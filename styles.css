@@ -76,10 +76,7 @@ body {
   line-height: 1.5;
 }
 
-:focus-visible {
-  outline: 2px solid var(--marker);
-  outline-offset: 2px;
-}
+:focus-visible { outline: 2px solid var(--marker); outline-offset: 2px; }
 
 /* skip link */
 .skip {
@@ -204,10 +201,7 @@ body {
   text-align: left;
 }
 .book-item:hover { background: var(--paper); }
-.book-item.is-active {
-  border-left-color: var(--marker);
-  background: var(--paper);
-}
+.book-item.is-active { border-left-color: var(--marker); background: var(--paper); }
 .book-item .book-title {
   font-size: .9rem;
   overflow: hidden;
@@ -234,10 +228,7 @@ body {
 }
 
 /* main pane */
-.pane {
-  overflow-y: auto;
-  height: 100%;
-}
+.pane { overflow-y: auto; height: 100%; }
 .pane-inner {
   max-width: 68ch;
   margin: 0 auto;
@@ -253,10 +244,7 @@ body {
   text-align: center;
   margin-bottom: 2rem;
 }
-.dropzone.is-over {
-  border-color: var(--marker);
-  background: var(--marker-tint);
-}
+.dropzone.is-over { border-color: var(--marker); background: var(--marker-tint); }
 .dropzone input[type="file"] {
   position: absolute;
   inset: 0;
@@ -300,10 +288,7 @@ body {
 }
 
 /* entry */
-.entry {
-  padding-bottom: 1.75rem;
-  border-bottom: 1px solid var(--rule);
-}
+.entry { padding-bottom: 1.75rem; border-bottom: 1px solid var(--rule); }
 .entry.is-hidden-record {
   opacity: .62;
   border-left: 1px solid var(--mid);
@@ -327,9 +312,7 @@ body {
   transition: background-size .5s ease;
 }
 .entry.is-drawn .q-text { background-size: 100% 68%; }
-.entry[data-type="note"] .q-text {
-  background-image: linear-gradient(var(--swipe-note), var(--swipe-note));
-}
+.entry[data-type="note"] .q-text { background-image: linear-gradient(var(--swipe-note), var(--swipe-note)); }
 
 @media (prefers-reduced-motion: reduce) {
   .q-text { background-size: 100% 68%; transition: none; }
