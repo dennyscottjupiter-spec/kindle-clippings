@@ -1,5 +1,5 @@
 // ---
-// purpose: Standalone shelf page — renders every known book as a cover card, fetches missing covers
+// purpose: Standalone shelf page — cover-card grid, topic chips, auto + manual missing-cover fetch
 // exports: nothing (wires itself on DOMContentLoaded)
 // depends: js/i18n.js, js/store.js, js/topics.js, js/covers.js
 // gotcha: this page has no js/app.js, so it seeds KC.state and a minimal KC.ui.toast itself —
@@ -134,7 +134,7 @@
   function onProgress(done, total) {
     KC.covers.paintSwitch(done < total ? KC.i18n.t('covers.progress', { done: done, total: total }) : null,
       done < total ? (total ? done / total : 0) : undefined);
-    if (done >= total) KC.ui.toast(KC.i18n.t('covers.done', { n: total }));
+    if (done >= total) KC.ui.toast(total ? KC.i18n.t('covers.done', { n: total }) : KC.i18n.t('covers.cached'));
     refreshCovers();
   }
 
@@ -187,6 +187,11 @@
     if (KC.state.coversOn) KC.covers.fetchAll(KC.state.books, onProgress);
 
     byId('shelf-q').addEventListener('input', filterCards);
+
+    byId('fetch-covers').addEventListener('click', function () {
+      KC.covers.refetchMissing(KC.state.books, onProgress);
+      KC.covers.paintSwitch();
+    });
 
     byId('toggle-covers').addEventListener('click', function () {
       if (KC.state.coversOn) KC.covers.disable();

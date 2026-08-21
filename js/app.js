@@ -40,7 +40,7 @@
       KC.ui.updateCoversButton(KC.i18n.t('covers.progress', { done: done, total: total }), total ? done / total : 0);
     } else {
       KC.ui.updateCoversButton();
-      KC.ui.toast(KC.i18n.t('covers.done', { n: total }));
+      KC.ui.toast(total ? KC.i18n.t('covers.done', { n: total }) : KC.i18n.t('covers.cached'));
     }
     KC.ui.renderSidebar();
     KC.ui.renderBookBanner();

@@ -31,7 +31,7 @@
   }
 
   function flag(cls, text) {
-    return el('span', 'flag ' + cls, text);
+    return el('span', 'card-flag ' + cls, text);
   }
 
   KC.cards = {

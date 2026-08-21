@@ -195,8 +195,9 @@
 }
 .meta .copy:hover { border-color: var(--brand-1); }
 
-/* flags */
-.flag {
+/* card flags — NOT .flag: chrome.css already owns .flag for the language button's <img>, and this
+   sheet loads after it, so a shared name repainted the country flag as a bordered pill. */
+.card-flag {
   display: inline-flex;
   align-items: center;
   font-family: var(--font-mono);

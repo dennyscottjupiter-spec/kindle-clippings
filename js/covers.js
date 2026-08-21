@@ -1,6 +1,6 @@
 // ---
 // purpose: Opt-in Open Library cover + subject fetch, sequential throttled queue, SVG placeholders
-// exports: KC.covers.isOn/enable/disable/fetchAll/entry/placeholder
+// exports: KC.covers.isOn/paintSwitch/enable/disable/fetchAll/refetchMissing/entry/placeholder
 // depends: js/topics.js (classify), js/store.js (lib cache), js/i18n.js; KC.state.coversOn/lib
 // gotcha: only the cover URL is cached, never the image bytes — data URLs blew the localStorage quota
 //   after ~40 books, which silently killed the cache and stalled the whole queue. Candidates are
@@ -14,7 +14,17 @@
 
   var GAP_MS = 260;
   var MAX_FAILS = 5;
+  var MISS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
   var queue = [], running = false, failStreak = 0;
+
+  // A miss is cached so a bad run does not re-hammer Open Library, but caching it forever is what
+  // made every later run report "0 covers loaded": the queue found an entry for every book and
+  // skipped them all. Misses expire; real hits stay cached.
+  function isFresh(entry) {
+    if (!entry) return false;
+    if (!entry.miss) return true;
+    return typeof entry.ts === 'number' && (Date.now() - entry.ts) < MISS_TTL_MS;
+  }
 
   function cleanTitle(title) {
     var t = String(title || '').trim();
@@ -129,7 +139,7 @@
     function step() {
       if (!queue.length || !KC.state.coversOn) { running = false; if (onProgress) onProgress(done, total); return; }
       var book = queue.shift();
-      if (lib[book.key]) { done++; setTimeout(step, 0); return; }
+      if (isFresh(lib[book.key])) { done++; setTimeout(step, 0); return; }
       fetchOne(book).then(function (entry) {
         failStreak = 0;
         lib[book.key] = entry;
@@ -255,10 +265,34 @@
       var lib = KC.store.lib.get();
       queue = [];
       for (var i = 0; i < books.length; i++) {
-        if (!lib[books[i].key]) queue.push(books[i]);
+        if (!isFresh(lib[books[i].key])) queue.push(books[i]);
       }
       failStreak = 0;
       runQueue(onProgress);
+    },
+
+    // Manual "download thumbnails": forget every cached entry that produced no image (a miss, or a
+    // match whose Open Library record carried no cover_i) and ask again. Books that already have a
+    // cover are left alone, so this is cheap to press twice and never re-downloads what worked.
+    refetchMissing: function (books, onProgress) {
+      if (!KC.state.coversOn) {
+        KC.state.coversOn = true;
+        KC.store.prefs.set({ coversOn: true });
+        if (!KC.store.prefs.get().coversAck) {
+          KC.store.prefs.set({ coversAck: true });
+          if (KC.ui && KC.ui.toast) KC.ui.toast(KC.i18n.t('covers.privacy'));
+        }
+      }
+      var lib = KC.store.lib.get();
+      for (var i = 0; i < books.length; i++) {
+        var e = lib[books[i].key];
+        if (e && !e.cover) {
+          delete lib[books[i].key];
+          if (KC.state.lib) delete KC.state.lib[books[i].key];
+        }
+      }
+      KC.store.lib.set(lib);
+      KC.covers.fetchAll(books, onProgress);
     },
 
     entry: function (bookKey) {

@@ -71,6 +71,7 @@
       'nav.shelf': 'Estante',
       'covers.progress': 'Capas {done}/{total}',
       'covers.done': '{n} capas carregadas',
+      'covers.cached': 'Capas já estão em dia',
       'covers.failed': 'Não foi possível falar com o openlibrary.org',
       'covers.privacy': 'Título e autor de cada livro são enviados ao openlibrary.org. Nada mais sai daqui.',
       'footer.privacyCovers': 'Seus destaques nunca saem deste dispositivo. Só os títulos são consultados.',
@@ -110,6 +111,8 @@
       'shelf.subtitle': 'Sua biblioteca em capas',
       'shelf.search': 'Buscar livro…',
       'shelf.back': 'Voltar aos destaques',
+      'shelf.fetch': 'Baixar capas',
+      'tip.fetch': 'Tenta de novo só os livros que ainda estão sem capa — os que já têm são mantidos. Liga a busca no openlibrary.org se ela estiver desligada.',
       'shelf.empty': 'Nenhuma biblioteca ainda — abra um arquivo de destaques primeiro.',
       'restore.pending': 'Solte seu arquivo para abrir "{book}"'
     },
@@ -177,6 +180,7 @@
       'nav.shelf': 'Shelf',
       'covers.progress': 'Covers {done}/{total}',
       'covers.done': '{n} covers loaded',
+      'covers.cached': 'Covers already up to date',
       'covers.failed': 'Could not reach openlibrary.org',
       'covers.privacy': "Each book's title and author are sent to openlibrary.org. Nothing else leaves this device.",
       'footer.privacyCovers': 'Your highlights never leave this device. Only titles are looked up.',
@@ -216,6 +220,8 @@
       'shelf.subtitle': 'Your library in covers',
       'shelf.search': 'Search books…',
       'shelf.back': 'Back to highlights',
+      'shelf.fetch': 'Download covers',
+      'tip.fetch': 'Retries only the books still missing a cover — the ones that already have art are kept. Turns the openlibrary.org lookup on if it is off.',
       'shelf.empty': 'No library yet — open a clippings file first.',
       'restore.pending': 'Drop your file to open "{book}"'
     }

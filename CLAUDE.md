@@ -75,6 +75,9 @@ at load time, only inside functions called later with a real DOM.
   `.topic-row`, `.shelf-card`, `#shelf-empty`, `#covers-ring`, plus the pre-existing
   `#statline`/`.scrim`) must keep its show rule written as `.selector:not([hidden]) { display: … }`
   — a bare `display:` rule outranks `[hidden]` at equal specificity.
+- Class names are global across the five sheets and there is no build step to catch a collision:
+  `.flag` belongs to the language button's `<img>` in `chrome.css`, so the card badges in
+  `reader.css` (which loads later and would win) are `.card-flag`.
 - `tokens.css` locks `body` to `height:100%; overflow:hidden; display:flex` for the reader's two-pane
   layout. `shelf.html` is a normal scrolling document, so `body.shelf-page` in `shelf.css` must undo
   all three — without that override the shelf cannot scroll at all.
