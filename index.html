@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Kindle Clippings</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main" id="skip-link">Ir para os destaques</a>
+
+<header class="topbar">
+  <div class="brand">
+    <h1 data-i18n="app.title">Meus destaques</h1>
+    <span class="sub" data-i18n="app.subtitle"></span>
+  </div>
+
+  <div class="search">
+    <input id="q" type="search" autocomplete="off" spellcheck="false"
+           data-i18n-ph="search.placeholder" data-i18n-label="search.placeholder">
+  </div>
+
+  <div class="actions">
+    <button class="btn" id="drawer-toggle" type="button" data-i18n="toggle.books" aria-expanded="false"></button>
+    <button class="btn" id="toggle-hidden" type="button" aria-pressed="false"></button>
+    <button class="btn icon" id="toggle-theme" type="button" data-i18n-label="toggle.theme">◐</button>
+    <button class="btn" id="toggle-lang" type="button" data-i18n-label="toggle.lang"></button>
+    <div class="menu" id="export-menu">
+      <button class="btn" id="export-btn" type="button" aria-haspopup="true" aria-expanded="false"
+              data-i18n="export.menu"></button>
+      <ul class="menu-list" id="export-list" hidden>
+        <li><button type="button" data-export="md" data-i18n="export.md"></button></li>
+        <li><button type="button" data-export="mdBook" data-i18n="export.mdBook"></button></li>
+        <li><button type="button" data-export="json" data-i18n="export.json"></button></li>
+        <li><button type="button" data-export="csv" data-i18n="export.csv"></button></li>
+        <li><button type="button" data-export="txt" data-i18n="export.txt"></button></li>
+        <li><button type="button" data-export="anki" data-i18n="export.anki"></button></li>
+      </ul>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="sidebar" id="sidebar" aria-label="Livros"></nav>
+  <div class="scrim" id="scrim" hidden></div>
+
+  <main class="pane" id="main" tabindex="-1">
+    <div class="pane-inner">
+      <div class="dropzone" id="dropzone">
+        <p class="drop-title" data-i18n="drop.title"></p>
+        <p class="drop-hint" data-i18n="drop.hint"></p>
+        <label class="btn" for="file" data-i18n="drop.button"></label>
+        <input type="file" id="file" accept=".txt,text/plain">
+      </div>
+
+      <p class="statline" id="statline" hidden></p>
+      <div class="cards" id="cards"></div>
+      <p class="empty" id="empty" hidden></p>
+      <div class="sentinel" id="sentinel" aria-hidden="true"></div>
+      <p class="footer-note" data-i18n="footer.privacy"></p>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="js/i18n.js"></script>
+<script src="js/parser.js"></script>
+<script src="js/dedupe.js"></script>
+<script src="js/clean.js"></script>
+<script src="js/tags.js"></script>
+<script src="js/search.js"></script>
+<script src="js/exports.js"></script>
+<script src="js/cards.js"></script>
+<script src="js/clipboard.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
