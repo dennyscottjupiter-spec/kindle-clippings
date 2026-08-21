@@ -1,15 +1,29 @@
 // ---
-// purpose: Standalone shelf page — renders every known book as a cover card from the local cache
+// purpose: Standalone shelf page — renders every known book as a cover card, fetches missing covers
 // exports: nothing (wires itself on DOMContentLoaded)
 // depends: js/i18n.js, js/store.js, js/topics.js, js/covers.js
-// gotcha: reads KC.store.books/lib only — never touches highlight text, none of which is cached here
+// gotcha: this page has no js/app.js, so it seeds KC.state and a minimal KC.ui.toast itself —
+//   js/covers.js reads both. It never touches highlight text; none is cached here.
 // ---
 (function (KC) {
   'use strict';
 
   var currentTopic = null;
+  var toastTimer = null;
 
   function byId(id) { return document.getElementById(id); }
+
+  KC.ui = KC.ui || {
+    toast: function (msg) {
+      var n = byId('toast');
+      if (!n) return;
+      n.textContent = msg;
+      n.hidden = false;
+      n.className = 'toast is-on';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(function () { n.className = 'toast'; n.hidden = true; }, 2600);
+    }
+  };
 
   function applyStrings() {
     var t = KC.i18n.t, i;
@@ -28,6 +42,9 @@
     var a = document.createElement('a');
     a.className = 'shelf-card';
     a.href = 'index.html?book=' + encodeURIComponent(book.key);
+    a.setAttribute('data-key', book.key);
+    a.setAttribute('data-title', book.title);
+    a.setAttribute('data-author', book.author);
     a.setAttribute('data-topic', topic);
     if (hue !== null && hue !== undefined) a.style.setProperty('--h', String(hue));
     a.setAttribute('data-search', KC.i18n.fold(book.title + ' ' + book.author));
@@ -94,9 +111,36 @@
     }
   }
 
+  // Covers arrive one by one — repaint the affected cards in place instead of rebuilding the grid,
+  // which would fight the reader's scroll position while they browse.
+  function refreshCovers() {
+    var lib = KC.state.lib || {};
+    var cards = byId('shelf').querySelectorAll('.shelf-card');
+    for (var i = 0; i < cards.length; i++) {
+      var card = cards[i];
+      var entry = lib[card.getAttribute('data-key')];
+      if (!entry) continue;
+      var topic = entry.topic || 'uncategorized';
+      var hue = KC.topics.hueOf(topic);
+      card.setAttribute('data-topic', topic);
+      if (hue !== null && hue !== undefined) card.style.setProperty('--h', String(hue));
+      card.querySelector('.sc-cover').src = entry.cover ||
+        KC.covers.placeholder(card.getAttribute('data-title'), card.getAttribute('data-author'), hue);
+    }
+    renderTopics(KC.state.books, lib);
+    filterCards();
+  }
+
+  function onProgress(done, total) {
+    KC.covers.paintSwitch(done < total ? KC.i18n.t('covers.progress', { done: done, total: total }) : null,
+      done < total ? (total ? done / total : 0) : undefined);
+    if (done >= total) KC.ui.toast(KC.i18n.t('covers.done', { n: total }));
+    refreshCovers();
+  }
+
   function render() {
-    var books = KC.store.books.get();
-    var lib = KC.store.lib.get();
+    var books = KC.state.books;
+    var lib = KC.state.lib;
     var host = byId('shelf');
     var empty = byId('shelf-empty');
     while (host.firstChild) host.removeChild(host.firstChild);
@@ -133,10 +177,22 @@
     if (prefs.theme) document.documentElement.setAttribute('data-theme', prefs.theme);
     if (prefs.lang) KC.i18n.setLang(prefs.lang);
 
+    KC.state.books = KC.store.books.get();
+    KC.state.lib = KC.store.lib.get();
+    KC.state.coversOn = !!prefs.coversOn;
+
     applyStrings();
     render();
+    KC.covers.paintSwitch();
+    if (KC.state.coversOn) KC.covers.fetchAll(KC.state.books, onProgress);
 
     byId('shelf-q').addEventListener('input', filterCards);
+
+    byId('toggle-covers').addEventListener('click', function () {
+      if (KC.state.coversOn) KC.covers.disable();
+      else KC.covers.enable(onProgress);
+      KC.covers.paintSwitch();
+    });
 
     byId('shelf-topics').addEventListener('click', function (e) {
       var chip = e.target.closest ? e.target.closest('.chip') : null;

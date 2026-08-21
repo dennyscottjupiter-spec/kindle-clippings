@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="css/shelf.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F5F6FA'/%3E%3Crect x='4' y='13' width='24' height='7' fill='%236C63FF'/%3E%3C/svg%3E">
 </head>
-<body>
+<body class="shelf-page">
 <header class="topbar shelf-bar">
   <div class="brand">
     <span class="brand-dot" aria-hidden="true"></span>
@@ -19,14 +19,31 @@
     <span class="sub" data-i18n="shelf.subtitle"></span>
   </div>
   <div class="actions">
-    <input id="shelf-q" type="search" autocomplete="off" spellcheck="false" data-i18n-ph="shelf.search">
-    <div class="seg" id="shelf-topics" hidden></div>
+    <span class="tip-host covers-host">
+      <button class="switch" id="toggle-covers" type="button" role="switch" aria-checked="false" aria-describedby="tip-covers">
+        <span class="sw-text" data-i18n="switch.covers"></span>
+        <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
+      </button>
+      <svg class="covers-ring" id="covers-ring" viewBox="0 0 20 20" hidden aria-hidden="true">
+        <circle class="ring-track" cx="10" cy="10" r="8"></circle>
+        <circle class="ring-fill" id="covers-ring-fill" cx="10" cy="10" r="8"></circle>
+      </svg>
+      <span class="tip" id="tip-covers" role="tooltip" data-i18n="tip.covers"></span>
+    </span>
     <a class="btn primary" href="index.html" data-i18n="shelf.back"></a>
     <button class="btn icon" id="toggle-theme" type="button" data-i18n-label="toggle.theme">◐</button>
   </div>
 </header>
+
+<div class="shelf-tools">
+  <input id="shelf-q" type="search" autocomplete="off" spellcheck="false" data-i18n-ph="shelf.search">
+  <div class="topic-row shelf-topics" id="shelf-topics" hidden></div>
+</div>
+
 <main class="shelf" id="shelf"></main>
 <p class="empty" id="shelf-empty" hidden></p>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/i18n.js"></script>
 <script src="js/store.js"></script>

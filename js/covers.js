@@ -1,78 +1,122 @@
 // ---
 // purpose: Opt-in Open Library cover + subject fetch, sequential throttled queue, SVG placeholders
 // exports: KC.covers.isOn/enable/disable/fetchAll/entry/placeholder
-// depends: js/topics.js (classify), js/store.js (lib cache), js/state.js (coversOn), js/i18n.js
-// gotcha: nothing fetches until the user opts in — isOn() gates every network call
+// depends: js/topics.js (classify), js/store.js (lib cache), js/i18n.js; KC.state.coversOn/lib
+// gotcha: only the cover URL is cached, never the image bytes — data URLs blew the localStorage quota
+//   after ~40 books, which silently killed the cache and stalled the whole queue. Candidates are
+//   title-checked before they are believed: doc[0] is routinely the wrong book.
 // ---
 (function (KC) {
   'use strict';
 
+  // shelf.html loads this module without js/app.js, so KC.state may not exist yet.
+  KC.state = KC.state || { coversOn: false, books: [], lib: {} };
+
   var GAP_MS = 260;
-  var COVER_MAX_BYTES = 120000;
+  var MAX_FAILS = 5;
   var queue = [], running = false, failStreak = 0;
 
   function cleanTitle(title) {
-    var t = String(title || '')
+    var t = String(title || '').trim();
+    // Sideloaded files keep their slug filename ("rapido-e-devagar-...-pt") — spell it back out.
+    if (t.indexOf(' ') === -1 && t.indexOf('-') !== -1) {
+      t = t.replace(/-(pt|en|es|br|fr|de)$/i, '').replace(/-/g, ' ');
+    }
+    return t
       .replace(/\s*\([^()]*\)/g, '')
       .replace(/\s+-\s+[^-]+$/, '')
+      .replace(/,?\s+(volume|vol\.?|tomo|livro)\s+[ivxlcdm\d]+$/i, '')
       .replace(/\s+/g, ' ')
       .trim();
-    return encodeURIComponent(t);
   }
 
   function cleanAuthor(author) {
     var a = String(author || '').split(';')[0].trim();
-    if (!a) return '';
     if (a.indexOf(',') !== -1) {
       var parts = a.split(',');
-      a = (parts[1] || '').trim() + ' ' + parts[0].trim();
-      a = a.trim();
+      a = ((parts[1] || '').trim() + ' ' + parts[0].trim()).trim();
     }
-    return encodeURIComponent(a);
+    return a;
   }
 
-  function searchUrl(book) {
-    var t = cleanTitle(book.title);
-    var a = cleanAuthor(book.author);
-    var base = 'https://openlibrary.org/search.json?limit=1&fields=key,title,author_name,cover_i,subject';
-    if (a) return base + '&title=' + t + '&author=' + a;
-    return base + '&q=' + t;
+  // A Kindle library is full of PDFs and saved web pages. Open Library has none of them, and asking
+  // anyway is what produced nonsense matches (a forum thread classified from a treaty record).
+  function looksLikeBook(title, author) {
+    var t = cleanTitle(title);
+    if (t.length < 3) return false;
+    if (/^\d{4}\.\d{4,5}(v\d+)?$/.test(t)) return false;                    // arXiv identifier
+    if (/^\d{4}-\d{2}-\d{2}/.test(t)) return false;                         // dated download
+    if (/\.(pdf|epub|mobi|docx?|html?|txt)$/i.test(t)) return false;
+    if (/^(www\.|https?:)|\.(com|org|net|io|ai|dev|gov|edu|br)(\/|$)/i.test(author)) return false;
+    return true;
   }
 
-  function coverToDataUrl(coverId) {
-    if (!coverId) return Promise.resolve(null);
-    var url = 'https://covers.openlibrary.org/b/id/' + coverId + '-M.jpg';
-    return fetch(url).then(function (r) { return r.ok ? r.blob() : null; })
-      .then(function (blob) {
-        if (!blob || blob.size > COVER_MAX_BYTES) return url;
-        return new Promise(function (res) {
-          var fr = new FileReader();
-          fr.onload = function () { res(String(fr.result)); };
-          fr.onerror = function () { res(url); };
-          fr.readAsDataURL(blob);
-        });
-      })
-      .catch(function () { return url; });
+  // Accepting doc[0] blindly is how a wrong book supplies the topic — the candidate has to actually
+  // look like the book we asked for, and a candidate that carries subjects beats one that doesn't.
+  function titleMatches(query, candidate) {
+    var q = KC.i18n.fold(query), c = KC.i18n.fold(candidate || '');
+    if (!c) return false;
+    if (c.indexOf(q) !== -1 || q.indexOf(c) !== -1) return true;
+    var words = q.split(/[^a-z0-9]+/).filter(function (w) { return w.length > 3; });
+    if (!words.length) return false;
+    var hits = 0;
+    for (var i = 0; i < words.length; i++) if (c.indexOf(words[i]) !== -1) hits++;
+    return hits / words.length >= 0.6;
   }
 
-  function fetchOne(book) {
-    return fetch(searchUrl(book)).then(function (r) {
+  function pickDoc(docs, title) {
+    var best = null;
+    for (var i = 0; i < (docs || []).length; i++) {
+      var d = docs[i];
+      if (!titleMatches(title, d.title)) continue;
+      if (d.subject && d.subject.length) return d;
+      if (!best) best = d;
+    }
+    return best;
+  }
+
+  var SEARCH = 'https://openlibrary.org/search.json?limit=5&fields=key,title,author_name,cover_i,subject';
+
+  function wait(ms) {
+    return new Promise(function (res) { setTimeout(res, ms); });
+  }
+
+  function ask(url, title) {
+    return fetch(url).then(function (r) {
       if (!r.ok) throw new Error('http ' + r.status);
       return r.json();
     }).then(function (json) {
-      var doc = json && json.docs && json.docs[0];
-      if (!doc) return { miss: true, ts: Date.now() };
-      var topic = KC.topics.classify(doc.subject);
-      return coverToDataUrl(doc.cover_i).then(function (cover) {
-        return {
-          olKey: doc.key || null,
-          cover: cover || null,
-          topic: topic,
-          subjects: (doc.subject || []).slice(0, 3),
-          miss: false,
-          ts: Date.now()
-        };
+      return pickDoc(json && json.docs, title);
+    });
+  }
+
+  function fetchOne(book) {
+    var t = cleanTitle(book.title);
+    var a = cleanAuthor(book.author);
+    if (!looksLikeBook(book.title, book.author)) return Promise.resolve({ miss: true, ts: Date.now() });
+
+    var first = a ? SEARCH + '&title=' + encodeURIComponent(t) + '&author=' + encodeURIComponent(a)
+                  : SEARCH + '&q=' + encodeURIComponent(t);
+
+    return ask(first, t).then(function (doc) {
+      // Kindle author strings are often annotated, reversed or plain wrong — one looser title-only
+      // retry recovers most of the misses the strict title+author query produces.
+      if ((doc && doc.subject && doc.subject.length) || !a) return doc;
+      return wait(GAP_MS).then(function () {
+        return ask(SEARCH + '&q=' + encodeURIComponent(t), t).then(function (loose) {
+          return (loose && loose.subject && loose.subject.length) ? loose : (doc || loose);
+        });
       });
+    }).then(function (doc) {
+      if (!doc) return { miss: true, ts: Date.now() };
+      return {
+        olKey: doc.key || null,
+        cover: doc.cover_i ? 'https://covers.openlibrary.org/b/id/' + doc.cover_i + '-M.jpg' : null,
+        topic: KC.topics.classify(doc.subject),
+        subjects: (doc.subject || []).slice(0, 3),
+        miss: false,
+        ts: Date.now()
+      };
     });
   }
 
@@ -97,9 +141,10 @@
       }).catch(function () {
         failStreak++;
         done++;
-        if (failStreak >= 3) {
+        if (failStreak >= MAX_FAILS) {
           queue.length = 0;
           running = false;
+          if (onProgress) onProgress(done, total);
           if (typeof KC.ui !== 'undefined' && KC.ui.toast) KC.ui.toast(KC.i18n.t('covers.failed'));
           return;
         }
@@ -165,8 +210,27 @@
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
 
+  // Both pages carry the same switch markup, so the painting lives here rather than twice in the UI.
+  function paintSwitch(progressText, pct) {
+    var btn = document.getElementById('toggle-covers');
+    if (!btn) return;
+    btn.setAttribute('aria-checked', KC.state.coversOn ? 'true' : 'false');
+    var label = btn.querySelector('.sw-text');
+    if (label) label.textContent = progressText || KC.i18n.t('switch.covers');
+
+    var ring = document.getElementById('covers-ring');
+    var fill = document.getElementById('covers-ring-fill');
+    if (!ring || !fill) return;
+    if (typeof pct !== 'number') { ring.setAttribute('hidden', ''); return; }
+    ring.removeAttribute('hidden');
+    var C = 2 * Math.PI * 8;
+    fill.style.strokeDasharray = String(C);
+    fill.style.strokeDashoffset = String(C * (1 - pct));
+  }
+
   KC.covers = {
     isOn: function () { return !!KC.state.coversOn; },
+    paintSwitch: paintSwitch,
 
     enable: function (onProgress) {
       KC.state.coversOn = true;

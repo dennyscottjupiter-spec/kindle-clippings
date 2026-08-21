@@ -32,20 +32,27 @@
       <span class="tip" id="tip-shelf" role="tooltip" data-i18n="tip.shelf"></span>
     </span>
     <span class="tip-host covers-host">
-      <button class="btn" id="toggle-covers" type="button" aria-pressed="false" aria-describedby="tip-covers" data-i18n="toggle.covers"></button>
+      <button class="switch" id="toggle-covers" type="button" role="switch" aria-checked="false" aria-describedby="tip-covers">
+        <span class="sw-text" data-i18n="switch.covers"></span>
+        <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
+      </button>
       <svg class="covers-ring" id="covers-ring" viewBox="0 0 20 20" hidden aria-hidden="true">
         <circle class="ring-track" cx="10" cy="10" r="8"></circle>
         <circle class="ring-fill" id="covers-ring-fill" cx="10" cy="10" r="8"></circle>
       </svg>
       <span class="tip" id="tip-covers" role="tooltip" data-i18n="tip.covers"></span>
     </span>
-    <img class="mini-cover" id="mini-cover" alt="" hidden>
     <span class="tip-host">
-      <button class="btn" id="toggle-hidden" type="button" aria-pressed="false" aria-describedby="tip-hidden"></button>
+      <button class="switch" id="toggle-hidden" type="button" role="switch" aria-checked="false" aria-describedby="tip-hidden">
+        <span class="sw-text" data-i18n="switch.duplicates"></span>
+        <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
+      </button>
       <span class="tip" id="tip-hidden" role="tooltip" data-i18n="tip.hidden"></span>
     </span>
     <button class="btn icon" id="toggle-theme" type="button" data-i18n-label="toggle.theme">◐</button>
-    <button class="btn" id="toggle-lang" type="button" data-i18n-label="toggle.lang"></button>
+    <button class="btn flag-btn" id="toggle-lang" type="button">
+      <img class="flag" id="lang-flag" alt="" width="26" height="18">
+    </button>
     <div class="menu" id="export-menu">
       <button class="btn" id="export-btn" type="button" aria-haspopup="true" aria-expanded="false"
               data-i18n="export.menu"></button>

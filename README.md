@@ -44,11 +44,14 @@ A Kindle logs every highlight, note, and bookmark into a single text file that:
   so matching goes by *identical timestamp* first, position containment second, proximity last.
 - **Exports** to Markdown (with frontmatter and `tags:`), JSON, CSV, TXT, and TSV for Anki.
 - **Opt-in covers and topics.** A single switch fetches each book's cover and Open Library subjects,
-  classified into a fixed 15-topic taxonomy, cached in `localStorage` so it works offline after the
-  first fetch. Books with no fetched cover get a generated SVG placeholder in their topic color, so
-  the library looks designed from the first load, before you ever flip the switch.
+  classified into a fixed 15-topic taxonomy. Only the cover *URL* and the subjects are cached in
+  `localStorage`, never the image bytes, so a large library never hits the storage quota. Candidates
+  are title-checked before they are trusted, and sideloaded PDFs and saved web pages are recognised
+  and never looked up. Books with no fetched cover get a generated SVG placeholder in their topic
+  color, so the library looks designed from the first load, before you ever flip the switch.
 - **A shelf page** (`shelf.html`) shows every known book as a cover card — searchable, filterable by
-  topic, click through to reopen that book in the reader.
+  topic, click through to reopen that book in the reader. It fills in missing covers itself when the
+  switch is on.
 - **Sort the reading pane** by file order, newest/oldest, book, or topic (with sticky group headers);
   **sort the book list** by title, highlight count, or most recently highlighted; **resize the
   sidebar** by dragging or with the arrow keys.

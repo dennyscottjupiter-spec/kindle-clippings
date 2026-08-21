@@ -1,6 +1,7 @@
 // ---
 // purpose: Render the chrome — strings, sidebar delegate, book banner, sort bar, stat line, toast
-// exports: KC.ui.applyStrings(), renderSidebar(), render(), toast(), setTheme(), fillPane(), updateCoversButton()
+// exports: KC.ui.applyStrings(), renderSidebar(), renderBookBanner(), render(), toast(), setTheme(),
+//   fillPane(), updateCoversButton()
 // depends: js/i18n.js, js/search.js, js/sort.js, js/cards.js, js/sidebar.js, js/covers.js, js/topics.js
 // gotcha: the pagination reset key is activeBook | activeTopic | query | showHidden | sortMode — all five
 // ---
@@ -29,10 +30,14 @@
 
       document.documentElement.lang = KC.i18n.lang;
       byId('skip-link').textContent = KC.i18n.lang === 'en' ? 'Skip to highlights' : 'Ir para os destaques';
-      byId('toggle-lang').textContent = t(KC.i18n.lang === 'en' ? 'lang.pt' : 'lang.en');
+
+      // The flag pictures the language you would switch TO, so it always shows the other one.
+      var toPt = KC.i18n.lang === 'en';
+      byId('lang-flag').src = toPt ? 'assets/flags/br.svg' : 'assets/flags/gb.svg';
+      byId('toggle-lang').setAttribute('aria-label', t('toggle.lang') + ': ' + t(toPt ? 'lang.pt' : 'lang.en'));
+
       n = byId('toggle-hidden');
-      n.textContent = t(KC.state.showHidden ? 'toggle.hidden.hide' : 'toggle.hidden.show');
-      n.setAttribute('aria-pressed', KC.state.showHidden ? 'true' : 'false');
+      n.setAttribute('aria-checked', KC.state.showHidden ? 'true' : 'false');
 
       KC.ui.updateCoversButton();
 
@@ -41,20 +46,7 @@
     },
 
     updateCoversButton: function (progressText, pct) {
-      var btn = byId('toggle-covers');
-      if (!btn) return;
-      btn.setAttribute('aria-pressed', KC.state.coversOn ? 'true' : 'false');
-      btn.textContent = progressText || KC.i18n.t(KC.state.coversOn ? 'toggle.covers.on' : 'toggle.covers');
-
-      var ring = byId('covers-ring'), fill = byId('covers-ring-fill');
-      if (!ring || !fill) return;
-      var running = typeof pct === 'number';
-      if (running) { ring.removeAttribute('hidden'); } else { ring.setAttribute('hidden', ''); }
-      if (running) {
-        var C = 2 * Math.PI * 8;
-        fill.style.strokeDasharray = String(C);
-        fill.style.strokeDashoffset = String(C * (1 - pct));
-      }
+      KC.covers.paintSwitch(progressText, pct);
     },
 
     renderSidebar: function () {
@@ -90,18 +82,6 @@
       for (var i = 0; i < buttons.length; i++) {
         buttons[i].setAttribute('aria-pressed', buttons[i].getAttribute('data-sort') === KC.state.sortMode ? 'true' : 'false');
       }
-    },
-
-    renderMiniCover: function () {
-      var img = byId('mini-cover');
-      if (!img) return;
-      var book = activeBookRecord();
-      if (!book) { img.hidden = true; img.removeAttribute('src'); return; }
-      var entry = KC.covers.entry(book.key);
-      var topic = (entry && entry.topic) || 'uncategorized';
-      var hue = KC.topics.hueOf(topic);
-      img.src = (entry && entry.cover) ? entry.cover : KC.covers.placeholder(book.title, book.author, hue);
-      img.hidden = false;
     },
 
     renderBookBanner: function () {
@@ -176,7 +156,6 @@
       KC.ui.renderSidebar();
       KC.ui.renderStats();
       KC.ui.renderBookBanner();
-      KC.ui.renderMiniCover();
       KC.ui.renderSortBar();
     },
 

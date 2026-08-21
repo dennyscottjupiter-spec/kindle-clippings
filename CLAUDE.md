@@ -52,7 +52,7 @@ a module can only use what a script tag above it already defined:
 | `js/sidebar.js` | sidebar render (sort control, topic chips, book rows) + drag resizer |
 | `js/ui.js` | chrome render — book banner, sort bar, stat line, empty state, toast, `render()` |
 | `js/app.js` | `KC.state`, file loading, drag & drop, all event wiring (loaded last) |
-| `shelf.html` / `js/shelf.js` | standalone cover-shelf page, reads the localStorage book/library cache |
+| `shelf.html` / `js/shelf.js` | standalone cover-shelf page; reads the localStorage book/library cache and, with covers on, fetches what is missing (it seeds `KC.state` and a minimal `KC.ui.toast` itself, since `js/app.js` is not loaded there) |
 
 `tests/harness.js` loads a subset of these modules (`i18n`, `topics`, `parser`, `dedupe`, `clean`,
 `tags`, `search`, `sort`, `exports` — not `store`/`covers`/`cards`/`clipboard`/`sidebar`/`ui`/`app`/
@@ -72,9 +72,12 @@ at load time, only inside functions called later with a real DOM.
 - `css/` (`tokens.css` / `chrome.css` / `sidebar.css` / `reader.css` / `shelf.css`, loaded in that
   order — `tokens.css` first, everyone else assumes its custom properties) replaced the old single
   `styles.css`. Any element toggled with the `hidden` attribute (`#book-banner`, `#sortbar`,
-  `#mini-cover`, `.topic-row`, `#shelf-empty`, plus the pre-existing `#statline`/`.scrim`) must keep
-  its show rule written as `.selector:not([hidden]) { display: … }` — a bare `display:` rule outranks
-  `[hidden]` at equal specificity.
+  `.topic-row`, `.shelf-card`, `#shelf-empty`, `#covers-ring`, plus the pre-existing
+  `#statline`/`.scrim`) must keep its show rule written as `.selector:not([hidden]) { display: … }`
+  — a bare `display:` rule outranks `[hidden]` at equal specificity.
+- `tokens.css` locks `body` to `height:100%; overflow:hidden; display:flex` for the reader's two-pane
+  layout. `shelf.html` is a normal scrolling document, so `body.shelf-page` in `shelf.css` must undo
+  all three — without that override the shelf cannot scroll at all.
 
 ### Source data quirks the parser/clean pipeline exists to handle
 

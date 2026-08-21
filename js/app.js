@@ -44,7 +44,6 @@
     }
     KC.ui.renderSidebar();
     KC.ui.renderBookBanner();
-    KC.ui.renderMiniCover();
   }
 
   KC.app = {

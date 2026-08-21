@@ -1,2 +1,5 @@
 # Personal reading data — never committed
 My Clippings.txt
+
+# Playwright MCP session artifacts
+.playwright-mcp/
