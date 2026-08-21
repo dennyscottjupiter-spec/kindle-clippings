@@ -156,7 +156,7 @@
         if (rec.deviceFooter) return;
         k = rec.bookKey;
         if (!map[k]) {
-          map[k] = { key: k, title: rec.title, author: rec.author, authors: rec.authors || [], count: 0, hiddenCount: 0 };
+          map[k] = { key: k, title: rec.title, author: rec.author, authors: rec.authors || [], count: 0, hiddenCount: 0, lastMs: 0 };
           order.push(k);
         }
         if (rec.title.length > map[k].title.length) map[k].title = rec.title;
@@ -164,6 +164,7 @@
           map[k].author = rec.author;
           map[k].authors = rec.authors || [];
         }
+        if (rec.dateMs && rec.dateMs > (map[k].lastMs || 0)) map[k].lastMs = rec.dateMs;
         if (isHidden) map[k].hiddenCount++; else map[k].count++;
       }
       for (i = 0; i < visible.length; i++) bump(visible[i], false);

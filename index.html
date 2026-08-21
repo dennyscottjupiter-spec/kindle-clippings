@@ -5,14 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Kindle Clippings</title>
-<link rel="stylesheet" href="styles.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23E8E9E3'/%3E%3Crect x='4' y='13' width='24' height='7' fill='%23F3D24E'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/chrome.css">
+<link rel="stylesheet" href="css/sidebar.css">
+<link rel="stylesheet" href="css/reader.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F5F6FA'/%3E%3Crect x='4' y='13' width='24' height='7' fill='%236C63FF'/%3E%3C/svg%3E">
 </head>
 <body>
 <a class="skip" href="#main" id="skip-link">Ir para os destaques</a>
 
 <header class="topbar">
   <div class="brand">
+    <span class="brand-dot" aria-hidden="true"></span>
     <h1 data-i18n="app.title">Meus destaques</h1>
     <span class="sub" data-i18n="app.subtitle"></span>
   </div>
@@ -24,7 +28,13 @@
 
   <div class="actions">
     <button class="btn drawer-toggle" id="drawer-toggle" type="button" data-i18n="toggle.books" aria-expanded="false"></button>
-    <button class="btn" id="toggle-hidden" type="button" aria-pressed="false"></button>
+    <a class="btn" id="nav-shelf" href="shelf.html" data-i18n="nav.shelf"></a>
+    <button class="btn" id="toggle-covers" type="button" aria-pressed="false" data-i18n="toggle.covers"></button>
+    <img class="mini-cover" id="mini-cover" alt="" hidden>
+    <span class="tip-host">
+      <button class="btn" id="toggle-hidden" type="button" aria-pressed="false" aria-describedby="tip-hidden"></button>
+      <span class="tip" id="tip-hidden" role="tooltip" data-i18n="tip.hidden"></span>
+    </span>
     <button class="btn icon" id="toggle-theme" type="button" data-i18n-label="toggle.theme">◐</button>
     <button class="btn" id="toggle-lang" type="button" data-i18n-label="toggle.lang"></button>
     <div class="menu" id="export-menu">
@@ -44,6 +54,8 @@
 
 <div class="shell">
   <nav class="sidebar" id="sidebar" aria-label="Livros"></nav>
+  <div class="resizer" id="resizer" role="separator" aria-orientation="vertical"
+       tabindex="0" data-i18n-label="sidebar.resize"></div>
   <div class="scrim" id="scrim" hidden></div>
 
   <main class="pane" id="main" tabindex="-1">
@@ -51,10 +63,22 @@
       <div class="dropzone" id="dropzone">
         <p class="drop-title" data-i18n="drop.title"></p>
         <p class="drop-hint" data-i18n="drop.hint"></p>
-        <label class="btn" for="file" data-i18n="drop.button"></label>
+        <label class="btn primary" for="file" data-i18n="drop.button"></label>
         <input type="file" id="file" accept=".txt,text/plain">
+        <p class="restore-pending" id="restore-pending" hidden></p>
       </div>
 
+      <section class="book-banner" id="book-banner" hidden></section>
+      <div class="sortbar" id="sortbar" hidden>
+        <span class="sortbar-label" data-i18n="sort.label"></span>
+        <div class="seg" id="sort-seg" role="group">
+          <button type="button" data-sort="order"    data-i18n="sort.order"    aria-pressed="true"></button>
+          <button type="button" data-sort="dateDesc" data-i18n="sort.dateDesc" aria-pressed="false"></button>
+          <button type="button" data-sort="dateAsc"  data-i18n="sort.dateAsc"  aria-pressed="false"></button>
+          <button type="button" data-sort="book"     data-i18n="sort.book"     aria-pressed="false"></button>
+          <button type="button" data-sort="topic"    data-i18n="sort.topic"    aria-pressed="false"></button>
+        </div>
+      </div>
       <p class="statline" id="statline" hidden></p>
       <div class="cards" id="cards"></div>
       <p class="empty" id="empty" hidden></p>
@@ -67,14 +91,19 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/i18n.js"></script>
+<script src="js/store.js"></script>
+<script src="js/topics.js"></script>
 <script src="js/parser.js"></script>
 <script src="js/dedupe.js"></script>
 <script src="js/clean.js"></script>
 <script src="js/tags.js"></script>
 <script src="js/search.js"></script>
+<script src="js/sort.js"></script>
+<script src="js/covers.js"></script>
 <script src="js/exports.js"></script>
 <script src="js/cards.js"></script>
 <script src="js/clipboard.js"></script>
+<script src="js/sidebar.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/app.js"></script>
 </body>

@@ -9,6 +9,8 @@ const { report } = require('./harness');
 require('./syntax.test').run();
 require('./fixture.test').run();
 require('./exports.test').run();
+require('./topics.test').run();
+require('./sort.test').run();
 require('./real.test').run();
 
 process.exit(report() ? 0 : 1);

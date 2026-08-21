@@ -1,0 +1,56 @@
+/* ---
+   purpose: The standalone shelf page — book cards in a grid, hover lift, shelf plank
+   depends: css/tokens.css, css/chrome.css (.topbar, .btn, .seg)
+   gotcha: .shelf-card:hover lift is disabled under prefers-reduced-motion — it is the one flourish
+   --- */
+
+.shelf {
+  max-width: 76rem;
+  margin: 0 auto;
+  padding: 2rem 1.25rem 5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.75rem 1.25rem;
+}
+
+.shelf-card {
+  position: relative;
+  display: block;
+  text-decoration: none;
+  color: var(--ink);
+  transition: transform .22s cubic-bezier(.2,.7,.3,1), box-shadow .22s;
+}
+.shelf-card:hover, .shelf-card:focus-visible {
+  transform: translateY(-6px) rotate(-.6deg);
+}
+.shelf-card::after {
+  content: "";
+  position: absolute;
+  left: -6px; right: -6px; bottom: -10px;
+  height: 6px; border-radius: 3px;
+  background: var(--rule);
+}
+@media (prefers-reduced-motion: reduce) {
+  .shelf-card { transition: none; }
+  .shelf-card:hover, .shelf-card:focus-visible { transform: none; }
+}
+
+.sc-art { position: relative; border-radius: var(--r-sm); overflow: hidden; box-shadow: var(--sh-2); }
+.shelf-card:hover .sc-art, .shelf-card:focus-visible .sc-art { box-shadow: var(--sh-lift); }
+.sc-cover { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; }
+.sc-spine { position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--topic-edge); }
+.sc-count { position: absolute; right: 6px; bottom: 6px; }
+
+.sc-title {
+  margin-top: .6rem;
+  font-family: var(--font-serif);
+  font-size: .92rem;
+  line-height: 1.3;
+}
+.sc-author { font-size: .78rem; color: var(--mid); margin-top: .15rem; }
+
+.shelf-bar .actions { flex-wrap: wrap; }
+
+@media (max-width: 860px) {
+  .shelf { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1.25rem 1rem; }
+}

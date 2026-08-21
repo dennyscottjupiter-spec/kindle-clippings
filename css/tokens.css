@@ -1,0 +1,146 @@
+/* ---
+   purpose: Reset, color tokens (light/dark), topic-hue mechanism, type scale, radii, shadows
+   depends: nothing — loaded first, every other css/ file assumes these custom properties exist
+   gotcha: never define a color only inside a media/[data-theme] block — bare :root first, always
+   --- */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+img { max-width: 100%; display: block; }
+button, input { font: inherit; color: inherit; }
+ul { list-style: none; padding: 0; }
+
+:root {
+  /* surfaces — light */
+  --paper:  #F5F6FA;
+  --panel:  #FFFFFF;
+  --sunk:   #EEF0F7;
+  --ink:    #10131A;
+  --mid:    #5B6472;
+  --rule:   #E2E6EF;
+
+  /* brand */
+  --brand-1: #6C63FF;
+  --brand-2: #FF5C7A;
+  --brand-3: #00C2A8;
+  --brand-4: #FFC53D;
+  --grad-primary: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%);
+
+  /* marker (unchanged lineage) */
+  --marker: #FFC53D;
+  --marker-note: #6C63FF;
+  --marker-tint: rgba(255,197,61,.35);
+  --marker-note-tint: rgba(108,99,255,.18);
+  --swipe: #FFC53D;
+  --swipe-note: rgba(108,99,255,.45);
+
+  /* form */
+  --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-pill: 999px;
+  --sh-1: 0 1px 2px rgba(16,19,26,.06), 0 2px 8px rgba(16,19,26,.05);
+  --sh-2: 0 8px 24px rgba(16,19,26,.10), 0 2px 6px rgba(16,19,26,.06);
+  --sh-lift: 0 18px 40px rgba(16,19,26,.18);
+
+  /* type */
+  --font-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+
+  /* layout */
+  --sidebar-w: 264px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0E1016;
+    --panel: #161A22;
+    --sunk:  #11141B;
+    --ink:   #E9ECF2;
+    --mid:   #98A2B3;
+    --rule:  #262C38;
+    --marker-tint: rgba(255,197,61,.22);
+    --marker-note-tint: rgba(108,99,255,.26);
+    --swipe: rgba(255,197,61,.34);
+    --swipe-note: rgba(108,99,255,.40);
+    --sh-1: 0 1px 2px rgba(0,0,0,.4);
+    --sh-2: 0 8px 24px rgba(0,0,0,.45);
+    --sh-lift: 0 18px 40px rgba(0,0,0,.55);
+  }
+  :root:not([data-theme="light"]) [data-topic] {
+    --topic-fg:   hsl(var(--h) 70% 74%);
+    --topic-bg:   hsl(var(--h) 40% 18%);
+    --topic-edge: hsl(var(--h) 65% 60%);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper: #0E1016;
+  --panel: #161A22;
+  --sunk:  #11141B;
+  --ink:   #E9ECF2;
+  --mid:   #98A2B3;
+  --rule:  #262C38;
+  --marker-tint: rgba(255,197,61,.22);
+  --marker-note-tint: rgba(108,99,255,.26);
+  --swipe: rgba(255,197,61,.34);
+  --swipe-note: rgba(108,99,255,.40);
+  --sh-1: 0 1px 2px rgba(0,0,0,.4);
+  --sh-2: 0 8px 24px rgba(0,0,0,.45);
+  --sh-lift: 0 18px 40px rgba(0,0,0,.55);
+}
+:root[data-theme="dark"] [data-topic] {
+  --topic-fg:   hsl(var(--h) 70% 74%);
+  --topic-bg:   hsl(var(--h) 40% 18%);
+  --topic-edge: hsl(var(--h) 65% 60%);
+}
+:root[data-theme="light"] {
+  --paper: #F5F6FA;
+  --panel: #FFFFFF;
+  --sunk:  #EEF0F7;
+  --ink:   #10131A;
+  --mid:   #5B6472;
+  --rule:  #E2E6EF;
+  --marker-tint: rgba(255,197,61,.35);
+  --marker-note-tint: rgba(108,99,255,.18);
+  --swipe: #FFC53D;
+  --swipe-note: rgba(108,99,255,.45);
+  --sh-1: 0 1px 2px rgba(16,19,26,.06), 0 2px 8px rgba(16,19,26,.05);
+  --sh-2: 0 8px 24px rgba(16,19,26,.10), 0 2px 6px rgba(16,19,26,.06);
+  --sh-lift: 0 18px 40px rgba(16,19,26,.18);
+}
+
+/* topic-hue mechanism — one rule set for all 15 topics, each element sets style="--h:<hue>" */
+[data-topic] {
+  --topic-fg:   hsl(var(--h) 62% 38%);
+  --topic-bg:   hsl(var(--h) 82% 94%);
+  --topic-edge: hsl(var(--h) 70% 52%);
+}
+[data-topic="uncategorized"] {
+  --topic-fg: var(--mid); --topic-bg: var(--sunk); --topic-edge: var(--rule);
+}
+
+html { height: 100%; }
+
+/* The page itself never scrolls — the sidebar and the pane are the scroll containers. */
+body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+:focus-visible { outline: 2px solid var(--brand-1); outline-offset: 2px; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

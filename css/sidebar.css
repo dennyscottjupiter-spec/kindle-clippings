@@ -1,0 +1,144 @@
+/* ---
+   purpose: Shell grid, resizable sidebar, book rows with spine/badge, topic chip row
+   depends: css/tokens.css, css/chrome.css (.seg, .btn)
+   gotcha: .scrim:not([hidden]) — a bare display: rule outranks [hidden] at equal specificity
+   --- */
+
+.shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 8px 1fr;
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative;
+}
+
+.sidebar {
+  overflow-y: auto;
+  height: 100%;
+  background: var(--panel);
+  border-right: 1px solid var(--rule);
+  display: flex;
+  flex-direction: column;
+}
+
+.side-head {
+  flex: 0 0 auto;
+  padding: 1rem 1rem .7rem;
+  display: flex;
+  flex-direction: column;
+  gap: .6rem;
+  border-bottom: 1px solid var(--rule);
+}
+.side-title {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--mid);
+}
+
+.topic-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  padding: .7rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  animation: chips-in .3s ease-out;
+}
+@keyframes chips-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .topic-row { animation: none; } }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .35em;
+  background: var(--topic-bg);
+  color: var(--topic-fg);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  font: 600 .72rem/1 var(--font-sans);
+  padding: .35em .7em;
+  cursor: pointer;
+}
+.chip[aria-pressed="true"] { border-color: var(--topic-edge); box-shadow: 0 0 0 3px var(--topic-bg); }
+
+.book-list { flex: 1 1 auto; }
+
+.book-item {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  width: 100%;
+  padding: .55em .9rem;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  position: relative;
+}
+.book-item:hover { background: var(--sunk); }
+.book-item.is-active { background: var(--sunk); }
+.book-item.is-off-topic { opacity: .45; }
+.book-item .spine {
+  width: 4px; align-self: stretch; border-radius: var(--r-pill);
+  background: var(--topic-edge); flex-shrink: 0;
+}
+.book-item .book-thumb { width: 28px; height: 42px; border-radius: 3px; object-fit: cover; flex-shrink: 0; }
+.book-item .book-title {
+  flex: 1 1 auto;
+  font-size: .88rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.book-item.is-empty .book-title { color: var(--mid); }
+
+/* count badge — reused on sidebar rows, cards, book banner */
+.badge {
+  min-width: 1.7rem; height: 1.7rem;
+  border-radius: var(--r-pill);
+  display: grid; place-items: center;
+  font: 600 .72rem var(--font-mono);
+  padding: 0 .45em;
+  background: var(--sunk); color: var(--mid);
+  flex-shrink: 0;
+}
+.book-item.is-active .badge, [data-topic] .badge { background: var(--topic-bg); color: var(--topic-fg); }
+
+.drawer-toggle { display: none; }
+
+.scrim {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, .4);
+  z-index: 15;
+}
+
+/* resizer */
+.resizer { cursor: col-resize; background: transparent; position: relative; }
+.resizer::before {
+  content: ""; position: absolute; inset: 0 3px; border-radius: var(--r-pill);
+  background: var(--rule); transition: background .15s;
+}
+.resizer:hover::before, .resizer:focus-visible::before { background: var(--brand-1); }
+body.is-resizing { cursor: col-resize; user-select: none; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; }
+  .resizer { display: none; }
+  .sidebar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 264px;
+    transform: translateX(-100%);
+    transition: transform .25s;
+    z-index: 25;
+  }
+  .sidebar.is-open { transform: none; }
+  .drawer-toggle { display: inline-flex; }
+  .scrim:not([hidden]) { display: block; }
+}

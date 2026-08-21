@@ -9,8 +9,8 @@ const path = require('path');
 const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const FILES = ['js/i18n.js', 'js/parser.js', 'js/dedupe.js', 'js/clean.js',
-  'js/tags.js', 'js/search.js', 'js/exports.js'];
+const FILES = ['js/i18n.js', 'js/topics.js', 'js/parser.js', 'js/dedupe.js', 'js/clean.js',
+  'js/tags.js', 'js/search.js', 'js/sort.js', 'js/exports.js'];
 
 function loadKC(lang) {
   const sandbox = { console, setTimeout, window: {}, navigator: { language: lang || 'pt-BR' } };

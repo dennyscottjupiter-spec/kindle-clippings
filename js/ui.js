@@ -1,8 +1,8 @@
 // ---
-// purpose: Render the chrome — strings, sidebar, stat line, empty state, toast — and drive render()
-// exports: KC.ui.applyStrings(), renderSidebar(), render(), toast(), setTheme(), fillPane()
-// depends: js/i18n.js, js/search.js, js/cards.js
-// gotcha: the pagination reset key is activeBook | query | showHidden — all three resize the list
+// purpose: Render the chrome — strings, sidebar delegate, book banner, sort bar, stat line, toast
+// exports: KC.ui.applyStrings(), renderSidebar(), render(), toast(), setTheme(), fillPane(), updateCoversButton()
+// depends: js/i18n.js, js/search.js, js/sort.js, js/cards.js, js/sidebar.js, js/covers.js, js/topics.js
+// gotcha: the pagination reset key is activeBook | activeTopic | query | showHidden | sortMode — all five
 // ---
 (function (KC) {
   'use strict';
@@ -10,6 +10,12 @@
   var toastTimer = null;
 
   function byId(id) { return document.getElementById(id); }
+
+  function activeBookRecord() {
+    var s = KC.state;
+    for (var i = 0; i < s.books.length; i++) if (s.books[i].key === s.activeBook) return s.books[i];
+    return null;
+  }
 
   KC.ui = {
     applyStrings: function () {
@@ -27,34 +33,22 @@
       n = byId('toggle-hidden');
       n.textContent = t(KC.state.showHidden ? 'toggle.hidden.hide' : 'toggle.hidden.show');
       n.setAttribute('aria-pressed', KC.state.showHidden ? 'true' : 'false');
+
+      KC.ui.updateCoversButton();
+
+      var footer = document.querySelector('.footer-note');
+      if (footer) footer.textContent = t(KC.state.coversOn ? 'footer.privacyCovers' : 'footer.privacy');
+    },
+
+    updateCoversButton: function (progressText) {
+      var btn = byId('toggle-covers');
+      if (!btn) return;
+      btn.setAttribute('aria-pressed', KC.state.coversOn ? 'true' : 'false');
+      btn.textContent = progressText || KC.i18n.t(KC.state.coversOn ? 'toggle.covers.on' : 'toggle.covers');
     },
 
     renderSidebar: function () {
-      var host = byId('sidebar'), s = KC.state, i;
-      while (host.firstChild) host.removeChild(host.firstChild);
-      if (!s.books.length) return;
-
-      function item(key, title, count) {
-        var b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'book-item' + (s.activeBook === key ? ' is-active' : '') +
-          (count === 0 ? ' is-empty' : '');
-        b.setAttribute('data-book', key === null ? '' : key);
-        var tt = document.createElement('span');
-        tt.className = 'book-title';
-        tt.textContent = title;
-        var c = document.createElement('span');
-        c.className = 'book-count';
-        c.textContent = KC.i18n.num(count);
-        b.appendChild(tt);
-        b.appendChild(c);
-        host.appendChild(b);
-      }
-
-      var total = 0;
-      for (i = 0; i < s.books.length; i++) total += s.books[i].count;
-      item(null, KC.i18n.t('sidebar.all'), total);
-      for (i = 0; i < s.books.length; i++) item(s.books[i].key, s.books[i].title, s.books[i].count);
+      KC.sidebar.render();
     },
 
     renderStats: function () {
@@ -78,15 +72,88 @@
       line.appendChild(span);
     },
 
+    renderSortBar: function () {
+      var bar = byId('sortbar');
+      if (!bar) return;
+      bar.hidden = !KC.state.stats;
+      var buttons = bar.querySelectorAll('[data-sort]');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].setAttribute('aria-pressed', buttons[i].getAttribute('data-sort') === KC.state.sortMode ? 'true' : 'false');
+      }
+    },
+
+    renderMiniCover: function () {
+      var img = byId('mini-cover');
+      if (!img) return;
+      var book = activeBookRecord();
+      if (!book) { img.hidden = true; img.removeAttribute('src'); return; }
+      var entry = KC.covers.entry(book.key);
+      var topic = (entry && entry.topic) || 'uncategorized';
+      var hue = KC.topics.hueOf(topic);
+      img.src = (entry && entry.cover) ? entry.cover : KC.covers.placeholder(book.title, book.author, hue);
+      img.hidden = false;
+    },
+
+    renderBookBanner: function () {
+      var host = byId('book-banner');
+      if (!host) return;
+      while (host.firstChild) host.removeChild(host.firstChild);
+      var book = activeBookRecord();
+      if (!book) { host.hidden = true; host.removeAttribute('style'); return; }
+      host.hidden = false;
+
+      var entry = KC.covers.entry(book.key);
+      var topic = (entry && entry.topic) || 'uncategorized';
+      var hue = KC.topics.hueOf(topic);
+      host.setAttribute('data-topic', topic);
+      if (hue !== null && hue !== undefined) host.style.setProperty('--h', String(hue));
+      else host.style.removeProperty('--h');
+
+      var fig = document.createElement('figure');
+      fig.className = 'bb-cover';
+      var img = document.createElement('img');
+      img.alt = '';
+      img.src = (entry && entry.cover) ? entry.cover : KC.covers.placeholder(book.title, book.author, hue);
+      fig.appendChild(img);
+      host.appendChild(fig);
+
+      var meta = document.createElement('div');
+      meta.className = 'bb-meta';
+      var eyebrow = document.createElement('span');
+      eyebrow.className = 'eyebrow';
+      eyebrow.textContent = KC.topics.label(topic);
+      var h2 = document.createElement('h2');
+      h2.className = 'bb-title';
+      h2.textContent = book.title;
+      var author = document.createElement('p');
+      author.className = 'bb-author';
+      author.textContent = book.author;
+      var stats = document.createElement('div');
+      stats.className = 'bb-stats';
+      var badge = document.createElement('span');
+      badge.className = 'badge';
+      badge.textContent = KC.i18n.num(book.count);
+      stats.appendChild(badge);
+      stats.appendChild(document.createTextNode(' ' + KC.i18n.t('book.highlights', { n: book.count })));
+      meta.appendChild(eyebrow);
+      meta.appendChild(h2);
+      meta.appendChild(author);
+      meta.appendChild(stats);
+      host.appendChild(meta);
+    },
+
     render: function () {
       var s = KC.state, pool = s.showHidden ? s.visible.concat(s.hidden) : s.visible, i, out = [];
       if (s.showHidden) pool.sort(function (a, b) { return a.order - b.order; });
 
+      function topicOf(rec) { return (s.lib[rec.bookKey] && s.lib[rec.bookKey].topic) || 'uncategorized'; }
+
       for (i = 0; i < pool.length; i++) {
         if (s.activeBook && pool[i].bookKey !== s.activeBook) continue;
+        if (s.activeTopic && topicOf(pool[i]) !== s.activeTopic) continue;
         out.push(pool[i]);
       }
-      s.filtered = KC.search.filter(out, s.query);
+      s.filtered = KC.sort.apply(KC.search.filter(out, s.query), s.sortMode, s.lib);
 
       KC.cards.reset();
       KC.cards.appendPage();
@@ -98,6 +165,9 @@
       empty.hidden = s.filtered.length > 0 || !s.stats;
       KC.ui.renderSidebar();
       KC.ui.renderStats();
+      KC.ui.renderBookBanner();
+      KC.ui.renderMiniCover();
+      KC.ui.renderSortBar();
     },
 
     // A short list never re-triggers the observer, so top up until the pane can scroll.

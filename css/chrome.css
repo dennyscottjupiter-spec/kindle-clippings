@@ -1,0 +1,179 @@
+/* ---
+   purpose: Top bar, buttons, dropdown menu, toast, tooltip, segmented control, skip link
+   depends: css/tokens.css
+   gotcha: .tip uses visibility (not display) so aria-describedby stays reachable and pointer-events:none
+   --- */
+
+.skip {
+  position: absolute;
+  top: -48px;
+  left: 8px;
+  z-index: 50;
+  background: var(--ink);
+  color: var(--paper);
+  padding: .6em 1em;
+  border-radius: var(--r-sm);
+  transition: top .15s ease;
+}
+.skip:focus { top: 8px; }
+
+/* topbar */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex: 0 0 auto;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1.1rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--rule);
+}
+
+.brand { display: flex; align-items: baseline; gap: .55rem; }
+.brand-dot {
+  width: 10px; height: 10px; border-radius: var(--r-pill);
+  background: var(--grad-primary); flex-shrink: 0;
+}
+.brand h1 {
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+}
+.brand .sub { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .03em; color: var(--mid); }
+
+.search { flex: 1; max-width: 32rem; }
+.search input#q, #shelf-q {
+  width: 100%;
+  background: var(--sunk);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  padding: .5em .9em;
+  color: var(--ink);
+}
+.search input#q::placeholder, #shelf-q::placeholder { color: var(--mid); }
+
+.actions { display: flex; align-items: center; gap: .4rem; margin-left: auto; position: relative; }
+
+/* buttons — three ranks, all pills */
+.btn {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  padding: .5em 1em;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  box-shadow: var(--sh-1);
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+.btn:hover { border-color: var(--brand-1); box-shadow: var(--sh-2); }
+.btn.primary {
+  background: var(--grad-primary);
+  color: #fff;
+  border: none;
+}
+.btn.primary:hover { box-shadow: var(--sh-2); }
+.btn.icon { width: 2.4em; height: 2.4em; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.btn[aria-pressed="true"] { background: var(--brand-3); color: #04241F; border-color: transparent; }
+
+/* segmented control — used by sort bars */
+.seg {
+  display: inline-flex;
+  background: var(--sunk);
+  padding: 3px;
+  border-radius: var(--r-pill);
+  gap: 2px;
+}
+.seg button {
+  background: transparent;
+  border: none;
+  border-radius: var(--r-pill);
+  padding: .4em .85em;
+  font: 600 .78rem/1 var(--font-sans);
+  color: var(--mid);
+  cursor: pointer;
+}
+.seg button[aria-pressed="true"] { background: var(--panel); color: var(--ink); box-shadow: var(--sh-1); }
+
+/* menu (dropdown) */
+.menu { position: relative; }
+.menu > .menu-list {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 12rem;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-2);
+  z-index: 30;
+  overflow: hidden;
+}
+.menu-list li + li { border-top: 1px solid var(--rule); }
+.menu-list button {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: .65em .95em;
+  cursor: pointer;
+}
+.menu-list button:hover { background: var(--sunk); }
+
+/* tooltip */
+.tip-host { position: relative; display: inline-flex; }
+.tip {
+  position: absolute; top: calc(100% + 10px); right: 0; z-index: 40;
+  width: max-content; max-width: 22rem;
+  background: var(--ink); color: var(--paper);
+  padding: .7em .85em; border-radius: var(--r-md);
+  font: 400 .78rem/1.45 var(--font-sans); box-shadow: var(--sh-2);
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity .14s ease, transform .14s ease, visibility .14s;
+  pointer-events: none;
+}
+.tip::before {
+  content: ""; position: absolute; top: -5px; right: 14px;
+  width: 10px; height: 10px; background: var(--ink); transform: rotate(45deg);
+}
+.tip-host:hover .tip, .tip-host:focus-within .tip {
+  opacity: 1; visibility: visible; transform: none;
+}
+@media (prefers-reduced-motion: reduce) { .tip { transition: none; } }
+
+/* toast */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.5rem;
+  transform: translateX(-50%);
+  background: var(--ink);
+  color: var(--paper);
+  padding: .65em 1.2em;
+  border-radius: var(--r-pill);
+  font-size: .85rem;
+  box-shadow: var(--sh-2);
+  opacity: 0;
+  transition: opacity .2s ease;
+}
+.toast.is-on { opacity: 1; }
+
+/* mini cover, top bar */
+.mini-cover { width: 24px; height: 36px; border-radius: var(--r-sm); box-shadow: var(--sh-1); object-fit: cover; }
+
+/* narrow viewports */
+@media (max-width: 860px) {
+  .topbar { height: auto; min-height: 60px; flex-wrap: wrap; gap: .5rem; padding: .6rem .8rem; }
+  .brand .sub { display: none; }
+  .brand { order: 1; }
+  .actions { order: 2; flex-wrap: wrap; justify-content: flex-end; gap: .3rem; }
+  .search { order: 3; flex: 1 0 100%; max-width: none; }
+  .btn { padding: .4em .7em; font-size: .85rem; }
+  .tip { right: auto; left: 0; max-width: 15rem; }
+}

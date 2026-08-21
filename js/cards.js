@@ -1,7 +1,7 @@
 // ---
-// purpose: Build one highlight card, and paginate the card list behind an IntersectionObserver
-// exports: KC.cards.build(rec), KC.cards.reset(), KC.cards.appendPage(), KC.cards.observe()
-// depends: js/i18n.js, js/clean.js (record shape)
+// purpose: Build one highlight card + group header, and paginate the list behind an IntersectionObserver
+// exports: KC.cards.build(rec), KC.cards.groupHead(rec), KC.cards.reset(), KC.cards.appendPage(), KC.cards.observe()
+// depends: js/i18n.js, js/clean.js (record shape), js/topics.js (group header label/hue)
 // gotcha: DOM is built with createElement + textContent only — highlight text is untrusted input
 // ---
 (function (KC) {
@@ -11,6 +11,7 @@
   var STAGGER = 12;
   var observer = null;
   var sentinelNode = null;
+  var lastGroup = null;
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -78,10 +79,24 @@
       return art;
     },
 
+    groupHead: function (rec) {
+      var mode = KC.state.sortMode;
+      var isTopic = mode === 'topic';
+      var topicId = isTopic ? rec._group : ((KC.state.lib[rec.bookKey] && KC.state.lib[rec.bookKey].topic) || 'uncategorized');
+      var h = el('h3', 'group-head');
+      h.setAttribute('data-topic', topicId);
+      var hue = KC.topics.hueOf(topicId);
+      if (hue !== null && hue !== undefined) h.style.setProperty('--h', String(hue));
+      h.appendChild(el('span', 'gh-dot'));
+      h.appendChild(el('span', 'gh-label', isTopic ? KC.topics.label(topicId) : rec.title));
+      return h;
+    },
+
     reset: function () {
       var host = document.getElementById('cards');
       while (host.firstChild) host.removeChild(host.firstChild);
       KC.state.rendered = 0;
+      lastGroup = null;
     },
 
     appendPage: function () {
@@ -93,7 +108,12 @@
       var fresh = [];
 
       for (var i = s.rendered; i < end; i++) {
-        var node = KC.cards.build(s.filtered[i]);
+        var rec = s.filtered[i];
+        if (rec._group && rec._group !== lastGroup) {
+          frag.appendChild(KC.cards.groupHead(rec));
+          lastGroup = rec._group;
+        }
+        var node = KC.cards.build(rec);
         fresh.push(node);
         frag.appendChild(node);
       }
