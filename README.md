@@ -87,6 +87,9 @@ tipográficas / hífen opcional) — mais uma bateria de regressão contra o `My
 O arquivo real é pessoal e está no `.gitignore`; essa parte da suíte se pula sozinha quando ele
 não está presente.
 
+Para quem for editar o código (humano ou agente), o [`CLAUDE.md`](CLAUDE.md) tem o mapa de
+arquitetura e os detalhes fáceis de quebrar por dentro.
+
 ## Fora do escopo por enquanto
 
 Biblioteca persistente (localStorage/IndexedDB), capas de livro via Open Library e virtualização da
