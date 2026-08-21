@@ -6,91 +6,94 @@ updated: 2026-08-21
 
 # Kindle Clippings Reader
 
-Lê o `My Clippings.txt` do Kindle e transforma aquele arquivo de texto corrido — anexado sem
-parar, com duplicatas e caracteres invisíveis — em algo pesquisável, limpo e exportável.
+Reads a Kindle `My Clippings.txt` file and turns that ever-appended wall of text — full of
+duplicates and invisible characters — into something searchable, clean, and exportable.
 
-**Nada sai do dispositivo.** O arquivo é lido pelo próprio navegador (`FileReader`), nunca enviado
-a servidor nenhum. Não há build, não há dependências, não há requisições externas — nem fontes.
+**Nothing leaves the device.** The file is read by the browser itself (`FileReader`), never sent
+to any server. No build, no dependencies, no external requests — not even fonts.
 
-![Interface no desktop](docs/desktop-light.png)
+![Desktop interface](docs/desktop-light.png)
 
-## O problema que ele resolve
+## The problem it solves
 
-Um Kindle grava todo destaque, nota e marcador num único arquivo de texto que:
+A Kindle logs every highlight, note, and bookmark into a single text file that:
 
-- é **append-only** — cresce para sempre, sem ordem útil;
-- carrega **BOM (`U+FEFF`) no meio do arquivo**, não só no começo, o que parte um mesmo livro em dois;
-- acumula **"destaques estendidos"**: cada vez que você arrasta a seleção, uma nova cópia maior é gravada;
-- mistura **NFC e NFD** — a mesma palavra em português existe em duas formas de bytes, então busca e
-  deduplicação simplesmente não funcionam sem normalizar;
-- gruda o aviso `<You have reached the clipping limit for this item>` **no meio do texto real**.
+- is **append-only** — grows forever, in no useful order;
+- carries a **BOM (`U+FEFF`) in the middle of the file**, not just at the start, which splits a
+  single book into two;
+- accumulates **"extended highlights"**: every time you drag the selection further, a new, larger
+  copy gets written;
+- mixes **NFC and NFD** — the same word in Portuguese exists in two different byte forms, so search
+  and deduplication simply don't work without normalizing first;
+- glues the `<You have reached the clipping limit for this item>` warning **into the middle of the
+  real text**.
 
-## O que ele faz
+## What it does
 
-- **Limpa por padrão, nunca apaga.** Duplicatas prováveis ficam escondidas atrás de um botão; o
-  registro original continua inteiro na memória e reaparece ao ligar *Mostrar ocultos*.
-- **Hashtag invisível por livro.** Cada destaque carrega um `#PascalCase` que não aparece na tela,
-  mas vai junto ao copiar (seleção normal **ou** botão Copiar) e em todas as exportações — os
-  destaques chegam no Obsidian/Notion já marcados.
-- **Português é primeira língua.** Interface pt-BR por padrão, busca que ignora acentos
-  (`acao` acha `ação`), ordenação com `localeCompare` pt-BR, datas e números pelo `Intl`.
-  Um botão alterna para inglês; a hashtag nunca é traduzida.
-- **Notas grudam no destaque certo.** O Kindle grava destaque e nota no mesmo segundo, então o
-  casamento é por *timestamp idêntico* primeiro, contenção de posição depois, proximidade por último.
-- **Exporta** em Markdown (com frontmatter e `tags:`), JSON, CSV, TXT e TSV para Anki.
+- **Cleans by default, never deletes.** Likely duplicates are hidden behind a button; the original
+  record stays intact in memory and reappears when you turn on *Show hidden*.
+- **Invisible hashtag per book.** Every highlight carries a `#PascalCase` tag that never shows on
+  screen, but travels along on copy (plain selection **or** the Copy button) and in every export —
+  highlights land in Obsidian/Notion already tagged.
+- **Portuguese is a first-class language.** UI defaults to pt-BR, search ignores accents (`acao`
+  matches `ação`), sorting uses pt-BR `localeCompare`, dates and numbers go through `Intl`. A button
+  switches to English; the hashtag itself is never translated.
+- **Notes stick to the right highlight.** Kindle writes a highlight and its note in the same second,
+  so matching goes by *identical timestamp* first, position containment second, proximity last.
+- **Exports** to Markdown (with frontmatter and `tags:`), JSON, CSV, TXT, and TSV for Anki.
 
-## Como usar
+## Usage
 
-Abra `index.html` com dois cliques e arraste seu `My Clippings.txt` para a página. Só isso.
+Open `index.html` with a double-click and drag your `My Clippings.txt` onto the page. That's it.
 
-Para servir na LAN (mini-PC, Portainer, porta 8099), veja [`deploy/DEPLOY.md`](deploy/DEPLOY.md).
+To serve it on the LAN (mini-PC, Portainer, port 8099), see [`deploy/DEPLOY.md`](deploy/DEPLOY.md).
 
-Atalhos: `/` foca a busca, `Esc` fecha o menu e a gaveta de livros.
+Shortcuts: `/` focuses search, `Esc` closes the menu and the book drawer.
 
-## Arquitetura
+## Architecture
 
-Sem bundler, sem ES modules, sem build. Cada arquivo é uma IIFE pendurada em `window.KC`, carregada
-por `<script src>` simples — funciona igual em `file://` e atrás do nginx.
+No bundler, no ES modules, no build. Each file is an IIFE hanging off `window.KC`, loaded via a
+plain `<script src>` tag — works the same over `file://` and behind nginx.
 
-| Arquivo | Papel |
+| File | Role |
 |---|---|
-| `js/i18n.js` | catálogos pt-BR/en, `fold()` sem acentos, formatadores `Intl` |
-| `js/parser.js` | texto bruto → registros (`KC.parse`) |
-| `js/dedupe.js` | union-find sobre sobreposição de posição + contenção de texto |
-| `js/clean.js` | normalização, filtros, associação de notas (`KC.clean.process`) |
-| `js/tags.js` | livro → `#Hashtag` |
-| `js/search.js` | busca por tokens, sem acento |
+| `js/i18n.js` | pt-BR/en catalogs, accent-free `fold()`, `Intl` formatters |
+| `js/parser.js` | raw text → records (`KC.parse`) |
+| `js/dedupe.js` | union-find over position overlap + text containment |
+| `js/clean.js` | normalization, filters, note association (`KC.clean.process`) |
+| `js/tags.js` | book → `#Hashtag` |
+| `js/search.js` | tokenized, accent-insensitive search |
 | `js/exports.js` | md / json / csv / txt / anki + download |
-| `js/clipboard.js` | interceptação do evento `copy` + botão por card |
-| `js/cards.js` | um card, e a paginação por `IntersectionObserver` |
-| `js/ui.js` | sidebar, stat line, estado vazio, toast |
-| `js/app.js` | estado, leitura do arquivo, drag & drop, wiring |
+| `js/clipboard.js` | `copy` event interception + per-card copy button |
+| `js/cards.js` | single card render + `IntersectionObserver` pagination |
+| `js/ui.js` | sidebar, stat line, empty state, toast |
+| `js/app.js` | state, file loading, drag & drop, wiring |
 
-Três detalhes que são fáceis de errar e estão resolvidos de propósito:
+Three details that are easy to get wrong and are handled on purpose:
 
-- o `root` do `IntersectionObserver` é **o painel que rola**, não a viewport — com `root: null` num
-  layout de dois painéis o sentinela nunca dispara (ou dispara sempre);
-- a chave de reset da paginação é `activeBook | query | showHidden` — **os três**;
-- todo DOM derivado do arquivo é construído com `createElement` + `textContent`, nunca `innerHTML`.
+- the `IntersectionObserver`'s `root` is **the scrolling panel**, not the viewport — with
+  `root: null` in this two-pane layout the sentinel never fires (or fires immediately);
+- the pagination reset key is `activeBook | query | showHidden` — **all three**;
+- all DOM built from the file's content uses `createElement` + `textContent`, never `innerHTML`.
 
-## Testes
+## Tests
 
 ```powershell
 node tests/parser.test.js
 ```
 
-126 asserções: um fixture sintético que cobre cada caso de borda (BOM no meio, parênteses aninhados,
-documento sem autor, destaque/marcador/nota em pt-BR, locale desconhecido, marcador vazio, limite de
-recorte colado no texto, duplicata exata, cadeia A⊂B⊂C, data americana de 12 horas, NBSP / aspas
-tipográficas / hífen opcional) — mais uma bateria de regressão contra o `My Clippings.txt` real.
+126 assertions: a synthetic fixture covering every edge case (mid-file BOM, nested parentheses,
+authorless document, highlight/bookmark/note in pt-BR, unknown locale, empty bookmark, clipping
+limit glued into the text, exact duplicate, A⊂B⊂C chain, 12-hour US date, NBSP / typographic quotes
+/ optional hyphen) — plus a regression run against the real `My Clippings.txt`.
 
-O arquivo real é pessoal e está no `.gitignore`; essa parte da suíte se pula sozinha quando ele
-não está presente.
+The real file is personal and is in `.gitignore`; that part of the suite skips itself when it's
+not present.
 
-Para quem for editar o código (humano ou agente), o [`CLAUDE.md`](CLAUDE.md) tem o mapa de
-arquitetura e os detalhes fáceis de quebrar por dentro.
+For anyone editing the code (human or agent), [`CLAUDE.md`](CLAUDE.md) has the architecture map
+and the easy-to-break details underneath it.
 
-## Fora do escopo por enquanto
+## Out of scope for now
 
-Biblioteca persistente (localStorage/IndexedDB), capas de livro via Open Library e virtualização da
-lista ficaram para uma etapa posterior.
+Persistent library (localStorage/IndexedDB), book covers via Open Library, and list virtualization
+are left for a later stage.
