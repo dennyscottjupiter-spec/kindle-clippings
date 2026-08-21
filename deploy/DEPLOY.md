@@ -51,7 +51,7 @@ curl -s -o /dev/null -w 'http:%{http_code}\n' http://localhost:8099/
 docker compose exec -T web sh -c 'echo "index:$(test -f /usr/share/nginx/html/index.html && echo ok || echo MISSING) css:$(ls /usr/share/nginx/html/css/*.css | wc -l) js:$(ls /usr/share/nginx/html/js/*.js | wc -l)"'
 ```
 
-Saída esperada nas duas últimas linhas: `http:200` e `index:ok css:5 js:17`.
+Saída esperada nas duas últimas linhas: `http:200` e `index:ok css:7 js:24`.
 
 ## Como o stack funciona
 
@@ -66,7 +66,9 @@ Saída esperada nas duas últimas linhas: `http:200` e `index:ok css:5 js:17`.
 
 Depois de dar `git push` de novas mudanças:
 
-- **Portainer:** Stacks → `kindle-clippings` → **Update the stack** (deixe "re-pull image" desligado).
+- **Portainer:** Stacks → `kindle-clippings` → **Update the stack** → ligue **Re-pull image and redeploy**
+  → **Update**. O toggle é o que garante o `--force-recreate`: sem ele o compose vê o serviço `fetch`
+  inalterado, não recria o container, e o volume continua com a versão antiga.
 - **Terminal:** `cd /opt/kindle-clippings; docker compose up -d --force-recreate`
 
 Em ambos os casos o `fetch` roda de novo, rebaixa a branch `main` e sobrescreve o volume.
