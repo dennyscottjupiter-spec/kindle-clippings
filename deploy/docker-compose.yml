@@ -1,0 +1,15 @@
+services:
+  kindle-clippings:
+    image: nginx:alpine
+    container_name: kindle-clippings
+    restart: unless-stopped
+    ports:
+      - "8099:80"  # port 8099 is the LAN port
+    volumes:
+      - ./site:/usr/share/nginx/html:ro  # read-only mount on purpose, static site only
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
