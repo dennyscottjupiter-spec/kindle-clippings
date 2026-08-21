@@ -6,85 +6,82 @@ updated: 2026-08-21
 
 ## O que isso faz
 
-- O nginx serve o site estático na porta 8099 do mini-PC.
-- Nada é enviado para fora da rede local — sem upload, sem servidor externo.
-- O arquivo de clippings é lido no navegador; ele nunca chega ao servidor.
+- O nginx serve o site estático na porta **8099** do mini-PC.
+- Os arquivos do site vêm direto do GitHub (branch `main`), baixados por um container auxiliar
+  que roda uma vez e sai — não é preciso copiar nada por `scp`.
+- O arquivo `My Clippings.txt` é lido **no navegador**; ele nunca chega ao servidor.
 
-## Pré-requisitos
+## Onde rodar — as três camadas do mini-PC
 
-- Docker + Docker Compose plugin instalados no mini-PC.
-- A pasta do app copiada para o mini-PC (veja Passo 1).
+O mini-PC roda Proxmox, e é fácil colar o comando na camada errada:
 
-## Passo 1 — copiar os arquivos
+| Camada | O que é | Tem `docker`? |
+|---|---|---|
+| 1. Host Proxmox | O hipervisor, o shell que aparece ao clicar no **nó** na UI do Proxmox | **Não** |
+| 2. LXC/VM | A máquina Linux virtual que o Proxmox sobe; tem IP próprio | **Sim** — Docker está aqui |
+| 3. Containers | Portainer, nginx, o app | — |
 
-`index.html`, `styles.css` e a pasta `js/` precisam ficar direto dentro de `/opt/kindle-clippings/site/` (sem subpasta extra).
-
-Exemplo com `scp` (substitua os placeholders):
+O deploy acontece na **camada 2**. Para confirmar que você está nela:
 
 ```bash
-scp -r index.html styles.css js <user>@<mini-pc-ip>:/opt/kindle-clippings/site/
+hostname; docker ps --format '{{.Names}}' | wc -l
 ```
 
-## Passo 2 — bloco único para colar
+Se imprimir um número (em vez de `command not found`), é o lugar certo.
 
-Cole tudo de uma vez no terminal do mini-PC:
+## Opção A — Portainer (recomendado, sem terminal)
+
+1. Abra o Portainer em `http://<ip-do-lxc>:9000`.
+2. **Stacks → + Add stack**.
+3. Nome: `kindle-clippings`.
+4. No **Web editor**, cole o conteúdo de `deploy/docker-compose.yml` deste repositório.
+5. **Deploy the stack** (leva ~20s, ele baixa duas imagens).
+6. Abra `http://<ip-do-lxc>:8099`.
+
+## Opção B — terminal do LXC
+
+Cole tudo de uma vez no console da camada 2:
 
 ```bash
-mkdir -p /opt/kindle-clippings/site
+mkdir -p /opt/kindle-clippings
 cd /opt/kindle-clippings
-cat > docker-compose.yml <<'EOF'
-services:
-  kindle-clippings:
-    image: nginx:alpine
-    container_name: kindle-clippings
-    restart: unless-stopped
-    ports:
-      - "8099:80"  # port 8099 is the LAN port
-    volumes:
-      - ./site:/usr/share/nginx/html:ro  # read-only mount on purpose, static site only
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null || exit 1"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 5s
-EOF
-docker compose up -d
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8099/
-docker inspect -f '{{.State.Running}}' kindle-clippings
+curl -fsSL https://raw.githubusercontent.com/dennyscottjupiter-spec/kindle-clippings/main/deploy/docker-compose.yml -o docker-compose.yml
+docker compose up -d --wait
+curl -s -o /dev/null -w 'http:%{http_code}\n' http://localhost:8099/
+docker compose exec -T web sh -c 'echo "index:$(test -f /usr/share/nginx/html/index.html && echo ok || echo MISSING) css:$(ls /usr/share/nginx/html/css/*.css | wc -l) js:$(ls /usr/share/nginx/html/js/*.js | wc -l)"'
 ```
 
-Cole de volta apenas as duas últimas linhas da saída (o código HTTP e `true`/`false`).
+Saída esperada nas duas últimas linhas: `http:200` e `index:ok css:5 js:17`.
 
-## Passo 3 — abrir no LAN
+## Como o stack funciona
 
-Acesse `http://<mini-pc-ip>:8099` a partir de qualquer dispositivo na mesma rede local.
-
-## Alternativa: stack no Portainer
-
-1. Abra Portainer em `<mini-PC-IP>:9000`.
-2. Vá em **Stacks → Add stack**.
-3. Nomeie a stack `kindle-clippings` e cole o conteúdo do `docker-compose.yml` do Passo 2.
-4. Clique em **Deploy the stack**.
+- O serviço **`fetch`** (Alpine) baixa o tarball da branch `main` e extrai dentro de um
+  **volume Docker** chamado `site`. Ele roda uma vez e termina.
+- O serviço **`web`** (nginx) só inicia depois disso, graças a
+  `depends_on: fetch: condition: service_completed_successfully`.
+- Os dois compartilham o mesmo volume; o nginx monta como **read-only** — ele nunca precisa
+  escrever, e assim não pode alterar os arquivos.
 
 ## Atualizar o app
 
-Re-copie os arquivos atualizados para `/opt/kindle-clippings/site/` (mesmo comando `scp` do Passo 1) e rode:
+Depois de dar `git push` de novas mudanças:
 
-```bash
-docker compose restart kindle-clippings
-```
+- **Portainer:** Stacks → `kindle-clippings` → **Update the stack** (deixe "re-pull image" desligado).
+- **Terminal:** `cd /opt/kindle-clippings; docker compose up -d --force-recreate`
 
-Não precisa rebuild — é um bind mount, o nginx lê os arquivos direto do disco.
+Em ambos os casos o `fetch` roda de novo, rebaixa a branch `main` e sobrescreve o volume.
 
 ## Problemas comuns
 
 | Sintoma | Causa / o que fazer |
 |---|---|
+| `docker: command not found` | Você está no shell do host Proxmox (camada 1), não no LXC. Veja a tabela acima. |
 | HTTP `000` | Container não está de pé ou porta bloqueada; rode `docker compose ps`. |
-| HTTP `403` | Arquivos ficaram uma pasta funda demais; `index.html` precisa estar direto dentro de `site/`. |
-| Página carrega vazia | Navegador guardou versão antiga em cache; force reload (Ctrl+Shift+R). |
+| HTTP `403` ou página em branco | O `fetch` falhou (rede/GitHub fora). Veja `docker compose logs fetch`. |
+| Página carrega versão antiga | Cache do navegador; force reload (Ctrl+Shift+R). |
+| Capas dos livros não aparecem | Recurso opt-in, desligado por padrão — ative no próprio app. |
 
 ## Privacidade
 
-O nginx serve apenas arquivos estáticos. `My Clippings.txt` nunca é enviado para o servidor — o parsing acontece inteiramente no navegador.
+O nginx serve apenas arquivos estáticos. `My Clippings.txt` nunca é enviado para o servidor —
+todo o parsing acontece no navegador do dispositivo que abrir a página.

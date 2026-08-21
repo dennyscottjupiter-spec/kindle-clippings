@@ -1,15 +1,31 @@
 services:
-  kindle-clippings:
+  # One-shot: downloads the current main branch into the shared volume, then exits.
+  fetch:
+    image: alpine:latest
+    command: >
+      sh -c "apk add --no-cache curl tar &&
+      curl -fsSL https://github.com/dennyscottjupiter-spec/kindle-clippings/archive/refs/heads/main.tar.gz
+      | tar xz --strip-components=1 -C /site"
+    volumes:
+      - site:/site
+
+  web:
     image: nginx:alpine
     container_name: kindle-clippings
     restart: unless-stopped
+    depends_on:
+      fetch:
+        condition: service_completed_successfully  # nginx waits for the download to finish
     ports:
       - "8099:80"  # port 8099 is the LAN port
     volumes:
-      - ./site:/usr/share/nginx/html:ro  # read-only mount on purpose, static site only
+      - site:/usr/share/nginx/html:ro  # read-only mount on purpose, static site only
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 5s
+
+volumes:
+  site:
