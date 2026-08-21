@@ -18,10 +18,20 @@ Run the full test suite (no npm/build step exists — plain Node):
 node tests/parser.test.js
 ```
 
-This runs `syntax.test.js` (`node --check` on every file in `js/`), `fixture.test.js` and
-`exports.test.js` (against `tests/fixture-clippings.txt`, a synthetic edge-case fixture), and
-`real.test.js` (regression against the user's real `My Clippings.txt` at repo root — gitignored,
-personal; that part of the suite self-skips when the file is absent).
+`tests/parser.test.js` is only the entry point; it runs seven suites in this fixed order, then exits
+non-zero if any assertion failed:
+
+| Suite | What it covers |
+|---|---|
+| `syntax.test.js` | `node --check` on every file in `js/` — including the DOM modules the vm harness cannot load |
+| `fixture.test.js` | parser / clean / dedupe / tags against `tests/fixture-clippings.txt` (synthetic edge cases) |
+| `exports.test.js` | every export format builds and always carries the hashtag (same fixture) |
+| `topics.test.js` | the 15-topic taxonomy + Open Library subject classifier |
+| `sort.test.js` | right-pane sort ordering and group-key assignment |
+| `stats.test.js` | stats totals, per-book/topic aggregates, time histograms, streaks |
+| `real.test.js` | regression against the user's real `My Clippings.txt` at repo root — gitignored, personal; self-skips when the file is absent |
+
+Baseline as of this writing: **213 passed, 0 failed** with the real file present.
 
 To view the app itself: open `index.html` directly (double-click / `file://`), or serve it — there
 is no dev server script, any static file server works (e.g. `python -m http.server`).
@@ -49,10 +59,10 @@ a module can only use what a script tag above it already defined:
 | `js/exports.js` | md / json / csv / txt / anki builders + download |
 | `js/obsidian.js` | Obsidian-native Markdown, one note per book (YAML frontmatter, callouts, blockquotes) |
 | `js/favorites.js` | starred "quotes" — content-derived keys in localStorage (`rec.id` is not stable) |
-| `js/stats.js` | pure statistics — totals, per-book, month/weekday/hour histograms, streaks (no DOM) |
-| `js/quotecard.js` | canvas quote-card renderer + PNG blob/download, Nest Hub sizes |
-| `js/modal.js` | generic overlay dialog — open/close, Esc, backdrop, focus return |
-| `js/statsview.js` | statistics panel render (CSS bars/columns, no chart library) |
+| `js/stats.js` | pure statistics — totals, per-book, per-year, **dense** month + weekday/hour histograms, streaks (no DOM, no browser globals — the harness loads it) |
+| `js/quotecard.js` | canvas quote-card renderer + PNG blob/download; `SIZES` = nesthub / fhd / qhd / iphone / android / square |
+| `js/modal.js` | generic overlay dialog — open/close, Esc, backdrop, focus return, body scroll lock |
+| `js/statsview.js` | statistics panel render — KPI tiles, month timeline, per-year bars, top books, topics, weekday/hour rhythm, extremes (CSS bars/columns, no chart library) |
 | `js/quoteview.js` | quote-card gallery — pick, preview, download PNGs |
 | `js/cards.js` | single card render, group headers, `IntersectionObserver` pagination |
 | `js/clipboard.js` | `copy` event interception + per-card copy button |
@@ -61,13 +71,43 @@ a module can only use what a script tag above it already defined:
 | `js/app.js` | `KC.state`, file loading, drag & drop, all event wiring (loaded last) |
 | `shelf.html` / `js/shelf.js` | standalone cover-shelf page; reads the localStorage book/library cache and, with covers on, fetches what is missing (it seeds `KC.state` and a minimal `KC.ui.toast` itself, since `js/app.js` is not loaded there) |
 
-`tests/harness.js` loads a subset of these modules (`i18n`, `topics`, `parser`, `dedupe`, `clean`,
-`tags`, `search`, `sort`, `exports` — not `store`/`covers`/`cards`/`clipboard`/`sidebar`/`ui`/`app`/
-`shelf`, which touch `document`/`localStorage`/`fetch`) into a bare Node `vm` context with only a
-`window` global. Any module loaded by the harness must not touch `document` or other browser globals
-at load time, only inside functions called later with a real DOM.
+The table order **is** the `<script>` order in `index.html`. `js/shelf.js` is not in that list — it is
+loaded only by `shelf.html`, after `i18n` / `store` / `topics` / `covers`.
 
-### Three deliberate, easy-to-regress details
+`tests/harness.js` loads exactly ten modules — its `FILES` array — in this order, into a bare Node
+`vm` context whose only globals are `console`, `setTimeout`, `window` and `navigator`:
+
+```
+i18n · topics · parser · dedupe · clean · tags · search · sort · stats · exports
+```
+
+Note `stats` sits between `sort` and `exports`, and `store` is NOT loaded. Not loaded: `store`, `covers`, `obsidian`, `favorites`, `quotecard`, `modal`, `statsview`, `quoteview`,
+`cards`, `clipboard`, `sidebar`, `ui`, `app`, `shelf` — they touch `document` / `localStorage` /
+`fetch`. Any module loaded by the harness must not touch `document` or other browser globals at load
+time, only inside functions called later with a real DOM. `js/stats.js` is deliberately DOM-free for
+this reason — keep it that way or `stats.test.js` dies at load.
+
+### CSS
+
+Seven sheets in `css/`, no build step, class names global across all of them. Load order differs per
+page and each page's order is the cascade:
+
+| Page | Order |
+|---|---|
+| `index.html` | `tokens` → `chrome` → `sidebar` → `reader` → `panels` → `mobile` |
+| `shelf.html` | `tokens` → `chrome` → `sidebar` → `shelf` → `mobile` |
+
+| Sheet | Owns |
+|---|---|
+| `tokens.css` | reset, color tokens (light/dark), topic-hue mechanism, type scale, radii, shadows — **loaded first, everyone else assumes its custom properties** |
+| `chrome.css` | top bar, buttons, switches, flag button, dropdown menu, toast, tooltip, segmented control, covers ring |
+| `sidebar.css` | shell grid, resizable sidebar, book rows with spine/badge, topic chip row, scrim |
+| `reader.css` | reading pane — dropzone, book banner, sort bar, stat line, cards, group headers |
+| `panels.css` | the two overlay dialogs — `.modal` shell, statistics panel (KPI tiles, `.bar-row`, `.cols` histograms) and the quote-card gallery (`.qc-*`) |
+| `shelf.css` | the standalone shelf page — page scroll, tools bar, cover cards grid, shelf plank |
+| `mobile.css` | phone/tablet layer — `dvh` height, safe-area insets, 44px touch targets, sidebar drawer, `(hover: none)` reveals, landscape-phone topbar — **must stay last**, it overrides every sheet above it |
+
+### Deliberate, easy-to-regress details
 
 - The `root` of the `IntersectionObserver` in `cards.js` must be **the scrolling panel**, not the
   viewport — with `root: null` in this two-pane layout the pagination sentinel either never fires or
@@ -76,18 +116,42 @@ at load time, only inside functions called later with a real DOM.
   or stale results survive a filter/sort change.
 - All DOM built from parsed clipping content uses `createElement` + `textContent`, never `innerHTML`
   (clippings text is untrusted user data).
-- `css/` (`tokens.css` / `chrome.css` / `sidebar.css` / `reader.css` / `shelf.css`, loaded in that
-  order — `tokens.css` first, everyone else assumes its custom properties) replaced the old single
-  `styles.css`. Any element toggled with the `hidden` attribute (`#book-banner`, `#sortbar`,
-  `.topic-row`, `.shelf-card`, `#shelf-empty`, `#covers-ring`, plus the pre-existing
-  `#statline`/`.scrim`) must keep its show rule written as `.selector:not([hidden]) { display: … }`
-  — a bare `display:` rule outranks `[hidden]` at equal specificity.
-- Class names are global across the five sheets and there is no build step to catch a collision:
+- Any element toggled with the `hidden` attribute (`#book-banner`, `#sortbar`, `.topic-row`,
+  `.shelf-card`, `#shelf-empty`, `.seg`, `.scrim`, `#statline`, and both `.modal` dialogs) must keep
+  its show rule written as `.selector:not([hidden]) { display: … }` — a bare `display:` rule outranks
+  `[hidden]` at equal specificity. (`.covers-ring` takes the other valid form: an explicit
+  `.covers-ring[hidden] { display: none }` after the base rule.) This bites in `panels.css` too: the
+  stats and quotes modals are shown/hidden purely by the attribute via `js/modal.js`.
+- Class names are global across the seven sheets and there is no build step to catch a collision:
   `.flag` belongs to the language button's `<img>` in `chrome.css`, so the card badges in
-  `reader.css` (which loads later and would win) are `.card-flag`.
+  `reader.css` (which loads later and would win) are `.card-flag` — note `.flag-dup` /
+  `.flag-trunc` / `.flag-near` are modifiers *of* `.card-flag`, not of `.flag`.
 - `tokens.css` locks `body` to `height:100%; overflow:hidden; display:flex` for the reader's two-pane
   layout. `shelf.html` is a normal scrolling document, so `body.shelf-page` in `shelf.css` must undo
-  all three — without that override the shelf cannot scroll at all.
+  all three — without that override the shelf cannot scroll at all. `mobile.css` re-asserts it
+  (`body.shelf-page { height:auto; min-height:100dvh }`), which only works because it loads last.
+- Never write `overflow-x: hidden` on `html`/`body` in `mobile.css` — it makes `body` a scroll
+  container and silently degrades every `position: sticky` descendant (`.topbar`, `.group-head`) to
+  `relative`. Use `overflow-x: clip`, as `body.shelf-page` already does.
+- `js/stats.js` emits `byMonth` **dense**: every month between the first and last is present, zero
+  months included (`monthSpan()`, guarded at 1200 iterations). `statsview.js` therefore slices the
+  last `MONTHS_SHOWN = 36` and ticks every January plus column 0 — never assume `byMonth` only holds
+  months that have highlights, and never re-derive gaps yourself. `.cols { justify-content:
+  flex-start }` in `panels.css` exists so a two-month library does not paint two half-page slabs.
+- `byYear` is a sorted **ascending** array (`{year, count, words, books}`); `statsview` walks it
+  backwards to show newest first, and only renders the section when `byYear.length > 1`. The
+  per-year `words` is accumulated from the loop variable `w`, which is only assigned for highlight
+  records — keep the `isHighlight` guard around the year bucket or `words` picks up a stale count.
+- `js/quotecard.js` derives **all** type and padding from `base = Math.min(w, h)`, never from `h`.
+  The SIZES list is now mixed landscape *and* portrait (iPhone 1290×2796, Android 1080×2400), so any
+  new metric written against `h` gives a portrait card absurd fonts. `padY`, `titleSize`, the quote
+  glyph and the min/max fit range all go through `base` — follow that.
+- The quote-card size is **not persisted**: `js/quoteview.js` holds `view.sizeId` in memory only
+  (default `'nesthub'`), and `sizeOf()` falls back to `SIZES[0]` for an unknown id. If a size id is
+  ever removed from `SIZES`, nothing stale can be read back from storage — but if size ever *does*
+  get persisted, that fallback is the only thing preventing a dead id from blanking the gallery.
+- `js/app.js#fillSizes()` populates `#qc-size` from `KC.quotecard.SIZES` at boot, so the `<select>`
+  in `index.html` is intentionally empty markup — adding a hardcoded `<option>` there will desync it.
 
 ### Source data quirks the parser/clean pipeline exists to handle
 
@@ -100,5 +164,6 @@ canonical edge cases they're tested against.
 
 ## File headers
 
-Every `js/` file and `tests/` file carries a frontmatter comment block (`purpose` / `exports` /
-`depends` / `gotcha`). Keep it in sync when you change a file's exports or dependencies.
+Every `js/`, `tests/` and `css/` file carries a frontmatter comment block (`purpose` / `exports` /
+`depends` / `gotcha`; the CSS ones use `/* --- … --- */` and have no `exports`). Keep it in sync when
+you change a file's exports, dependencies or load position — a stale header is a bug.
