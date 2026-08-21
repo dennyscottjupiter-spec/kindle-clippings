@@ -77,7 +77,25 @@ function run() {
   eq(s.byWeekday.reduce(function (a, b) { return a + b; }, 0), 5, 'only dated highlights reach the histograms');
   eq(s.byHour.reduce(function (a, b) { return a + b; }, 0), 5, 'null-dated highlight is excluded from byHour');
   eq(s.byMonth, [{ key: '2024-01', count: 5 }], 'byMonth key and count');
-  eq(s.byYear, [{ year: 2024, count: 5 }], 'byYear key and count');
+  eq(s.byYear, [{ year: 2024, count: 5, words: 17, books: 2 }],
+    'byYear carries count, words and distinct books for the year');
+
+  section('stats — dense months across a gap');
+  const gap = [
+    rec({ id: 'g1', type: 'highlight', text: 'one', dateMs: at(2023, 10, 2, 9, 0), order: 0, title: PHILO.title, author: PHILO.author, bookKey: PHILO.bookKey }),
+    rec({ id: 'g2', type: 'highlight', text: 'two words', dateMs: at(2024, 1, 4, 9, 0), order: 1, title: NOVEL.title, author: NOVEL.author, bookKey: NOVEL.bookKey }),
+    rec({ id: 'g3', type: 'highlight', text: 'three', dateMs: at(2024, 1, 6, 9, 0), order: 2, title: NOVEL.title, author: NOVEL.author, bookKey: NOVEL.bookKey })
+  ];
+  const g = KC.stats.compute(gap, BOOKS, LIB);
+  eq(g.byMonth.map(function (m) { return m.key; }),
+    ['2023-11', '2023-12', '2024-01', '2024-02'],
+    'byMonth is contiguous across the year boundary — no month is skipped');
+  eq(g.byMonth.map(function (m) { return m.count; }), [1, 0, 0, 2],
+    'the empty months inside the span are emitted with count 0');
+  eq(g.byYear, [
+    { year: 2023, count: 1, words: 1, books: 1 },
+    { year: 2024, count: 2, words: 3, books: 1 }
+  ], 'byYear is ascending, one entry per year, with per-year words and book counts');
 
   section('stats — days and streaks');
   eq(s.activeDays, 4, 'four distinct local days with highlights');

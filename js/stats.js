@@ -3,6 +3,7 @@
 // exports: KC.stats.compute(visible, books, lib)
 // depends: nothing (no DOM, no browser globals — must stay loadable in tests/harness.js)
 // gotcha: day buckets use LOCAL calendar days, so a streak matches what the reader saw on the device
+// gotcha: byMonth is DENSE — empty months between the first and last are emitted with count 0
 // ---
 (function (KC) {
   'use strict';
@@ -24,6 +25,20 @@
     var d = new Date(ms);
     var m = d.getMonth() + 1;
     return d.getFullYear() + '-' + (m < 10 ? '0' + m : m);
+  }
+
+  // Every month from `from` to `to` inclusive, as YYYY-MM — the cap only guards a corrupt range.
+  function monthSpan(from, to) {
+    var y = Number(from.slice(0, 4)), m = Number(from.slice(5, 7));
+    var out = [], guard = 0, key;
+    while (guard++ < 1200) {
+      key = y + '-' + (m < 10 ? '0' + m : m);
+      out.push(key);
+      if (key === to) break;
+      m++;
+      if (m > 12) { m = 1; y++; }
+    }
+    return out;
   }
 
   function streaks(dayList) {
@@ -93,7 +108,11 @@
           if (lastMs === null || rec.dateMs > lastMs) lastMs = rec.dateMs;
           if (isHighlight) {
             var d = new Date(rec.dateMs);
-            byYear[d.getFullYear()] = (byYear[d.getFullYear()] || 0) + 1;
+            var yk = d.getFullYear();
+            if (!byYear[yk]) byYear[yk] = { count: 0, words: 0, books: {} };
+            byYear[yk].count++;
+            byYear[yk].words += w;
+            byYear[yk].books[rec.bookKey] = true;
             var mk = monthKey(rec.dateMs);
             byMonth[mk] = (byMonth[mk] || 0) + 1;
             byWeekday[d.getDay()]++;
@@ -118,13 +137,22 @@
       for (h in byTopic) topicList.push(byTopic[h]);
       topicList.sort(function (a, b2) { return b2.count - a.count; });
 
-      var yearList = [];
-      for (h in byYear) yearList.push({ year: Number(h), count: byYear[h] });
+      var yearList = [], bk, nb;
+      for (h in byYear) {
+        nb = 0;
+        for (bk in byYear[h].books) nb++;
+        yearList.push({ year: Number(h), count: byYear[h].count, words: byYear[h].words, books: nb });
+      }
       yearList.sort(function (a, b2) { return a.year - b2.year; });
 
+      var monthKeys = [];
+      for (h in byMonth) monthKeys.push(h);
+      monthKeys.sort();
       var monthList = [];
-      for (h in byMonth) monthList.push({ key: h, count: byMonth[h] });
-      monthList.sort(function (a, b2) { return a.key < b2.key ? -1 : 1; });
+      if (monthKeys.length) {
+        var span = monthSpan(monthKeys[0], monthKeys[monthKeys.length - 1]);
+        for (i = 0; i < span.length; i++) monthList.push({ key: span[i], count: byMonth[span[i]] || 0 });
+      }
 
       var days = [], busiest = null;
       for (h in perDay) {

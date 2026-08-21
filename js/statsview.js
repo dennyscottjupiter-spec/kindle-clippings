@@ -1,5 +1,5 @@
 // ---
-// purpose: Render the statistics panel — KPI tiles, timeline, top books, topics, rhythm, extremes
+// purpose: Render the statistics panel — KPI tiles, timeline, years, top books, topics, rhythm, extremes
 // exports: KC.statsview.open(), close(), render()
 // depends: js/stats.js, js/i18n.js, js/topics.js, js/modal.js
 // gotcha: every bar is a plain div sized in %, so there is no chart library and no canvas here
@@ -117,12 +117,29 @@
       host.appendChild(kpis);
 
       if (st.byMonth.length) {
-        var months = st.byMonth.slice(-MONTHS_SHOWN).map(function (m) {
-          return { label: monthLabel(m.key), count: m.count, tick: m.key.slice(2, 4) === '01' ? m.key.slice(0, 4) : '' };
+        // Tick every January, plus the first column shown — a 36-month window may hold no January.
+        var months = st.byMonth.slice(-MONTHS_SHOWN).map(function (m, k) {
+          return {
+            label: monthLabel(m.key), count: m.count,
+            tick: (k === 0 || m.key.slice(5, 7) === '01') ? m.key.slice(0, 4) : ''
+          };
         });
         var sec = section(t('st.timeline'), t('st.timelineHint'));
         sec.appendChild(columns(months, maxOf(months, function (m) { return m.count; }), 'cols-months'));
         host.appendChild(sec);
+      }
+
+      if (st.byYear.length > 1) {
+        var sy = section(t('st.byYear'), t('st.byYearHint'));
+        var maxY = maxOf(st.byYear, function (y) { return y.count; });
+        for (i = st.byYear.length - 1; i >= 0; i--) {
+          var yr = st.byYear[i];
+          var yrow = barRow(String(yr.year), yr.count, maxY);
+          yrow.title = t('st.yearBooks', { n: yr.books }) + ' · ' + t('st.yearWords', { n: yr.words }) +
+            ' · ' + t('st.yearShare', { n: st.highlights ? Math.round((yr.count / st.highlights) * 100) : 0 });
+          sy.appendChild(yrow);
+        }
+        host.appendChild(sy);
       }
 
       if (st.topBooks.length) {
