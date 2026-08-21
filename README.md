@@ -9,8 +9,10 @@ updated: 2026-08-21
 Reads a Kindle `My Clippings.txt` file and turns that ever-appended wall of text — full of
 duplicates and invisible characters — into something searchable, clean, and exportable.
 
-**Nothing leaves the device.** The file is read by the browser itself (`FileReader`), never sent
-to any server. No build, no dependencies, no external requests — not even fonts.
+**Nothing leaves the device**, with one opt-in exception. The file is read by the browser itself
+(`FileReader`), never sent to any server. No build, no dependencies, no external requests — not even
+fonts — until you flip the OFF-by-default *Load covers* switch, which sends each book's title and
+author (never highlight text) to openlibrary.org for a cover and a subject.
 
 ![Desktop interface](docs/desktop-light.png)
 
@@ -41,6 +43,15 @@ A Kindle logs every highlight, note, and bookmark into a single text file that:
 - **Notes stick to the right highlight.** Kindle writes a highlight and its note in the same second,
   so matching goes by *identical timestamp* first, position containment second, proximity last.
 - **Exports** to Markdown (with frontmatter and `tags:`), JSON, CSV, TXT, and TSV for Anki.
+- **Opt-in covers and topics.** A single switch fetches each book's cover and Open Library subjects,
+  classified into a fixed 15-topic taxonomy, cached in `localStorage` so it works offline after the
+  first fetch. Books with no fetched cover get a generated SVG placeholder in their topic color, so
+  the library looks designed from the first load, before you ever flip the switch.
+- **A shelf page** (`shelf.html`) shows every known book as a cover card — searchable, filterable by
+  topic, click through to reopen that book in the reader.
+- **Sort the reading pane** by file order, newest/oldest, book, or topic (with sticky group headers);
+  **sort the book list** by title, highlight count, or most recently highlighted; **resize the
+  sidebar** by dragging or with the arrow keys.
 
 ## Usage
 
@@ -58,22 +69,28 @@ plain `<script src>` tag — works the same over `file://` and behind nginx.
 | File | Role |
 |---|---|
 | `js/i18n.js` | pt-BR/en catalogs, accent-free `fold()`, `Intl` formatters |
+| `js/store.js` | localStorage prefs + library cache, sessionStorage raw-text cache |
+| `js/topics.js` | fixed 15-topic taxonomy, Open Library subject classifier |
 | `js/parser.js` | raw text → records (`KC.parse`) |
 | `js/dedupe.js` | union-find over position overlap + text containment |
 | `js/clean.js` | normalization, filters, note association (`KC.clean.process`) |
 | `js/tags.js` | book → `#Hashtag` |
 | `js/search.js` | tokenized, accent-insensitive search |
+| `js/sort.js` | right-pane ordering (date/book/topic) + group-key assignment |
+| `js/covers.js` | opt-in Open Library fetch queue, SVG placeholder covers |
 | `js/exports.js` | md / json / csv / txt / anki + download |
 | `js/clipboard.js` | `copy` event interception + per-card copy button |
 | `js/cards.js` | single card render + `IntersectionObserver` pagination |
-| `js/ui.js` | sidebar, stat line, empty state, toast |
+| `js/sidebar.js` | sidebar render (sort control, topic chips, book rows), drag resizer |
+| `js/ui.js` | chrome render — book banner, sort bar, stat line, toast |
 | `js/app.js` | state, file loading, drag & drop, wiring |
+| `shelf.html` / `js/shelf.js` | standalone cover-shelf page |
 
 Three details that are easy to get wrong and are handled on purpose:
 
 - the `IntersectionObserver`'s `root` is **the scrolling panel**, not the viewport — with
   `root: null` in this two-pane layout the sentinel never fires (or fires immediately);
-- the pagination reset key is `activeBook | query | showHidden` — **all three**;
+- the pagination reset key is `activeBook | activeTopic | query | showHidden | sortMode` — **all five**;
 - all DOM built from the file's content uses `createElement` + `textContent`, never `innerHTML`.
 
 ## Tests
@@ -82,10 +99,11 @@ Three details that are easy to get wrong and are handled on purpose:
 node tests/parser.test.js
 ```
 
-126 assertions: a synthetic fixture covering every edge case (mid-file BOM, nested parentheses,
+165 assertions: a synthetic fixture covering every edge case (mid-file BOM, nested parentheses,
 authorless document, highlight/bookmark/note in pt-BR, unknown locale, empty bookmark, clipping
 limit glued into the text, exact duplicate, A⊂B⊂C chain, 12-hour US date, NBSP / typographic quotes
-/ optional hyphen) — plus a regression run against the real `My Clippings.txt`.
+/ optional hyphen), the topic classifier and taxonomy shape, the sort/group logic — plus a regression
+run against the real `My Clippings.txt`.
 
 The real file is personal and is in `.gitignore`; that part of the suite skips itself when it's
 not present.
@@ -95,5 +113,5 @@ and the easy-to-break details underneath it.
 
 ## Out of scope for now
 
-Persistent library (localStorage/IndexedDB), book covers via Open Library, and list virtualization
-are left for a later stage.
+List virtualization, hand-editing topics, ISBN/Google Books cover fallback, and persisting highlight
+text itself in `localStorage` (only the session-scoped raw file text is cached) are left for later.
