@@ -37,7 +37,8 @@
       function item(key, title, count) {
         var b = document.createElement('button');
         b.type = 'button';
-        b.className = 'book-item' + (s.activeBook === key ? ' is-active' : '');
+        b.className = 'book-item' + (s.activeBook === key ? ' is-active' : '') +
+          (count === 0 ? ' is-empty' : '');
         b.setAttribute('data-book', key === null ? '' : key);
         var tt = document.createElement('span');
         tt.className = 'book-title';

@@ -16,6 +16,8 @@ ul { list-style: none; padding: 0; }
   --marker-note: #8FB6D4;
   --marker-tint: rgba(243, 210, 78, .35);
   --marker-note-tint: rgba(143, 182, 212, .35);
+  --swipe: #F3D24E;
+  --swipe-note: #8FB6D4;
   --font-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -31,6 +33,8 @@ ul { list-style: none; padding: 0; }
     --rule: #2E3238;
     --marker-tint: rgba(243, 210, 78, .30);
     --marker-note-tint: rgba(143, 182, 212, .30);
+    --swipe: rgba(243, 210, 78, .30);
+    --swipe-note: rgba(143, 182, 212, .30);
   }
 }
 
@@ -43,6 +47,8 @@ ul { list-style: none; padding: 0; }
   --rule: #2E3238;
   --marker-tint: rgba(243, 210, 78, .30);
   --marker-note-tint: rgba(143, 182, 212, .30);
+  --swipe: rgba(243, 210, 78, .30);
+  --swipe-note: rgba(143, 182, 212, .30);
 }
 :root[data-theme="light"] {
   --paper: #E8E9E3;
@@ -52,14 +58,22 @@ ul { list-style: none; padding: 0; }
   --rule: #CFD2C8;
   --marker-tint: rgba(243, 210, 78, .35);
   --marker-note-tint: rgba(143, 182, 212, .35);
+  --swipe: #F3D24E;
+  --swipe-note: #8FB6D4;
 }
 
+html { height: 100%; }
+
+/* The page itself never scrolls — the sidebar and the pane are the scroll containers. */
 body {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
   line-height: 1.5;
-  overflow-x: clip;
 }
 
 :focus-visible {
@@ -98,6 +112,7 @@ body {
   position: sticky;
   top: 0;
   z-index: 20;
+  flex: 0 0 auto; /* a flex item would otherwise shrink under its own content */
   height: 56px;
   display: flex;
   align-items: center;
@@ -163,7 +178,9 @@ body {
 .shell {
   display: grid;
   grid-template-columns: 264px 1fr;
-  height: calc(100vh - 56px);
+  flex: 1 1 auto;
+  min-height: 0;
+  position: relative; /* the mobile drawer and its scrim anchor here, not to the viewport */
 }
 
 .sidebar {
@@ -197,6 +214,7 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.book-item.is-empty .book-title { color: var(--mid); }
 .book-item .book-count {
   font-family: var(--font-mono);
   font-size: .74rem;
@@ -209,8 +227,8 @@ body {
 
 .scrim {
   display: none;
-  position: fixed;
-  inset: 56px 0 0 0;
+  position: absolute;
+  inset: 0;
   background: rgba(0, 0, 0, .4);
   z-index: 15;
 }
@@ -251,7 +269,8 @@ body {
 .dropzone .drop-hint { color: var(--mid); font-size: .85rem; }
 
 /* statline */
-.statline {
+/* :not([hidden]) so the attribute keeps winning at equal specificity */
+.statline:not([hidden]) {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
@@ -299,7 +318,7 @@ body {
 }
 
 .entry .q-text {
-  background-image: linear-gradient(var(--marker), var(--marker));
+  background-image: linear-gradient(var(--swipe), var(--swipe));
   background-repeat: no-repeat;
   background-position: 0 62%;
   background-size: 0% 68%;
@@ -309,7 +328,7 @@ body {
 }
 .entry.is-drawn .q-text { background-size: 100% 68%; }
 .entry[data-type="note"] .q-text {
-  background-image: linear-gradient(var(--marker-note), var(--marker-note));
+  background-image: linear-gradient(var(--swipe-note), var(--swipe-note));
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -327,6 +346,12 @@ body {
   color: var(--mid);
 }
 
+/* device readouts read as one line: a hairline dot between each part */
+.entry .meta > *:not(:first-child):not(.copy)::before {
+  content: "·";
+  margin-right: .55em;
+  color: var(--rule);
+}
 .entry .meta {
   display: flex;
   flex-wrap: wrap;
@@ -391,11 +416,19 @@ body {
 
 /* narrow viewports */
 @media (max-width: 860px) {
+  /* the bar wraps to two rows; nothing downstream depends on its height any more */
+  .topbar { height: auto; min-height: 56px; flex-wrap: wrap; gap: .5rem; padding: .5rem .75rem; }
+  .brand .sub { display: none; }
+  .brand { order: 1; }
+  .actions { order: 2; flex-wrap: wrap; justify-content: flex-end; gap: .3rem; }
+  .search { order: 3; flex: 1 0 100%; max-width: none; }
+  .btn { padding: .35em .6em; font-size: .85rem; }
+
   .shell { grid-template-columns: 1fr; }
   .sidebar {
-    position: fixed;
+    position: absolute;
     left: 0;
-    top: 56px;
+    top: 0;
     bottom: 0;
     width: 264px;
     transform: translateX(-100%);
@@ -404,5 +437,6 @@ body {
   }
   .sidebar.is-open { transform: none; }
   .drawer-toggle { display: inline-flex; }
-  .scrim { display: block; }
+  /* :not([hidden]) so the attribute still wins — a bare .scrim rule would outrank it */
+  .scrim:not([hidden]) { display: block; }
 }
