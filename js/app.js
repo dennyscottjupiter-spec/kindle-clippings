@@ -37,7 +37,7 @@
 
   function onCoverProgress(done, total) {
     if (done < total) {
-      KC.ui.updateCoversButton(KC.i18n.t('covers.progress', { done: done, total: total }));
+      KC.ui.updateCoversButton(KC.i18n.t('covers.progress', { done: done, total: total }), total ? done / total : 0);
     } else {
       KC.ui.updateCoversButton();
       KC.ui.toast(KC.i18n.t('covers.done', { n: total }));

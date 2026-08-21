@@ -66,11 +66,16 @@
   border: 1px solid var(--rule);
   border-radius: var(--r-pill);
   padding: .5em 1em;
+  font-size: .88rem;
   font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
   font-family: var(--font-sans);
   box-shadow: var(--sh-1);
-  transition: box-shadow .15s ease, border-color .15s ease;
+  transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
 }
 .btn:hover { border-color: var(--brand-1); box-shadow: var(--sh-2); }
 .btn.primary {
@@ -81,6 +86,11 @@
 .btn.primary:hover { box-shadow: var(--sh-2); }
 .btn.icon { width: 2.4em; height: 2.4em; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
 .btn[aria-pressed="true"] { background: var(--brand-3); color: #04241F; border-color: transparent; }
+
+/* covers button — dark green accent so the opt-in network action reads distinctly from other chrome */
+#toggle-covers { border-color: var(--brand-green); color: var(--brand-green); }
+#toggle-covers:hover { border-color: var(--brand-green); box-shadow: var(--sh-2); }
+#toggle-covers[aria-pressed="true"] { background: var(--brand-green); color: #fff; }
 
 /* segmented control — used by sort bars; :not([hidden]) so #shelf-topics can be toggled with the attribute */
 .seg:not([hidden]) {
@@ -125,6 +135,26 @@
   cursor: pointer;
 }
 .menu-list button:hover { background: var(--sunk); }
+
+/* covers progress ring — the "hourglass": a ring around the button that fills as the fetch queue drains */
+.covers-host { position: relative; }
+.covers-ring[hidden] { display: none; }
+.covers-ring {
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 1.1em; height: 1.1em;
+  transform: rotate(-90deg);
+  pointer-events: none;
+}
+.covers-ring .ring-track { fill: none; stroke: var(--rule); stroke-width: 2.5; }
+.covers-ring .ring-fill {
+  fill: none;
+  stroke: var(--brand-green);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset .2s ease;
+}
+@media (prefers-reduced-motion: reduce) { .covers-ring .ring-fill { transition: none; } }
 
 /* tooltip */
 .tip-host { position: relative; display: inline-flex; }

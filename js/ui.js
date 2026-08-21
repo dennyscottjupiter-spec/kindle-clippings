@@ -40,11 +40,21 @@
       if (footer) footer.textContent = t(KC.state.coversOn ? 'footer.privacyCovers' : 'footer.privacy');
     },
 
-    updateCoversButton: function (progressText) {
+    updateCoversButton: function (progressText, pct) {
       var btn = byId('toggle-covers');
       if (!btn) return;
       btn.setAttribute('aria-pressed', KC.state.coversOn ? 'true' : 'false');
       btn.textContent = progressText || KC.i18n.t(KC.state.coversOn ? 'toggle.covers.on' : 'toggle.covers');
+
+      var ring = byId('covers-ring'), fill = byId('covers-ring-fill');
+      if (!ring || !fill) return;
+      var running = typeof pct === 'number';
+      if (running) { ring.removeAttribute('hidden'); } else { ring.setAttribute('hidden', ''); }
+      if (running) {
+        var C = 2 * Math.PI * 8;
+        fill.style.strokeDasharray = String(C);
+        fill.style.strokeDashoffset = String(C * (1 - pct));
+      }
     },
 
     renderSidebar: function () {

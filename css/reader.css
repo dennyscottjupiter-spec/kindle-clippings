@@ -6,9 +6,9 @@
 
 .pane { overflow-y: auto; height: 100%; }
 .pane-inner {
-  max-width: 68ch;
+  max-width: 88ch;
   margin: 0 auto;
-  padding: 2rem 1rem 6rem;
+  padding: 2rem 1.5rem 6rem;
 }
 
 /* dropzone */
