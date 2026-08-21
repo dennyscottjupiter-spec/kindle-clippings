@@ -55,23 +55,27 @@ Saída esperada nas duas últimas linhas: `http:200` e `index:ok css:7 js:24`.
 
 ## Como o stack funciona
 
-- O serviço **`fetch`** (Alpine) baixa o tarball da branch `main` e extrai dentro de um
-  **volume Docker** chamado `site`. Ele roda uma vez e termina.
-- O serviço **`web`** (nginx) só inicia depois disso, graças a
-  `depends_on: fetch: condition: service_completed_successfully`.
-- Os dois compartilham o mesmo volume; o nginx monta como **read-only** — ele nunca precisa
+- O serviço **`fetch`** (Alpine) baixa o tarball da branch `main` no **volume Docker** `site`
+  e repete isso a cada 5 minutos, para sempre. Ele também escreve a config do nginx
+  (`add_header Cache-Control "no-store"`) no volume `conf`.
+- O serviço **`web`** (nginx) só inicia depois que o primeiro download aterrissou, graças ao
+  healthcheck do `fetch` (`test -f /site/index.html`) + `condition: service_healthy`.
+- Os dois compartilham os volumes; o nginx monta ambos como **read-only** — ele nunca precisa
   escrever, e assim não pode alterar os arquivos.
+- O `no-store` é o que impede o navegador (celular, Nest Hub, qualquer um) de servir JS/CSS
+  antigos do cache: sem cabeçalho de cache o Chrome inventa um por conta própria.
 
 ## Atualizar o app
 
-Depois de dar `git push` de novas mudanças:
+Depois de dar `git push`, **não há nada a fazer** — o `fetch` rebaixa a branch `main` em até
+5 minutos e o navegador não guarda cache. Para forçar na hora:
 
-- **Portainer:** Stacks → `kindle-clippings` → **Update the stack** → ligue **Re-pull image and redeploy**
-  → **Update**. O toggle é o que garante o `--force-recreate`: sem ele o compose vê o serviço `fetch`
-  inalterado, não recria o container, e o volume continua com a versão antiga.
-- **Terminal:** `cd /opt/kindle-clippings; docker compose up -d --force-recreate`
+- **Portainer:** Stacks → `kindle-clippings` → Containers → `kindle-clippings-fetch` → **Restart**.
+- **Terminal:** `cd /opt/kindle-clippings; docker compose restart fetch`
 
-Em ambos os casos o `fetch` roda de novo, rebaixa a branch `main` e sobrescreve o volume.
+⚠️ Ao migrar da versão antiga do stack (a que rodava o `fetch` uma vez só), o volume `site`
+guarda a versão velha até o novo `fetch` rodar; se quiser começar limpo:
+`docker compose down; docker volume rm kindle-clippings_site; docker compose up -d --wait`.
 
 ## Problemas comuns
 
@@ -80,7 +84,7 @@ Em ambos os casos o `fetch` roda de novo, rebaixa a branch `main` e sobrescreve 
 | `docker: command not found` | Você está no shell do host Proxmox (camada 1), não no LXC. Veja a tabela acima. |
 | HTTP `000` | Container não está de pé ou porta bloqueada; rode `docker compose ps`. |
 | HTTP `403` ou página em branco | O `fetch` falhou (rede/GitHub fora). Veja `docker compose logs fetch`. |
-| Página carrega versão antiga | Cache do navegador; force reload (Ctrl+Shift+R). |
+| Página carrega versão antiga | Volume `site` velho: `docker compose restart fetch` e confira `docker compose logs fetch`. |
 | Capas dos livros não aparecem | Recurso opt-in, desligado por padrão — ative no próprio app. |
 
 ## Privacidade

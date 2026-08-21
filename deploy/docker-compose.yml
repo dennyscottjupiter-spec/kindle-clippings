@@ -1,13 +1,37 @@
 services:
-  # One-shot: downloads the current main branch into the shared volume, then exits.
+  # Fica de pé: baixa a branch main no volume e repete a cada 5 min.
+  # Também escreve a config do nginx (no-store) no volume `conf`.
   fetch:
     image: alpine:latest
-    command: >
-      sh -c "apk add --no-cache curl tar &&
-      curl -fsSL https://github.com/dennyscottjupiter-spec/kindle-clippings/archive/refs/heads/main.tar.gz
-      | tar xz --strip-components=1 -C /site"
+    container_name: kindle-clippings-fetch
+    restart: unless-stopped
     volumes:
       - site:/site
+      - conf:/conf
+    command:
+      - sh
+      - -c
+      - |
+        apk add --no-cache curl tar
+        cat > /conf/default.conf <<'EOF'
+        server {
+          listen 80;
+          root /usr/share/nginx/html;
+          index index.html;
+          add_header Cache-Control "no-store, must-revalidate" always;
+        }
+        EOF
+        while :; do
+          curl -fsSL https://github.com/dennyscottjupiter-spec/kindle-clippings/archive/refs/heads/main.tar.gz \
+            | tar xz --strip-components=1 -C /site && echo "[fetch] site atualizado"
+          sleep 300
+        done
+    healthcheck:  # só fica healthy depois que o primeiro download caiu no volume
+      test: ["CMD-SHELL", "test -f /site/index.html && test -f /conf/default.conf"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+      start_period: 5s
 
   web:
     image: nginx:alpine
@@ -15,11 +39,12 @@ services:
     restart: unless-stopped
     depends_on:
       fetch:
-        condition: service_completed_successfully  # nginx waits for the download to finish
+        condition: service_healthy  # nginx espera o primeiro download
     ports:
       - "8099:80"  # port 8099 is the LAN port
     volumes:
       - site:/usr/share/nginx/html:ro  # read-only mount on purpose, static site only
+      - conf:/etc/nginx/conf.d:ro
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost/ >/dev/null || exit 1"]
       interval: 30s
@@ -29,3 +54,4 @@ services:
 
 volumes:
   site:
+  conf:
