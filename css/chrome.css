@@ -82,8 +82,8 @@
 .btn.icon { width: 2.4em; height: 2.4em; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
 .btn[aria-pressed="true"] { background: var(--brand-3); color: #04241F; border-color: transparent; }
 
-/* segmented control — used by sort bars */
-.seg {
+/* segmented control — used by sort bars; :not([hidden]) so #shelf-topics can be toggled with the attribute */
+.seg:not([hidden]) {
   display: inline-flex;
   background: var(--sunk);
   padding: 3px;
@@ -175,5 +175,5 @@
   .actions { order: 2; flex-wrap: wrap; justify-content: flex-end; gap: .3rem; }
   .search { order: 3; flex: 1 0 100%; max-width: none; }
   .btn { padding: .4em .7em; font-size: .85rem; }
-  .tip { right: auto; left: 0; max-width: 15rem; }
+  .tip { max-width: min(15rem, calc(100vw - 2rem)); }
 }

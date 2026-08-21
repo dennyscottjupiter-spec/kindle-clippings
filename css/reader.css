@@ -57,7 +57,7 @@
 }
 .bb-meta .bb-title { font-family: var(--font-serif); font-size: 1.6rem; }
 .bb-meta .bb-author { color: var(--mid); }
-.bb-meta .bb-stats { margin-top: .3rem; }
+.bb-meta .bb-stats { margin-top: .3rem; display: flex; align-items: center; gap: .5em; color: var(--mid); }
 
 /* sort bar */
 .sortbar:not([hidden]) {

@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Kindle Clippings Reader — a static, no-build, no-dependency browser app that parses a Kindle
 `My Clippings.txt` export into searchable, exportable cards. Everything runs client-side; the file
-is read via `FileReader` and never leaves the device (no server, no fetch, no external fonts).
+is read via `FileReader` and never leaves the device. The one exception: an opt-in, OFF-by-default
+switch (`js/covers.js`) that sends each book's title and author to openlibrary.org to fetch a cover
+and topic — no highlight text is ever sent, and the app stays fully offline until the user flips it.
 
 ## Commands
 
@@ -35,31 +37,44 @@ a module can only use what a script tag above it already defined:
 | File | Role |
 |---|---|
 | `js/i18n.js` | pt-BR/en catalogs, accent-folding `fold()`, `Intl` formatters |
+| `js/store.js` | localStorage prefs + library cache, sessionStorage raw-text cache (all try/catch) |
+| `js/topics.js` | fixed 15-topic taxonomy, Open Library subject classifier |
 | `js/parser.js` | raw clippings text → records (`KC.parse`) |
 | `js/dedupe.js` | union-find over position overlap + text containment |
 | `js/clean.js` | normalization, filters, note association (`KC.clean.process`) |
 | `js/tags.js` | book → `#Hashtag` |
 | `js/search.js` | tokenized, accent-insensitive search |
+| `js/sort.js` | right-pane ordering (date/book/topic) + group-key assignment |
+| `js/covers.js` | opt-in Open Library fetch queue, cover caching, SVG placeholder covers |
 | `js/exports.js` | md / json / csv / txt / anki builders + download |
-| `js/cards.js` | single card render + `IntersectionObserver` pagination |
+| `js/cards.js` | single card render, group headers, `IntersectionObserver` pagination |
 | `js/clipboard.js` | `copy` event interception + per-card copy button |
-| `js/ui.js` | sidebar, stat line, empty state, toast |
+| `js/sidebar.js` | sidebar render (sort control, topic chips, book rows) + drag resizer |
+| `js/ui.js` | chrome render — book banner, sort bar, stat line, empty state, toast, `render()` |
 | `js/app.js` | `KC.state`, file loading, drag & drop, all event wiring (loaded last) |
+| `shelf.html` / `js/shelf.js` | standalone cover-shelf page, reads the localStorage book/library cache |
 
-`tests/harness.js` loads a subset of these modules (`i18n`, `parser`, `dedupe`, `clean`, `tags`,
-`search`, `exports` — not `cards`/`clipboard`/`ui`/`app`, which touch the DOM) into a bare Node `vm`
-context with only a `window` global. Any module loaded by the harness must not touch `document` or
-other browser globals at load time, only inside functions called later with a real DOM.
+`tests/harness.js` loads a subset of these modules (`i18n`, `topics`, `parser`, `dedupe`, `clean`,
+`tags`, `search`, `sort`, `exports` — not `store`/`covers`/`cards`/`clipboard`/`sidebar`/`ui`/`app`/
+`shelf`, which touch `document`/`localStorage`/`fetch`) into a bare Node `vm` context with only a
+`window` global. Any module loaded by the harness must not touch `document` or other browser globals
+at load time, only inside functions called later with a real DOM.
 
 ### Three deliberate, easy-to-regress details
 
 - The `root` of the `IntersectionObserver` in `cards.js` must be **the scrolling panel**, not the
   viewport — with `root: null` in this two-pane layout the pagination sentinel either never fires or
   fires immediately.
-- The pagination reset key is `activeBook | query | showHidden` — all three, or stale results survive
-  a filter change.
+- The pagination reset key is `activeBook | activeTopic | query | showHidden | sortMode` — all five,
+  or stale results survive a filter/sort change.
 - All DOM built from parsed clipping content uses `createElement` + `textContent`, never `innerHTML`
   (clippings text is untrusted user data).
+- `css/` (`tokens.css` / `chrome.css` / `sidebar.css` / `reader.css` / `shelf.css`, loaded in that
+  order — `tokens.css` first, everyone else assumes its custom properties) replaced the old single
+  `styles.css`. Any element toggled with the `hidden` attribute (`#book-banner`, `#sortbar`,
+  `#mini-cover`, `.topic-row`, `#shelf-empty`, plus the pre-existing `#statline`/`.scrim`) must keep
+  its show rule written as `.selector:not([hidden]) { display: … }` — a bare `display:` rule outranks
+  `[hidden]` at equal specificity.
 
 ### Source data quirks the parser/clean pipeline exists to handle
 

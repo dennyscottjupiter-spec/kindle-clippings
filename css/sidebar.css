@@ -38,7 +38,7 @@
   color: var(--mid);
 }
 
-.topic-row {
+.topic-row:not([hidden]) {
   display: flex;
   flex-wrap: wrap;
   gap: .4rem;
@@ -98,7 +98,7 @@
 .badge {
   min-width: 1.7rem; height: 1.7rem;
   border-radius: var(--r-pill);
-  display: grid; place-items: center;
+  display: inline-flex; align-items: center; justify-content: center;
   font: 600 .72rem var(--font-mono);
   padding: 0 .45em;
   background: var(--sunk); color: var(--mid);

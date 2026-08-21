@@ -5,7 +5,7 @@
    --- */
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
-img { max-width: 100%; display: block; }
+img:not([hidden]) { max-width: 100%; display: block; }
 button, input { font: inherit; color: inherit; }
 ul { list-style: none; padding: 0; }
 
