@@ -1,16 +1,20 @@
 // ---
-// purpose: Render one highlight to a PNG quote card sized for a Nest Hub photo frame
+// purpose: Render one highlight to a PNG quote card at a chosen screen size (landscape or portrait)
 // exports: KC.quotecard.SIZES/draw()/toBlob()/download()
 // depends: nothing (canvas only, no network, no fonts loaded)
 // gotcha: draw() works in CSS pixels — it sets canvas.width = w * scale and ctx.scale(scale, scale),
-//   so every coordinate below is in `w` x `h` space, never device pixels.
+//   so every coordinate below is in `w` x `h` space, never device pixels. Type and padding derive
+//   from `base = Math.min(w, h)` so a tall phone card does not get giant fonts.
 // ---
 (function (KC) {
   'use strict';
 
   var SIZES = [
     { id: 'nesthub', w: 1024, h: 600, label: 'Nest Hub 7"' },
-    { id: 'nesthubmax', w: 1280, h: 800, label: 'Nest Hub Max 10"' },
+    { id: 'fhd', w: 1920, h: 1080, label: 'Full HD 1080p' },
+    { id: 'qhd', w: 2560, h: 1440, label: '2K / QHD 1440p' },
+    { id: 'iphone', w: 1290, h: 2796, label: 'iPhone' },
+    { id: 'android', w: 1080, h: 2400, label: 'Android' },
     { id: 'square', w: 1080, h: 1080, label: 'Square' }
   ];
 
@@ -114,11 +118,14 @@
     ctx.fillStyle = accent;
     ctx.fillRect(0, 0, 6, h);
 
-    var padX = w * 0.09, padY = h * 0.1;
+    // Everything vertical scales off the SHORT side, so a portrait card gets phone-sized type
+    // instead of type derived from its 2796px height.
+    var base = Math.min(w, h);
+    var padX = w * 0.09, padY = base * 0.1;
     var left = padX + 6;
     var maxW = w - left - padX;
 
-    var titleSize = Math.max(12, Math.min(30, Math.round(h * 0.032)));
+    var titleSize = Math.max(12, Math.min(30, Math.round(base * 0.032)));
     var authorSize = Math.round(titleSize * 0.9);
     var author = String((rec && rec.author) || '').trim();
 
@@ -144,17 +151,17 @@
     }
 
     var boxTop = padY;
-    var boxBottom = ruleY - h * 0.06;
-    var boxH = Math.max(h * 0.1, boxBottom - boxTop);
+    var boxBottom = ruleY - base * 0.06;
+    var boxH = Math.max(base * 0.1, boxBottom - boxTop);
 
     // Decorative opening mark, behind the quote and barely there.
-    var qSize = h * 0.3;
+    var qSize = base * 0.3;
     ctx.font = qSize + 'px ' + SERIF;
     ctx.fillStyle = th.quote;
     ctx.fillText('“', left - qSize * 0.06, boxTop + qSize * 0.72);
 
     var text = String((rec && rec.text) || '').replace(/\s+/g, ' ').trim();
-    var min = Math.max(10, Math.round(h / 28)), max = Math.max(min, Math.round(h / 9));
+    var min = Math.max(10, Math.round(base / 28)), max = Math.max(min, Math.round(base / 9));
     var size = fitSize(ctx, text, maxW, boxH, min, max);
     ctx.font = size + 'px ' + SERIF;
     var lines = wrapLines(ctx, text, maxW);
