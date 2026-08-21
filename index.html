@@ -2,13 +2,21 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#6C63FF">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Clippings">
 <title>Kindle Clippings</title>
+<link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="css/tokens.css">
 <link rel="stylesheet" href="css/chrome.css">
 <link rel="stylesheet" href="css/sidebar.css">
 <link rel="stylesheet" href="css/reader.css">
+<link rel="stylesheet" href="css/panels.css">
+<link rel="stylesheet" href="css/mobile.css">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F5F6FA'/%3E%3Crect x='4' y='13' width='24' height='7' fill='%236C63FF'/%3E%3C/svg%3E">
 </head>
 <body>
@@ -30,6 +38,14 @@
     <span class="tip-host">
       <a class="btn" id="nav-shelf" href="shelf.html" data-i18n="nav.shelf" aria-describedby="tip-shelf"></a>
       <span class="tip" id="tip-shelf" role="tooltip" data-i18n="tip.shelf"></span>
+    </span>
+    <span class="tip-host">
+      <button class="btn" id="nav-stats" type="button" data-i18n="nav.stats" aria-describedby="tip-stats"></button>
+      <span class="tip" id="tip-stats" role="tooltip" data-i18n="tip.stats"></span>
+    </span>
+    <span class="tip-host">
+      <button class="btn" id="nav-quotes" type="button" data-i18n="nav.quotes" aria-describedby="tip-quotes"></button>
+      <span class="tip" id="tip-quotes" role="tooltip" data-i18n="tip.quotes"></span>
     </span>
     <span class="tip-host covers-host">
       <button class="switch" id="toggle-covers" type="button" role="switch" aria-checked="false" aria-describedby="tip-covers">
@@ -63,6 +79,7 @@
         <li><button type="button" data-export="csv" data-i18n="export.csv"></button></li>
         <li><button type="button" data-export="txt" data-i18n="export.txt"></button></li>
         <li><button type="button" data-export="anki" data-i18n="export.anki"></button></li>
+        <li><button type="button" data-export="obsidian" data-i18n="export.obsidian"></button></li>
       </ul>
     </div>
   </div>
@@ -104,6 +121,40 @@
   </main>
 </div>
 
+<div class="modal" id="stats-modal" role="dialog" aria-modal="true" aria-labelledby="stats-title" hidden>
+  <div class="modal-card">
+    <header class="modal-head">
+      <h2 id="stats-title" data-i18n="st.title"></h2>
+      <button class="btn icon modal-close" type="button" data-close="stats-modal" aria-label="×">×</button>
+    </header>
+    <div class="modal-body" id="stats-body"></div>
+  </div>
+</div>
+
+<div class="modal" id="quotes-modal" role="dialog" aria-modal="true" aria-labelledby="quotes-title" hidden>
+  <div class="modal-card">
+    <header class="modal-head">
+      <h2 id="quotes-title" data-i18n="qc.title"></h2>
+      <div class="qc-tools">
+        <div class="seg" id="qc-source" role="group">
+          <button type="button" data-qc-src="fav" data-i18n="qc.source.fav" aria-pressed="true"></button>
+          <button type="button" data-qc-src="all" data-i18n="qc.source.all" aria-pressed="false"></button>
+        </div>
+        <input id="qc-q" type="search" autocomplete="off" data-i18n-ph="qc.search" data-i18n-label="qc.search">
+        <select id="qc-size" data-i18n-label="qc.size"></select>
+        <div class="seg" id="qc-themes" role="group">
+          <button type="button" data-qc-theme="dark" data-i18n="qc.theme.dark" aria-pressed="true"></button>
+          <button type="button" data-qc-theme="light" data-i18n="qc.theme.light" aria-pressed="false"></button>
+          <button type="button" data-qc-theme="paper" data-i18n="qc.theme.paper" aria-pressed="false"></button>
+        </div>
+      </div>
+      <button class="btn icon modal-close" type="button" data-close="quotes-modal" aria-label="×">×</button>
+    </header>
+    <div class="modal-body"><div class="qc-grid" id="quotes-grid"></div></div>
+    <footer class="modal-foot" id="quotes-foot"></footer>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/i18n.js"></script>
@@ -117,6 +168,13 @@
 <script src="js/sort.js"></script>
 <script src="js/covers.js"></script>
 <script src="js/exports.js"></script>
+<script src="js/obsidian.js"></script>
+<script src="js/favorites.js"></script>
+<script src="js/stats.js"></script>
+<script src="js/quotecard.js"></script>
+<script src="js/modal.js"></script>
+<script src="js/statsview.js"></script>
+<script src="js/quoteview.js"></script>
 <script src="js/cards.js"></script>
 <script src="js/clipboard.js"></script>
 <script src="js/sidebar.js"></script>

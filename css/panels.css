@@ -1,0 +1,187 @@
+/* ---
+   purpose: Overlay dialogs — statistics panel (tiles, bars, histograms) and the quote-card gallery
+   depends: css/tokens.css
+   gotcha: .modal is toggled with the [hidden] attribute, so its show rule MUST be :not([hidden])
+   --- */
+
+.modal[hidden] { display: none; }
+.modal:not([hidden]) {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(.5rem, 3vw, 2.5rem);
+  background: rgba(16, 19, 26, .55);
+  backdrop-filter: blur(3px);
+}
+.modal-card {
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, 100%);
+  max-height: 100%;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-lift);
+  overflow: hidden;
+}
+.modal-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  padding: .9rem 1.1rem;
+  background: var(--panel);
+  border-bottom: 1px solid var(--rule);
+}
+.modal-head h2 {
+  font-family: var(--font-mono);
+  font-size: .82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+}
+.modal-close { margin-left: auto; }
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1.1rem;
+}
+.modal-foot {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  flex-wrap: wrap;
+  padding: .8rem 1.1rem;
+  background: var(--panel);
+  border-top: 1px solid var(--rule);
+}
+
+/* ---- statistics ---- */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: .7rem;
+  margin-bottom: 1.4rem;
+}
+.kpi {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  padding: .9rem 1rem;
+  box-shadow: var(--sh-1);
+  border-top: 3px solid var(--brand-1);
+}
+.kpi-b { border-top-color: var(--brand-2); }
+.kpi-c { border-top-color: var(--brand-3); }
+.kpi-d { border-top-color: var(--brand-4); }
+.kpi-v { display: block; font-size: 1.7rem; line-height: 1.1; font-weight: 700; }
+.kpi-l { font-size: .74rem; color: var(--mid); text-transform: uppercase; letter-spacing: .08em; }
+
+.stat-sec { margin-bottom: 1.6rem; }
+.stat-h {
+  font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+  color: var(--mid); margin-bottom: .5rem;
+}
+.stat-sub { font-size: .72rem; color: var(--mid); margin: .8rem 0 .3rem; font-weight: 600; }
+.stat-hint { font-size: .78rem; color: var(--mid); margin-bottom: .6rem; }
+.stat-empty { color: var(--mid); padding: 2rem 0; text-align: center; }
+
+.bar-row {
+  display: grid;
+  grid-template-columns: minmax(6rem, 15rem) 1fr auto;
+  align-items: center;
+  gap: .7rem;
+  padding: .22rem 0;
+}
+.bar-label {
+  font-size: .85rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.bar-label.is-link { cursor: pointer; }
+.bar-label.is-link:hover { color: var(--brand-1); text-decoration: underline; }
+.bar-track { background: var(--sunk); border-radius: var(--r-pill); height: .62rem; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--grad-primary); }
+.bar-fill.is-topic { background: var(--topic-edge, var(--brand-1)); }
+/* an uncategorised book has no hue yet, and its --topic-edge is the hairline grey — unreadable as a bar */
+[data-topic="uncategorized"] .bar-fill.is-topic { background: var(--grad-primary); }
+.bar-n { font-size: .78rem; color: var(--mid); font-variant-numeric: tabular-nums; }
+
+.cols {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 7.5rem;
+  padding-top: .3rem;
+}
+.cols-week { gap: .5rem; }
+/* a two-month library must not paint two half-page slabs — columns stay bar-shaped */
+.cols { justify-content: flex-start; }
+.col { flex: 1 1 0; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; min-width: 3px; max-width: 2.6rem; }
+.col-bar {
+  background: var(--brand-1);
+  border-radius: 2px 2px 0 0;
+  min-height: 2px;
+  transition: height .2s ease;
+}
+.col-bar.is-zero { background: var(--rule); }
+.col-l {
+  font-size: .58rem; color: var(--mid); text-align: center;
+  height: 1em; margin-top: .25rem; white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) { .col-bar { transition: none; } }
+
+.facts { display: grid; grid-template-columns: auto 1fr; gap: .3rem 1rem; font-size: .86rem; }
+.facts dt { color: var(--mid); }
+.facts dd { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- quote cards ---- */
+.qc-tools { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.qc-tools select, .qc-tools input[type="search"] {
+  background: var(--sunk); border: 1px solid var(--rule); border-radius: var(--r-pill);
+  padding: .45em .9em; color: var(--ink);
+}
+.qc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: .9rem;
+}
+.qc {
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: var(--sh-1);
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+.qc:hover { box-shadow: var(--sh-2); transform: translateY(-2px); }
+.qc-canvas { width: 100%; height: auto; display: block; background: var(--sunk); }
+.qc-bar { display: flex; align-items: center; gap: .4rem; padding: .45rem .6rem; }
+.qc-title {
+  flex: 1 1 auto; min-width: 0;
+  font-size: .76rem; color: var(--mid);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.qc-btn {
+  flex: 0 0 auto;
+  background: transparent; border: 1px solid var(--rule); border-radius: var(--r-pill);
+  padding: .2em .6em; font-size: .74rem; font-weight: 600; color: var(--mid); cursor: pointer;
+}
+.qc-btn:hover { border-color: var(--brand-1); color: var(--ink); }
+.qc-btn.is-on, .qc-btn[aria-pressed="true"] { color: var(--brand-4); border-color: var(--brand-4); }
+.qc-note { font-size: .74rem; color: var(--mid); }
+@media (prefers-reduced-motion: reduce) { .qc { transition: none; } }
+
+@media (max-width: 720px) {
+  .modal:not([hidden]) { padding: 0; }
+  .modal-card { border-radius: 0; border: 0; height: 100%; }
+  .bar-row { grid-template-columns: minmax(4.5rem, 8rem) 1fr auto; gap: .5rem; }
+  .qc-grid { grid-template-columns: 1fr; }
+  .facts { grid-template-columns: 1fr; gap: 0 0; }
+  .facts dd { margin-bottom: .5rem; }
+}

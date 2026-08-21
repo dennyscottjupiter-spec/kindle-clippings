@@ -195,6 +195,29 @@
 }
 .meta .copy:hover { border-color: var(--brand-1); }
 
+/* favourite star — bare glyph button in the meta row, no chrome of its own */
+.meta .fav {
+  background: transparent;
+  border: 0;
+  padding: 0 .25em;
+  line-height: 1;
+  font-size: .95rem;
+  color: var(--mid);
+  cursor: pointer;
+  transition: color .15s ease, transform .15s ease;
+}
+/* the meta separator rule dots every child but .copy — the star is an icon, not a field */
+.entry .meta > .fav::before { content: none; margin-right: 0; }
+.meta .fav:hover { color: var(--brand-4); transform: scale(1.15); }
+.meta .fav.is-on, .meta .fav[aria-pressed="true"] { color: var(--brand-4); }
+
+/* starred cards keep the topic edge and gain an inset amber rail beside it */
+.entry.is-fav { box-shadow: var(--sh-1), inset 2px 0 0 var(--brand-4); }
+
+@media (prefers-reduced-motion: reduce) {
+  .fav { transition: none; }
+}
+
 /* card flags — NOT .flag: chrome.css already owns .flag for the language button's <img>, and this
    sheet loads after it, so a shared name repainted the country flag as a bordered pill. */
 .card-flag {

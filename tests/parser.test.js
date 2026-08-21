@@ -11,6 +11,7 @@ require('./fixture.test').run();
 require('./exports.test').run();
 require('./topics.test').run();
 require('./sort.test').run();
+require('./stats.test').run();
 require('./real.test').run();
 
 process.exit(report() ? 0 : 1);

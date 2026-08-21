@@ -1,7 +1,7 @@
 // ---
 // purpose: Build one highlight card + group header, and paginate the list behind an IntersectionObserver
 // exports: KC.cards.build(rec), KC.cards.groupHead(rec), KC.cards.reset(), KC.cards.appendPage(), KC.cards.observe()
-// depends: js/i18n.js, js/clean.js (record shape), js/topics.js (group header label/hue)
+// depends: js/i18n.js, js/clean.js (record shape), js/topics.js (group header label/hue), js/favorites.js
 // gotcha: DOM is built with createElement + textContent only — highlight text is untrusted input
 // ---
 (function (KC) {
@@ -41,6 +41,7 @@
       art.setAttribute('data-type', rec.type);
       if (rec.tag) art.setAttribute('data-tag', rec.tag);
       if (rec.hiddenReason) art.className += ' is-hidden-record';
+      if (KC.favorites.has(rec)) art.className += ' is-fav';
 
       var q = el('p', 'q');
       q.appendChild(el('span', 'q-text', rec.text || KC.i18n.t('type.' + rec.type)));
@@ -69,6 +70,15 @@
       if (rec.hiddenReason === 'duplicate') meta.appendChild(flag('flag-dup', KC.i18n.t('card.possibleDuplicate')));
       if (rec.truncated) meta.appendChild(flag('flag-trunc', KC.i18n.t('card.truncated')));
       if (rec.noteMatch === 'near') meta.appendChild(flag('flag-near', '≈ ' + KC.i18n.t('card.noteNear')));
+
+      var isFav = KC.favorites.has(rec);
+      var fav = el('button', isFav ? 'fav is-on' : 'fav', '★');
+      fav.type = 'button';
+      fav.setAttribute('data-fav', rec.id);
+      fav.setAttribute('aria-pressed', isFav ? 'true' : 'false');
+      fav.setAttribute('aria-label', KC.i18n.t('fav.toggle'));
+      fav.title = KC.i18n.t('fav.toggle');
+      meta.appendChild(fav);
 
       var copy = el('button', 'copy', KC.i18n.t('card.copy'));
       copy.type = 'button';

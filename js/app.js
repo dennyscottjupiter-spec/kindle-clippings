@@ -103,6 +103,11 @@
 
     exportAs: function (kind) {
       var s = KC.state;
+      if (kind === 'obsidian') {
+        KC.obsidian.run(s.filtered, { lib: s.lib, callout: true });
+        KC.ui.toast(KC.i18n.t('export.done'));
+        return;
+      }
       var single = kind === 'mdBook';
       // What you see is what you export: s.filtered already reflects book and query.
       KC.exports.run(single ? 'md' : kind, s.filtered, single ? { bookTitle: KC.app.activeBookTitle() } : {});
@@ -236,6 +241,16 @@
     });
 
     byId('cards').addEventListener('click', function (e) {
+      var favId = e.target.getAttribute && e.target.getAttribute('data-fav');
+      if (favId) {
+        var favRec = byIdMap[favId];
+        var on = KC.favorites.toggle(favRec);
+        e.target.className = on ? 'fav is-on' : 'fav';
+        e.target.setAttribute('aria-pressed', on ? 'true' : 'false');
+        var card = e.target.closest ? e.target.closest('.entry') : null;
+        if (card) card.className = on ? card.className + ' is-fav' : card.className.replace(/\s*is-fav/g, '');
+        return;
+      }
       var id = e.target.getAttribute && e.target.getAttribute('data-copy');
       if (!id) return;
       var rec = byIdMap[id];
@@ -244,6 +259,36 @@
         KC.ui.toast(KC.i18n.t(okCopy ? 'card.copied' : 'error.read'));
       });
     });
+
+    byId('nav-stats').addEventListener('click', function () { KC.statsview.open(); });
+    byId('nav-quotes').addEventListener('click', function () { KC.quoteview.open(); });
+
+    // A book name in the stats panel is a shortcut back into the reader, filtered to that book.
+    byId('stats-body').addEventListener('click', function (e) {
+      var key = e.target.getAttribute && e.target.getAttribute('data-book');
+      if (!key) return;
+      KC.statsview.close();
+      KC.state.activeBook = key;
+      KC.state.rendered = 0;
+      KC.ui.render();
+      byId('main').scrollTop = 0;
+    });
+
+    var qcModal = byId('quotes-modal');
+    qcModal.addEventListener('click', function (e) {
+      var el = e.target, get = function (a) { return el.getAttribute && el.getAttribute(a); };
+      if (get('data-qc-src')) { KC.quoteview.set({ source: get('data-qc-src') }); return; }
+      if (get('data-qc-theme')) { KC.quoteview.set({ theme: get('data-qc-theme') }); return; }
+      if (get('data-qc-more')) { KC.quoteview.set({ shown: KC.quoteview.state.shown + 18 }); return; }
+      if (get('data-qc-dlall')) { KC.quoteview.downloadVisible(); return; }
+      if (get('data-qc-dl')) { KC.quoteview.downloadOne(KC.quoteview.recById(get('data-qc-dl'))); return; }
+      if (get('data-qc-fav')) {
+        KC.favorites.toggle(KC.quoteview.recById(get('data-qc-fav')));
+        KC.quoteview.set({ shown: KC.quoteview.state.shown });
+      }
+    });
+    byId('qc-q').addEventListener('input', function (e) { KC.quoteview.set({ query: e.target.value }); });
+    byId('qc-size').addEventListener('change', function (e) { KC.quoteview.set({ sizeId: e.target.value }); });
 
     byId('drawer-toggle').addEventListener('click', function () { toggleDrawer(); });
     byId('scrim').addEventListener('click', function () { toggleDrawer(false); });
@@ -257,7 +302,21 @@
       KC.state.books = KC.clean.buildBooks(KC.state.visible, KC.state.hidden);
       KC.ui.applyStrings();
       KC.ui.render();
+      if (KC.modal.isOpen('stats-modal')) KC.statsview.render();
+      if (KC.modal.isOpen('quotes-modal')) KC.quoteview.render();
     };
+  }
+
+  function fillSizes() {
+    var sel = byId('qc-size'), list = KC.quotecard.SIZES, i;
+    while (sel.firstChild) sel.removeChild(sel.firstChild);
+    for (i = 0; i < list.length; i++) {
+      var o = document.createElement('option');
+      o.value = list[i].id;
+      o.textContent = list[i].label + ' · ' + list[i].w + '×' + list[i].h;
+      sel.appendChild(o);
+    }
+    sel.value = KC.quoteview.state.sizeId;
   }
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -274,7 +333,9 @@
     pendingBook = params.get('book');
 
     KC.clipboard.install();
+    KC.modal.install();
     wire();
+    fillSizes();
     KC.sidebar.installResizer();
     KC.ui.applyStrings();
 

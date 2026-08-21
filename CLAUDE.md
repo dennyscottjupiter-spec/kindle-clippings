@@ -47,6 +47,13 @@ a module can only use what a script tag above it already defined:
 | `js/sort.js` | right-pane ordering (date/book/topic) + group-key assignment |
 | `js/covers.js` | opt-in Open Library fetch queue, cover caching, SVG placeholder covers |
 | `js/exports.js` | md / json / csv / txt / anki builders + download |
+| `js/obsidian.js` | Obsidian-native Markdown, one note per book (YAML frontmatter, callouts, blockquotes) |
+| `js/favorites.js` | starred "quotes" — content-derived keys in localStorage (`rec.id` is not stable) |
+| `js/stats.js` | pure statistics — totals, per-book, month/weekday/hour histograms, streaks (no DOM) |
+| `js/quotecard.js` | canvas quote-card renderer + PNG blob/download, Nest Hub sizes |
+| `js/modal.js` | generic overlay dialog — open/close, Esc, backdrop, focus return |
+| `js/statsview.js` | statistics panel render (CSS bars/columns, no chart library) |
+| `js/quoteview.js` | quote-card gallery — pick, preview, download PNGs |
 | `js/cards.js` | single card render, group headers, `IntersectionObserver` pagination |
 | `js/clipboard.js` | `copy` event interception + per-card copy button |
 | `js/sidebar.js` | sidebar render (sort control, topic chips, book rows) + drag resizer |
