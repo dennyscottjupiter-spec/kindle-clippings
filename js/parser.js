@@ -1,17 +1,17 @@
 // ---
 // purpose: Parse Kindle "My Clippings.txt" into structured records (English + Brazilian Portuguese)
-// exports: KC.parse(text)
-// gotcha: author is the LAST balanced paren group; BOM must be stripped before splitting
+// exports: KC.parse(text), KC.splitTitleAuthor(), KC.parseDate(), KC.CLIP_LIMIT_RE, KC.DEVICE_FOOTER_RE
+// gotcha: author is the LAST balanced paren group; U+FEFF appears mid-file, not only at offset 0
 // ---
 (function (KC) {
   'use strict';
 
   var SEPARATOR = /^[ \t]*={10}[ \t]*$/m;
 
-  // Type keywords, checked in this order. All keywords are ASCII so \b is safe.
+  // Type keywords, checked in this order. All keywords are ASCII-boundary safe.
   var TYPE_WORDS = [
-    { type: 'bookmark', re: /\b(bookmark|marcador)\b/i },
-    { type: 'note', re: /\b(note|nota)\b/i },
+    { type: 'bookmark', re: /\b(bookmark|marcador|marca[çc][ãa]o)\b/i },
+    { type: 'note', re: /\b(note|nota|apontamento)\b/i },
     { type: 'clipping', re: /\b(clipping|recorte)\b/i },
     { type: 'highlight', re: /\b(highlight|destaque|subrayado)\b/i }
   ];
@@ -21,7 +21,12 @@
 
   var PAGE_RE = /(?:page|p[áa]gina)\s+([0-9ivxlcdm]+)/i;
   var LOC_RE = /(?:location|posi[çc][ãa]o|posicao)\s*(?:n[o°.]*\s*)?(\d+)(?:\s*[-–]\s*(\d+))?/i;
-  var CLIP_LIMIT_RE = /^<.*(?:clipping limit|limite de recorte).*>$/i;
+
+  // Unanchored on purpose: the sentinel is glued onto real truncated text, never standalone.
+  var CLIP_LIMIT_RE = /<[^<>]*(?:clipping limit|limite de recorte)[^<>]*>/i;
+
+  // The device writes its own footer record; it is not a book.
+  var DEVICE_FOOTER_RE = /^(?:your\s+clippings|meus\s+recortes|seus\s+recortes)$/i;
 
   var PT_MONTHS = {
     janeiro: 0, fevereiro: 1, 'março': 2, marco: 2, abril: 3, maio: 4, junho: 5,
@@ -49,6 +54,18 @@
     return { title: s, author: '' };
   }
 
+  // Kindle uses ';' between co-authors: "Mel Robbins;Sawyer Robbins".
+  function splitAuthors(author) {
+    if (!author) return [];
+    var parts = author.split(/\s*;\s*/);
+    var out = [];
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i].trim();
+      if (p) out.push(p);
+    }
+    return out;
+  }
+
   function detectType(meta) {
     for (var i = 0; i < TYPE_WORDS.length; i++) {
       if (TYPE_WORDS[i].re.test(meta)) return TYPE_WORDS[i].type;
@@ -67,14 +84,25 @@
     if (m) {
       return { start: parseInt(m[1], 10), end: m[2] ? parseInt(m[2], 10) : parseInt(m[1], 10) };
     }
-    // Locale we do not know: take the last number run before the date label.
-    var head = meta.split(DATE_LABEL)[0];
+    // Locale we do not know: the date always occupies the last '|' segment, so drop it
+    // and take the last number run from what remains. Falls back to the date label.
+    var parts = meta.split('|');
+    var head = parts.length > 1 ? parts.slice(0, -1).join(' ') : meta.split(DATE_LABEL)[0];
     var nums = head.match(/(\d+)(?:\s*[-–]\s*(\d+))?/g);
     if (nums && nums.length) {
       var last = nums[nums.length - 1].match(/(\d+)(?:\s*[-–]\s*(\d+))?/);
       return { start: parseInt(last[1], 10), end: last[2] ? parseInt(last[2], 10) : parseInt(last[1], 10) };
     }
     return { start: null, end: null };
+  }
+
+  // The raw date string is authoritative; an unknown locale still keeps it verbatim.
+  function rawDate(meta) {
+    var m = meta.match(DATE_LABEL);
+    if (m) return m[1].trim();
+    var parts = meta.split('|');
+    if (parts.length < 2) return '';
+    return parts[parts.length - 1].trim();
   }
 
   function parseDate(raw) {
@@ -110,29 +138,33 @@
     if (!metaLine || metaLine.charAt(0) !== '-') return null;
 
     var ta = splitTitleAuthor(titleLine);
-    var dm = metaLine.match(DATE_LABEL);
     var loc = parseLocation(metaLine);
-    var type = detectType(metaLine);
+    var dateRaw = rawDate(metaLine);
 
     return {
       id: 'r' + index,
       order: index,
+      titleRaw: titleLine,
       title: ta.title,
       author: ta.author,
-      type: type,
+      authors: splitAuthors(ta.author),
+      type: detectType(metaLine),
       page: parsePage(metaLine),
       locStart: loc.start,
       locEnd: loc.end,
-      dateRaw: dm ? dm[1].trim() : '',
-      dateMs: dm ? parseDate(dm[1]) : null,
+      dateRaw: dateRaw,
+      dateMs: parseDate(dateRaw),
       metaRaw: metaLine,
       text: body,
-      clipLimit: CLIP_LIMIT_RE.test(body)
+      clipLimit: CLIP_LIMIT_RE.test(body),
+      deviceFooter: DEVICE_FOOTER_RE.test(ta.title)
     };
   }
 
   KC.parse = function (text) {
-    var clean = String(text).replace(/^﻿/, '').replace(/\r\n?/g, '\n');
+    // U+FEFF sits at the head of 9 mid-file records in the real export, not only at offset 0.
+    // A leading-only strip splits one book into two under groupBy(title).
+    var clean = String(text).replace(/﻿/g, '').replace(/\r\n?/g, '\n');
     var blocks = clean.split(SEPARATOR);
     var records = [];
     var unparsed = 0;
@@ -148,5 +180,8 @@
   };
 
   KC.splitTitleAuthor = splitTitleAuthor;
+  KC.splitAuthors = splitAuthors;
   KC.parseDate = parseDate;
+  KC.CLIP_LIMIT_RE = CLIP_LIMIT_RE;
+  KC.DEVICE_FOOTER_RE = DEVICE_FOOTER_RE;
 })(window.KC = window.KC || {});
