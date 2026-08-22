@@ -1,9 +1,10 @@
 // ---
 // purpose: Pure statistics over cleaned records — totals, per-book, time histograms, streaks
-// exports: KC.stats.compute(visible, books, lib)
+// exports: KC.stats.compute(visible, books, lib), KC.stats.bucketMonths(monthList, budget)
 // depends: nothing (no DOM, no browser globals — must stay loadable in tests/harness.js)
 // gotcha: day buckets use LOCAL calendar days, so a streak matches what the reader saw on the device
 // gotcha: byMonth is DENSE — empty months between the first and last are emitted with count 0
+// gotcha: bucketMonths lives here (not statsview/statsyears) so the bucketing rule stays unit-testable
 // ---
 (function (KC) {
   'use strict';
@@ -41,6 +42,35 @@
     return out;
   }
 
+  // Sums a dense monthList into coarser buckets keyed by `keyFn`, preserving first-seen order.
+  function groupBuckets(monthList, keyFn) {
+    var out = [], map = {}, i, k;
+    for (i = 0; i < monthList.length; i++) {
+      k = keyFn(monthList[i].key);
+      if (!map[k]) { map[k] = { key: k, count: 0 }; out.push(map[k]); }
+      map[k].count += monthList[i].count;
+    }
+    return out;
+  }
+
+  function quarterKeyOf(monthKey) {
+    return monthKey.slice(0, 4) + '-Q' + Math.ceil(Number(monthKey.slice(5, 7)) / 3);
+  }
+
+  function yearKeyOf(monthKey) {
+    return monthKey.slice(0, 4);
+  }
+
+  // Picks the coarsest granularity that keeps the bucket count within `budget` columns:
+  // months while the whole span fits, else quarters, else years — so a long history is
+  // re-bucketed instead of silently truncated. `monthList` must be dense (see byMonth above).
+  function bucketMonths(monthList, budget) {
+    if (monthList.length <= budget) return { granularity: 'month', buckets: monthList };
+    var quarters = groupBuckets(monthList, quarterKeyOf);
+    if (quarters.length <= budget) return { granularity: 'quarter', buckets: quarters };
+    return { granularity: 'year', buckets: groupBuckets(monthList, yearKeyOf) };
+  }
+
   function streaks(dayList) {
     if (!dayList.length) return { longest: 0, current: 0 };
     var longest = 1, run = 1, i;
@@ -54,6 +84,8 @@
   }
 
   KC.stats = {
+    bucketMonths: bucketMonths,
+
     compute: function (visible, books, lib) {
       lib = lib || {};
       var perBook = {}, byYear = {}, byMonth = {}, byTopic = {};

@@ -3,12 +3,15 @@
 // exports: KC.statsview.open(), close(), render()
 // depends: js/stats.js, js/i18n.js, js/topics.js, js/modal.js, js/statsyears.js
 // gotcha: every bar is a plain div sized in %, so there is no chart library and no canvas here
-// gotcha: the timeline's month window and tick labels come from js/statsyears.js, not from here
+// gotcha: the timeline's bucketing and tick labels come from js/statsyears.js + js/stats.js, not here
 // ---
 (function (KC) {
   'use strict';
 
-  var MONTHS_SHOWN = 36;
+  // Max columns the timeline will ever draw — the bucketing rule (KC.stats.bucketMonths) coarsens
+  // months -> quarters -> years to stay within this, tuned so it never overflows a 320px viewport
+  // given the CSS floor `.col { min-width: 3px }` plus its 2px gap.
+  var COLUMN_BUDGET = 48;
   var TOP_BOOKS = 12;
 
   function el(tag, cls, text) {
@@ -114,8 +117,8 @@
         sec.appendChild(el('h4', 'stat-sub', t('st.years')));
         sec.appendChild(el('p', 'stat-hint', t('st.yearsHint')));
         sec.appendChild(KC.statsyears.chips(st.byYear, KC.statsyears.refresh));
-        var months = KC.statsyears.months(st.byMonth, MONTHS_SHOWN);
-        sec.appendChild(columns(months, maxOf(months, function (m) { return m.count; }), 'cols-months'));
+        var timeline = KC.statsyears.timeline(st.byMonth, COLUMN_BUDGET);
+        sec.appendChild(columns(timeline, maxOf(timeline, function (m) { return m.count; }), 'cols-months'));
         host.appendChild(sec);
       }
 

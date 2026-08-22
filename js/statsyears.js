@@ -1,17 +1,39 @@
 // ---
-// purpose: Year filter chips for the statistics timeline, and the month window they drive
-// exports: KC.statsyears.state, chips(byYear, onChange), months(byMonth, windowSize), refresh()
-// depends: js/i18n.js, js/statsview.js (refresh() re-renders the panel)
+// purpose: Year filter chips for the statistics timeline, and the adaptive column list they drive
+// exports: KC.statsyears.state, chips(byYear, onChange), timeline(byMonth, budget), refresh()
+// depends: js/i18n.js, js/stats.js (bucketMonths), js/statsview.js (refresh() re-renders the panel)
 // gotcha: the selection is memory-only by design — reopening the panel must start at "all years"
+// gotcha: granularity (month/quarter/year) comes from KC.stats.bucketMonths, not decided here
 // ---
 (function (KC) {
   'use strict';
 
   var state = { years: [] };
+  var YEAR_TICK_MAX = 10; // caps how many year-granularity labels can be on screen at once
 
   function fmt(key, opt) {
     var d = new Date(Number(key.slice(0, 4)), Number(key.slice(5, 7)) - 1, 1);
     try { return new Intl.DateTimeFormat(KC.i18n.lang, opt).format(d); } catch (e) { return key; }
+  }
+
+  // Tooltip text (the full "label: count" shown on hover) — one form per granularity.
+  function labelOf(key, granularity) {
+    if (granularity === 'month') return fmt(key, { month: 'short', year: 'numeric' });
+    if (granularity === 'quarter') return 'Q' + key.slice(6) + ' ' + key.slice(0, 4);
+    return key; // year bucket key IS the year
+  }
+
+  // Short axis tick — sparse by design, so labels never sit closer than they can be read.
+  function tickOf(bucket, k, total, granularity, narrow) {
+    if (granularity === 'month') {
+      if (narrow) return fmt(bucket.key, { month: 'narrow' });
+      return (k === 0 || bucket.key.slice(5, 7) === '01') ? bucket.key.slice(0, 4) : '';
+    }
+    if (granularity === 'quarter') {
+      return (k === 0 || bucket.key.slice(5) === 'Q1') ? bucket.key.slice(0, 4) : '';
+    }
+    var stride = Math.max(1, Math.ceil(total / YEAR_TICK_MAX));
+    return (k % stride === 0) ? bucket.key : '';
   }
 
   // `year` null is the "all" chip — it clears the selection instead of toggling one year.
@@ -45,24 +67,26 @@
       return wrap;
     },
 
-    // byMonth is already dense — pick whole years out of it, or fall back to the trailing window.
-    months: function (byMonth, windowSize) {
-      var out = [], i;
+    // byMonth is already dense — narrow it to the selected years (if any), then hand the whole
+    // remaining span to KC.stats.bucketMonths so it renders in full at whatever granularity
+    // keeps it within `budget` columns. A short selection naturally stays monthly.
+    timeline: function (byMonth, budget) {
+      var picked = byMonth;
       if (state.years.length) {
-        for (i = 0; i < byMonth.length; i++) {
-          if (state.years.indexOf(Number(byMonth[i].key.slice(0, 4))) >= 0) out.push(byMonth[i]);
+        picked = [];
+        for (var i = 0; i < byMonth.length; i++) {
+          if (state.years.indexOf(Number(byMonth[i].key.slice(0, 4))) >= 0) picked.push(byMonth[i]);
         }
-      } else {
-        out = byMonth.slice(-windowSize);
       }
-      // One year holds one January, so year ticks would leave a single lonely label — use months.
-      var narrow = state.years.length === 1;
-      return out.map(function (m, k) {
+      var b = KC.stats.bucketMonths(picked, budget);
+      // One selected year holds one January, so a year tick would be a single lonely label —
+      // only possible at month granularity, since a coarser one already spans multiple years.
+      var narrow = b.granularity === 'month' && state.years.length === 1;
+      return b.buckets.map(function (bucket, k) {
         return {
-          label: fmt(m.key, { month: 'short', year: 'numeric' }),
-          count: m.count,
-          tick: narrow ? fmt(m.key, { month: 'narrow' })
-            : (k === 0 || m.key.slice(5, 7) === '01') ? m.key.slice(0, 4) : ''
+          label: labelOf(bucket.key, b.granularity),
+          count: bucket.count,
+          tick: tickOf(bucket, k, b.buckets.length, b.granularity, narrow)
         };
       });
     },

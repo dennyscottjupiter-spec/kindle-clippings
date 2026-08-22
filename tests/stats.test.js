@@ -108,6 +108,40 @@ function run() {
   eq(s.longest.words, 7, 'longest picks the highlight with the most words');
   eq(s.longest.title, 'Philosophy Book', 'longest carries its book title');
 
+  section('stats — adaptive bucketing (months -> quarters -> years)');
+  function monthsFrom(y, m, n) {
+    var out = [];
+    for (var i = 0; i < n; i++) {
+      out.push({ key: y + '-' + (m < 10 ? '0' + m : m), count: 1 });
+      m++; if (m > 12) { m = 1; y++; }
+    }
+    return out;
+  }
+  const short = monthsFrom(2024, 1, 4);
+  const shortB = KC.stats.bucketMonths(short, 48);
+  eq(shortB.granularity, 'month', 'a span within budget stays at monthly resolution');
+  eq(shortB.buckets, short, 'and the month list passes through unchanged');
+
+  const atBudget = monthsFrom(2024, 1, 48);
+  eq(KC.stats.bucketMonths(atBudget, 48).granularity, 'month', 'a span exactly at budget still stays monthly');
+
+  const midSpan = monthsFrom(2016, 1, 51);
+  const midB = KC.stats.bucketMonths(midSpan, 48);
+  eq(midB.granularity, 'quarter', 'a span over budget but fitting in quarters buckets by quarter');
+  eq(midB.buckets.length, 17, '51 months bucket into 17 quarters');
+  eq(midB.buckets[0], { key: '2016-Q1', count: 3 }, 'first quarter sums its 3 months');
+  eq(midB.buckets[16], { key: '2020-Q1', count: 3 }, 'last quarter sums its 3 months');
+
+  const longSpan = monthsFrom(2016, 1, 150);
+  const longB = KC.stats.bucketMonths(longSpan, 48);
+  eq(longB.granularity, 'year', 'a span too long even for quarterly budget falls back to years');
+  eq(longB.buckets.length, 13, '150 months bucket into 13 years');
+  eq(longB.buckets[0], { key: '2016', count: 12 }, 'a full year sums all 12 months');
+  eq(longB.buckets[12], { key: '2028', count: 6 }, 'the trailing partial year sums only its 6 present months');
+
+  const emptyB = KC.stats.bucketMonths([], 48);
+  eq(emptyB, { granularity: 'month', buckets: [] }, 'an empty month list stays month-granularity, no buckets');
+
   section('stats — empty input');
   const z = KC.stats.compute([], [], {});
   ok(z && typeof z === 'object', 'compute([], [], {}) does not throw');
