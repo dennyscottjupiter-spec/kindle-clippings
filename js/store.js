@@ -1,7 +1,8 @@
 // ---
 // purpose: localStorage prefs + library cache + sessionStorage raw-text cache, all failure-tolerant
-// exports: KC.store.get/set, prefs, lib, books, session, libFull
+// exports: KC.store.get/set, prefs, lib, books, session, hadFile, libFull
 // gotcha: private windows, disabled site data and quota all throw — every access is try/catch guarded
+// gotcha: `session` is only the fast same-tab cache; the durable copy lives in js/persist.js (IndexedDB)
 // ---
 (function (KC) {
   'use strict';
@@ -10,6 +11,7 @@
   var LIB_KEY = 'kc.library.v1';
   var BOOKS_KEY = 'kc.books.v1';
   var SESSION_KEY = 'kc.session.text';
+  var HADFILE_KEY = 'kc.hadFile';
   var SESSION_MAX = 4e6;
 
   function get(key, fallback) {
@@ -77,6 +79,15 @@
       },
       clear: function () {
         try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { /* ignore */ }
+      }
+    },
+
+    // Outliving the IndexedDB record is the only signal that the browser evicted the saved file.
+    hadFile: {
+      get: function () { return get(HADFILE_KEY, 0); },
+      set: function () { return set(HADFILE_KEY, Date.now()); },
+      clear: function () {
+        try { localStorage.removeItem(HADFILE_KEY); } catch (e) { /* ignore */ }
       }
     }
   };

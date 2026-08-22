@@ -1,7 +1,7 @@
 // ---
 // purpose: App entry — state, file loading, drag & drop, and every event wiring
 // exports: KC.state, KC.app.load(text)
-// depends: every other js/ module; loaded last by index.html
+// depends: every other js/ module (incl. js/persist.js); loaded last by index.html
 // gotcha: highlight data never leaves the device unless the user opts into covers (js/covers.js) —
 //   even then, only title/author are sent, never highlight text
 // ---
@@ -90,6 +90,10 @@
         if (!text.trim()) { KC.ui.toast(KC.i18n.t('error.empty')); return; }
         KC.store.session.save(text);
         KC.app.load(text);
+        KC.persist.save(text, file.name).then(function (ok) {
+          if (ok) { KC.store.hadFile.set(); KC.persist.requestDurable(); }
+          KC.ui.toast(KC.i18n.t(ok ? 'restore.saved' : 'restore.failed'));
+        });
       };
       reader.onerror = function () { KC.ui.toast(KC.i18n.t('error.read')); };
       reader.readAsText(file, 'utf-8');
@@ -114,6 +118,28 @@
       KC.ui.toast(KC.i18n.t('export.done'));
     }
   };
+
+  // Forget the saved file and go back to the dropzone, ready for a different one.
+  function resetFile() {
+    KC.persist.clear();
+    KC.store.session.clear();
+    KC.store.hadFile.clear();
+    byIdMap = {};
+    KC.search.index([]);
+
+    var s = KC.state;
+    s.visible = []; s.hidden = []; s.books = []; s.tagByBook = {};
+    s.stats = null; s.filtered = []; s.rendered = 0;
+    s.activeBook = null; s.activeTopic = null; s.query = '';
+
+    byId('q').value = '';
+    byId('file').value = '';  // same file must fire `change` again
+    byId('restore-pending').hidden = true;
+    byId('dropzone').hidden = false;
+
+    KC.ui.render();
+    KC.ui.toast(KC.i18n.t('reset.done'));
+  }
 
   function setQuery(value) {
     clearTimeout(searchTimer);
@@ -154,6 +180,14 @@
     });
 
     byId('q').addEventListener('input', function (e) { setQuery(e.target.value); });
+
+    // The markup for this button may land after this module — wire it only if it is there.
+    var rb = byId('btn-reset');
+    if (rb) {
+      rb.addEventListener('click', function () {
+        if (window.confirm(KC.i18n.t('reset.confirm'))) resetFile();
+      });
+    }
 
     byId('sidebar').addEventListener('click', function (e) {
       var segBtn = e.target.closest ? e.target.closest('#sidebar-sort-seg [data-sort]') : null;
@@ -339,16 +373,42 @@
     KC.sidebar.installResizer();
     KC.ui.applyStrings();
 
+    var hint = byId('restore-pending');
+
+    // Until 'restore.evicted' lands in the catalogs, KC.i18n.t echoes the key back — fall back then.
+    function evictedText() {
+      var s = KC.i18n.t('restore.evicted');
+      return s === 'restore.evicted' ? KC.i18n.t('restore.failed') : s;
+    }
+
+    function showDropzone(evicted) {
+      byId('dropzone').hidden = false;
+      if (evicted) { hint.hidden = false; hint.textContent = evictedText(); return; }
+      hint.hidden = !pendingBook;
+      if (pendingBook) hint.textContent = KC.i18n.t('restore.pending', { book: decodeURIComponent(pendingBook) });
+    }
+
     var savedText = KC.store.session.load();
     if (savedText) {
-      KC.app.load(savedText);
-    } else {
-      KC.ui.render();
-      if (pendingBook) {
-        var hint = byId('restore-pending');
-        hint.hidden = false;
-        hint.textContent = KC.i18n.t('restore.pending', { book: decodeURIComponent(pendingBook) });
-      }
+      KC.app.load(savedText);            // instant same-tab restore
+      return;
     }
+
+    KC.ui.render();
+    if (!KC.persist.available) { showDropzone(); return; }
+
+    // Durable restore is async: keep the dropzone out of the way instead of flashing it.
+    byId('dropzone').hidden = true;
+    hint.hidden = false;
+    hint.textContent = KC.i18n.t('restore.loading');
+    KC.persist.load().then(function (rec) {
+      if (rec && rec.text) {
+        KC.store.session.save(rec.text);
+        KC.app.load(rec.text);
+        KC.ui.toast(KC.i18n.t('restore.loaded'));
+      } else {
+        showDropzone(KC.store.hadFile.get() > 0);  // marker without a record = the browser evicted it
+      }
+    });
   });
 })(window.KC = window.KC || {});
