@@ -24,8 +24,10 @@
 
 <header class="topbar">
   <div class="brand">
-    <span class="brand-dot" aria-hidden="true"></span>
-    <h1 data-i18n="app.title">Meus destaques</h1>
+    <a class="brand-home" id="nav-home" href="index.html" data-i18n-label="nav.home">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <h1 data-i18n="app.title">Meus destaques</h1>
+    </a>
   </div>
 
   <div class="search">
@@ -35,52 +37,62 @@
 
   <div class="actions">
     <button class="btn drawer-toggle" id="drawer-toggle" type="button" data-i18n="toggle.books" aria-expanded="false"></button>
-    <span class="tip-host">
-      <a class="btn" id="nav-shelf" href="shelf.html" data-i18n="nav.shelf" aria-describedby="tip-shelf"></a>
-      <span class="tip" id="tip-shelf" role="tooltip" data-i18n="tip.shelf"></span>
-    </span>
-    <span class="tip-host">
-      <button class="btn" id="nav-stats" type="button" data-i18n="nav.stats" aria-describedby="tip-stats"></button>
-      <span class="tip" id="tip-stats" role="tooltip" data-i18n="tip.stats"></span>
-    </span>
-    <span class="tip-host">
-      <button class="btn" id="nav-quotes" type="button" data-i18n="nav.quotes" aria-describedby="tip-quotes"></button>
-      <span class="tip" id="tip-quotes" role="tooltip" data-i18n="tip.quotes"></span>
-    </span>
-    <span class="tip-host covers-host">
-      <button class="switch" id="toggle-covers" type="button" role="switch" aria-checked="false" aria-describedby="tip-covers">
-        <span class="sw-text" data-i18n="switch.covers"></span>
-        <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
-      </button>
-      <svg class="covers-ring" id="covers-ring" viewBox="0 0 20 20" hidden aria-hidden="true">
-        <circle class="ring-track" cx="10" cy="10" r="8"></circle>
-        <circle class="ring-fill" id="covers-ring-fill" cx="10" cy="10" r="8"></circle>
-      </svg>
-      <span class="tip" id="tip-covers" role="tooltip" data-i18n="tip.covers"></span>
-    </span>
-    <span class="tip-host">
-      <button class="switch" id="toggle-hidden" type="button" role="switch" aria-checked="false" aria-describedby="tip-hidden">
-        <span class="sw-text" data-i18n="switch.duplicates"></span>
-        <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
-      </button>
-      <span class="tip" id="tip-hidden" role="tooltip" data-i18n="tip.hidden"></span>
-    </span>
-    <button class="btn icon" id="toggle-theme" type="button" data-i18n-label="toggle.theme">◐</button>
-    <button class="btn flag-btn" id="toggle-lang" type="button">
-      <img class="flag" id="lang-flag" alt="" width="26" height="18">
-    </button>
-    <div class="menu" id="export-menu">
-      <button class="btn" id="export-btn" type="button" aria-haspopup="true" aria-expanded="false"
-              data-i18n="export.menu"></button>
-      <ul class="menu-list" id="export-list" hidden>
-        <li><button type="button" data-export="md" data-i18n="export.md"></button></li>
-        <li><button type="button" data-export="mdBook" data-i18n="export.mdBook"></button></li>
-        <li><button type="button" data-export="json" data-i18n="export.json"></button></li>
-        <li><button type="button" data-export="csv" data-i18n="export.csv"></button></li>
-        <li><button type="button" data-export="txt" data-i18n="export.txt"></button></li>
-        <li><button type="button" data-export="anki" data-i18n="export.anki"></button></li>
-        <li><button type="button" data-export="obsidian" data-i18n="export.obsidian"></button></li>
-      </ul>
+    <div class="more" id="more">
+      <!-- APG disclosure, NOT a menu button: the panel holds links, switches and a nested dropdown,
+           none of which are legal inside role="menu" — so no role and no aria-haspopup here. -->
+      <button class="btn icon more-btn" id="more-btn" type="button" aria-expanded="false"
+              aria-controls="more-panel" data-i18n-label="more.label">⋯</button>
+      <!-- On desktop this wrapper is display:contents, so the controls sit in .actions exactly as before. -->
+      <div class="more-panel" id="more-panel" hidden>
+        <span class="tip-host">
+          <a class="btn" id="nav-shelf" href="shelf.html" data-i18n="nav.shelf" aria-describedby="tip-shelf"></a>
+          <span class="tip" id="tip-shelf" role="tooltip" data-i18n="tip.shelf"></span>
+        </span>
+        <span class="tip-host">
+          <button class="btn" id="nav-stats" type="button" data-i18n="nav.stats" aria-describedby="tip-stats"></button>
+          <span class="tip" id="tip-stats" role="tooltip" data-i18n="tip.stats"></span>
+        </span>
+        <span class="tip-host">
+          <button class="btn" id="nav-quotes" type="button" data-i18n="nav.quotes" aria-describedby="tip-quotes"></button>
+          <span class="tip" id="tip-quotes" role="tooltip" data-i18n="tip.quotes"></span>
+        </span>
+        <span class="tip-host covers-host">
+          <button class="switch" id="toggle-covers" type="button" role="switch" aria-checked="false" aria-describedby="tip-covers">
+            <span class="sw-text" data-i18n="switch.covers"></span>
+            <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
+          </button>
+          <svg class="covers-ring" id="covers-ring" viewBox="0 0 20 20" hidden aria-hidden="true">
+            <circle class="ring-track" cx="10" cy="10" r="8"></circle>
+            <circle class="ring-fill" id="covers-ring-fill" cx="10" cy="10" r="8"></circle>
+          </svg>
+          <span class="tip" id="tip-covers" role="tooltip" data-i18n="tip.covers"></span>
+        </span>
+        <span class="tip-host">
+          <button class="switch" id="toggle-hidden" type="button" role="switch" aria-checked="false" aria-describedby="tip-hidden">
+            <span class="sw-text" data-i18n="switch.duplicates"></span>
+            <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
+          </button>
+          <span class="tip" id="tip-hidden" role="tooltip" data-i18n="tip.hidden"></span>
+        </span>
+        <button class="btn icon" id="toggle-theme" type="button" data-i18n-label="toggle.theme">◐</button>
+        <button class="btn flag-btn" id="toggle-lang" type="button">
+          <img class="flag" id="lang-flag" alt="" width="26" height="18">
+        </button>
+        <div class="menu" id="export-menu">
+          <button class="btn" id="export-btn" type="button" aria-haspopup="true" aria-expanded="false"
+                  data-i18n="export.menu"></button>
+          <ul class="menu-list" id="export-list" hidden>
+            <li><button type="button" data-export="md" data-i18n="export.md"></button></li>
+            <li><button type="button" data-export="mdBook" data-i18n="export.mdBook"></button></li>
+            <li><button type="button" data-export="json" data-i18n="export.json"></button></li>
+            <li><button type="button" data-export="csv" data-i18n="export.csv"></button></li>
+            <li><button type="button" data-export="txt" data-i18n="export.txt"></button></li>
+            <li><button type="button" data-export="anki" data-i18n="export.anki"></button></li>
+            <li><button type="button" data-export="obsidian" data-i18n="export.obsidian"></button></li>
+          </ul>
+        </div>
+        <button class="btn" id="btn-reset" type="button" data-i18n="action.reset"></button>
+      </div>
     </div>
   </div>
 </header>
@@ -159,6 +171,7 @@
 
 <script src="js/i18n.js"></script>
 <script src="js/store.js"></script>
+<script src="js/persist.js"></script>
 <script src="js/topics.js"></script>
 <script src="js/parser.js"></script>
 <script src="js/dedupe.js"></script>
@@ -173,12 +186,14 @@
 <script src="js/stats.js"></script>
 <script src="js/quotecard.js"></script>
 <script src="js/modal.js"></script>
+<script src="js/statsyears.js"></script>
 <script src="js/statsview.js"></script>
 <script src="js/quoteview.js"></script>
 <script src="js/cards.js"></script>
 <script src="js/clipboard.js"></script>
 <script src="js/sidebar.js"></script>
 <script src="js/ui.js"></script>
+<script src="js/nav.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

@@ -18,12 +18,17 @@ html { -webkit-text-size-adjust: 100%; }
 
 @media (max-width: 720px) {
   /* --- chrome / topbar ------------------------------------------------ */
+  /* two rows only — controls + search; every extra row is ~50px of a 844px screen */
   .topbar {
-    padding-left: max(.8rem, env(safe-area-inset-left));
-    padding-right: max(.8rem, env(safe-area-inset-right));
-    gap: .45rem;
+    padding: .45rem max(.8rem, env(safe-area-inset-right)) .45rem max(.8rem, env(safe-area-inset-left));
+    gap: .4rem;
   }
   .brand h1 { font-size: .74rem; letter-spacing: .1em; }
+  .brand-home { padding: .4em .7em; }
+  .more-panel:not([hidden]) {
+    max-height: calc(100svh - 8rem);
+    max-width: calc(100vw - max(1.6rem, env(safe-area-inset-left) + env(safe-area-inset-right)));
+  }
 
   /* 16px minimum or Safari zooms the whole page when the field takes focus. */
   .search input#q, #shelf-q {

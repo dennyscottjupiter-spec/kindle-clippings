@@ -1,7 +1,8 @@
 /* ---
-   purpose: Top bar, buttons, switches, flag button, dropdown menu, toast, tooltip, segmented control
+   purpose: Top bar, brand home pill, buttons, switches, flag, dropdown + ⋯ overflow menu, toast, tooltip, seg control
    depends: css/tokens.css
-   gotcha: .tip uses visibility (not display) so aria-describedby stays reachable and pointer-events:none
+   gotcha: .tip uses visibility (not display) so aria-describedby stays reachable and pointer-events:none;
+     .more-panel is display:contents on desktop (beats [hidden]) and a real dropdown below 860px
    --- */
 
 .skip {
@@ -33,6 +34,27 @@
 }
 
 .brand { display: flex; align-items: baseline; gap: .55rem; }
+/* the brand IS the home button — styled as a pill so it reads as tappable, not as a logo */
+.brand-home {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .4em .8em;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  background: var(--panel);
+  box-shadow: var(--sh-1);
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+.brand-home:focus-visible { border-color: var(--brand-1); box-shadow: var(--sh-2); }
+.brand-home:active { box-shadow: var(--sh-1); }
+/* :hover sticks after a tap on touch — only real pointers get the hover state */
+@media (hover: hover) and (pointer: fine) {
+  .brand-home:hover { border-color: var(--brand-1); box-shadow: var(--sh-2); }
+}
 .brand-dot {
   width: 10px; height: 10px; border-radius: var(--r-pill);
   background: var(--grad-primary); flex-shrink: 0;
@@ -58,6 +80,14 @@
 .search input#q::placeholder, #shelf-q::placeholder { color: var(--mid); }
 
 .actions { display: flex; align-items: center; gap: .4rem; margin-left: auto; position: relative; }
+
+/* overflow menu — a pass-through wrapper on desktop (toolbar unchanged), a dropdown below 860px.
+   The display:contents rule is scoped to the desktop query on purpose: unscoped it would outrank the
+   [hidden] attribute at every width and desync the panel from js/nav.js. */
+@media (min-width: 861px) {
+  .more, .more-panel { display: contents; }
+  #more-btn { display: none; }
+}
 
 /* buttons — three ranks, all pills */
 .btn {
@@ -249,4 +279,37 @@
   .search { order: 3; flex: 1 0 100%; max-width: none; }
   .btn { padding: .4em .7em; font-size: .85rem; }
   .tip { max-width: min(15rem, calc(100vw - 2rem)); }
+
+  /* every secondary control collapses behind ⋯ so the topbar stays one row + the search row */
+  .more { display: block; position: relative; }
+  #more-btn {
+    display: inline-flex; justify-content: center;
+    font-size: 1.05rem; line-height: 1;
+    touch-action: manipulation;
+  }
+  .more-panel { display: none; }
+  .more-panel:not([hidden]) {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: .25rem;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 30;
+    min-width: 13.5rem;
+    max-width: calc(100vw - 1.6rem);
+    max-height: calc(100svh - 7rem);   /* svh, not dvh — dvh re-resolves as the iOS URL bar animates */
+    overflow-y: auto;
+    padding: .4rem;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: var(--r-md);
+    box-shadow: var(--sh-2);
+  }
+  .more-panel > .tip-host, .more-panel .menu { display: flex; flex-direction: column; width: 100%; }
+  .more-panel .btn, .more-panel .switch { width: 100%; justify-content: flex-start; }
+  .more-panel .btn.icon { width: 100%; height: auto; padding: .5em 1em; }
+  /* inline, not absolute — a dropdown inside a dropdown would run off the screen */
+  .more-panel .menu-list { position: static; min-width: 0; margin-top: .25rem; }
 }
