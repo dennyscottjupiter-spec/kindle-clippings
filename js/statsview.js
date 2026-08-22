@@ -1,8 +1,9 @@
 // ---
 // purpose: Render the statistics panel — KPI tiles, timeline, years, top books, topics, rhythm, extremes
 // exports: KC.statsview.open(), close(), render()
-// depends: js/stats.js, js/i18n.js, js/topics.js, js/modal.js
+// depends: js/stats.js, js/i18n.js, js/topics.js, js/modal.js, js/statsyears.js
 // gotcha: every bar is a plain div sized in %, so there is no chart library and no canvas here
+// gotcha: the timeline's month window and tick labels come from js/statsyears.js, not from here
 // ---
 (function (KC) {
   'use strict';
@@ -75,14 +76,6 @@
     return m;
   }
 
-  function monthLabel(key) {
-    var parts = key.split('-');
-    var d = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
-    try {
-      return new Intl.DateTimeFormat(KC.i18n.lang, { month: 'short', year: 'numeric' }).format(d);
-    } catch (e) { return key; }
-  }
-
   function weekdayNames() {
     var out = [], i;
     for (i = 0; i < 7; i++) {
@@ -117,14 +110,11 @@
       host.appendChild(kpis);
 
       if (st.byMonth.length) {
-        // Tick every January, plus the first column shown — a 36-month window may hold no January.
-        var months = st.byMonth.slice(-MONTHS_SHOWN).map(function (m, k) {
-          return {
-            label: monthLabel(m.key), count: m.count,
-            tick: (k === 0 || m.key.slice(5, 7) === '01') ? m.key.slice(0, 4) : ''
-          };
-        });
         var sec = section(t('st.timeline'), t('st.timelineHint'));
+        sec.appendChild(el('h4', 'stat-sub', t('st.years')));
+        sec.appendChild(el('p', 'stat-hint', t('st.yearsHint')));
+        sec.appendChild(KC.statsyears.chips(st.byYear, KC.statsyears.refresh));
+        var months = KC.statsyears.months(st.byMonth, MONTHS_SHOWN);
         sec.appendChild(columns(months, maxOf(months, function (m) { return m.count; }), 'cols-months'));
         host.appendChild(sec);
       }

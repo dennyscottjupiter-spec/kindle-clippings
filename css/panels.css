@@ -1,6 +1,6 @@
 /* ---
    purpose: Overlay dialogs — statistics panel (tiles, bars, histograms) and the quote-card gallery
-   depends: css/tokens.css
+   depends: css/tokens.css, css/sidebar.css (.yr-chip extends its .chip)
    gotcha: .modal is toggled with the [hidden] attribute, so its show rule MUST be :not([hidden])
    --- */
 
@@ -91,6 +91,23 @@
 .stat-sub { font-size: .72rem; color: var(--mid); margin: .8rem 0 .3rem; font-weight: 600; }
 .stat-hint { font-size: .78rem; color: var(--mid); margin-bottom: .6rem; }
 .stat-empty { color: var(--mid); padding: 2rem 0; text-align: center; }
+
+/* year filter — reuses .chip from sidebar.css, which mobile.css already gives a 44px hit area */
+.stat-years { display: flex; flex-wrap: wrap; gap: .4rem; margin: 0 0 .8rem; }
+.yr-chip {
+  --topic-bg: var(--sunk);
+  --topic-fg: var(--mid);
+  --topic-edge: var(--brand-1);
+  border-color: var(--rule);
+  font-variant-numeric: tabular-nums;
+}
+.yr-chip:hover { color: var(--ink); border-color: var(--brand-1); }
+.yr-chip[aria-pressed="true"] {
+  background: var(--grad-primary);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: var(--sh-1);
+}
 
 .bar-row {
   display: grid;
