@@ -1,5 +1,5 @@
 // ---
-// purpose: Quote-card panel — pick starred highlights, preview them as images, download PNGs
+// purpose: Quote-card panel — pick starred highlights, preview them as images, download JPEGs
 // exports: KC.quoteview.open(), close(), render(), refreshStars()
 // depends: js/quotecard.js, js/favorites.js, js/i18n.js, js/topics.js, js/modal.js
 // gotcha: previews draw at PREVIEW_SCALE to stay cheap; the download always redraws at scale 1
@@ -73,7 +73,7 @@
     star.title = KC.i18n.t('fav.toggle');
     bar.appendChild(star);
 
-    var dl = el('button', 'qc-btn', '↓ PNG');
+    var dl = el('button', 'qc-btn', '↓ JPG');
     dl.type = 'button';
     dl.setAttribute('data-qc-dl', rec.id);
     dl.title = KC.i18n.t('qc.download');
@@ -146,7 +146,7 @@
 
     downloadOne: function (rec) {
       var s = sizeOf(view.sizeId);
-      var name = slug(rec.title) + '-' + s.w + 'x' + s.h + '.png';
+      var name = slug(rec.title) + '-' + s.w + 'x' + s.h + '.jpg';
       return KC.quotecard.download(rec, optsFor(rec, 1), name);
     },
 

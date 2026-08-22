@@ -1,5 +1,5 @@
 // ---
-// purpose: Render one highlight to a PNG quote card at a chosen screen size (landscape or portrait)
+// purpose: Render one highlight to a JPEG quote card at a chosen screen size (landscape or portrait)
 // exports: KC.quotecard.SIZES/draw()/toBlob()/download()
 // depends: nothing (canvas only, no network, no fonts loaded)
 // gotcha: draw() works in CSS pixels — it sets canvas.width = w * scale and ctx.scale(scale, scale),
@@ -27,6 +27,9 @@
   var SERIF = 'Georgia, "Iowan Old Style", "Times New Roman", serif';
   var SANS = '"Helvetica Neue", Arial, sans-serif';
   var LH = 1.35;
+
+  // JPEG quality: below ~0.85 glyph edges on the flat card background show ringing artifacts.
+  var JPEG_QUALITY = 0.92;
 
   function accentOf(hue) {
     return typeof hue === 'number' ? 'hsl(' + hue + ',70%,55%)' : '#6C63FF';
@@ -192,14 +195,14 @@
       if (canvas.toBlob) {
         canvas.toBlob(function (blob) {
           blob ? resolve(blob) : reject(new Error('toBlob failed'));
-        }, 'image/png');
+        }, 'image/jpeg', JPEG_QUALITY);
         return;
       }
-      var url = canvas.toDataURL('image/png');
+      var url = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
       var bin = atob(url.split(',')[1]);
       var bytes = new Uint8Array(bin.length);
       for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-      resolve(new Blob([bytes], { type: 'image/png' }));
+      resolve(new Blob([bytes], { type: 'image/jpeg' }));
     });
   }
 
@@ -208,7 +211,7 @@
       var url = URL.createObjectURL(blob);
       var a = document.createElement('a');
       a.href = url;
-      a.download = filename || 'quote.png';
+      a.download = filename || 'quote.jpg';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
