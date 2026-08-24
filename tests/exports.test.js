@@ -74,10 +74,21 @@ function run() {
   ok(txt.text.indexOf('#HabitosAtomicos') !== -1, 'TXT carries the tag inline');
   const anki = KC.exports.build('anki', recs, {});
   eq(anki.name, 'kindle-anki.tsv', 'anki filename');
-  const rows = anki.text.trim().split('\n');
+  const all = anki.text.trim().split('\n');
+  const head = all.slice(0, 5), rows = all.slice(5);
+  eq(head.join('|'), '#separator:tab|#html:false|#notetype:Basic|#deck:Kindle|#tags column:3',
+    'the five Anki headers open the file, in order');
+  ok(rows.every(function (r) { return r.charAt(0) !== '#'; }), 'no header line survives past the head');
   ok(rows.every(function (r) { return r.split('\t').length === 3; }), 'every Anki row has exactly 3 columns');
-  ok(rows.every(function (r) { return r.split('\t')[2].charAt(0) === '#'; }), 'column 3 is the tag');
+  ok(rows.every(function (r) { return /^"(?:[^"]|"")*"$/.test(r.split('\t')[0]); }), 'column 1 is a quoted field');
+  ok(rows.every(function (r) { return r.split('\t')[2].slice(0, 2) === '"#'; }), 'column 3 is the quoted tag');
   ok(anki.text.indexOf('\r') === -1, 'no stray carriage returns in the TSV');
+  const evil = KC.exports.build('anki', [{
+    id: 'rY', title: 'T', author: '', type: 'highlight', page: null, locStart: null, locEnd: null,
+    dateRaw: '', text: '#hash\tafter tab "quoted"\nsecond line', truncated: false, note: null, tag: '#T'
+  }], {}).text.trim().split('\n').slice(5).join('\n');
+  eq(evil, '"#hash\tafter tab ""quoted""\nsecond line"\t"T"\t"#T"',
+    'a tab, a newline, a leading # and inner quotes all stay inside one quoted field');
 
   section('exports — guards');
   ok(['md', 'json', 'csv', 'txt', 'anki'].every(function (k) {

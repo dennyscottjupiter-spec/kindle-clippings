@@ -2,7 +2,8 @@
 // purpose: Build Markdown / JSON / CSV / TXT / Anki exports and hand them to the browser
 // exports: KC.exports.build(kind, records, ctx), KC.exports.download(), KC.exports.run()
 // depends: js/i18n.js (labels follow the UI language; the hashtag never does)
-// gotcha: pt-BR CSV uses ';' — that is what Brazilian Excel expects
+// gotcha: pt-BR CSV uses ';' — that is what Brazilian Excel expects; the Anki TSV opens with
+//   '#'-headers that MUST stay the first lines, and every Anki field is quoted (see ankiField)
 // ---
 (function (KC) {
   'use strict';
@@ -129,18 +130,28 @@
     return blocks.join('\n\n') + '\n';
   }
 
+  // Anki's reader skips any line starting with '#' and treats a leading '"' as a quote,
+  // so EVERY field is quoted and inner quotes doubled — an unquoted highlight could
+  // silently vanish or shift columns. Newlines stay real: #html:false makes Anki itself
+  // escape the text and turn them into <br>, which beats hand-rolling HTML escaping.
   function ankiField(v) {
     var s = (v === null || v === undefined) ? '' : String(v);
-    return s.replace(/\t/g, ' ').replace(/\r\n|\r|\n/g, '<br>');
+    return '"' + s.replace(/\r\n|\r/g, '\n').replace(/"/g, '""') + '"';
   }
 
+  // No '#columns:' on purpose: named columns are matched against the note type's own
+  // field names, so 'Front/Back' would leave the back unmapped on a pt-BR collection.
+  // With no names Anki maps the non-meta columns by index, which is what we want.
+  var ANKI_HEAD = ['#separator:tab', '#html:false', '#notetype:Basic', '#deck:Kindle', '#tags column:3'];
+
   function buildAnki(records) {
-    var lines = [];
+    var lines = ANKI_HEAD.slice();
     for (var i = 0; i < records.length; i++) {
       var r = records[i];
       if (!r.text) { continue; }
-      var titleLine = r.title + (r.author ? ' — ' + r.author : ''), pl = pageLocParts(r);
-      var back = titleLine + (pl.length ? ' · ' + pl.join(' · ') : '');
+      var titleLine = r.title + (r.author ? ' — ' + r.author : ''), parts = pageLocParts(r);
+      if (r.dateRaw) { parts.push(r.dateRaw); }
+      var back = titleLine + (parts.length ? ' · ' + parts.join(' · ') : '');
       lines.push(ankiField(r.text) + '\t' + ankiField(back) + '\t' + ankiField(r.tag));
     }
     return lines.join('\n') + '\n';
