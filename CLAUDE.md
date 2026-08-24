@@ -31,7 +31,7 @@ non-zero if any assertion failed:
 | `stats.test.js` | stats totals, per-book/topic aggregates, time histograms, streaks |
 | `real.test.js` | regression against the user's real `My Clippings.txt` at repo root — gitignored, personal; self-skips when the file is absent |
 
-Baseline as of this writing: **213 passed, 0 failed** with the real file present.
+Baseline as of this writing: **245 passed, 0 failed** with the real file present.
 
 To view the app itself: open `index.html` directly (double-click / `file://`), or serve it — there
 is no dev server script, any static file server works (e.g. `python -m http.server`).
@@ -46,8 +46,10 @@ a module can only use what a script tag above it already defined:
 
 | File | Role |
 |---|---|
-| `js/i18n.js` | pt-BR/en catalogs, accent-folding `fold()`, `Intl` formatters |
+| `js/i18n.js` | pt-BR/en catalogs, accent-folding `fold()`, `Intl` formatters, `KC.i18n.add()` |
+| `js/i18n-*.js` | per-feature string packs, each calling `KC.i18n.add()` — `anki` · `qc` · `help` · `about` · `topics` · `cardactions`. Loaded as a contiguous block right after `i18n.js`, before any consumer |
 | `js/store.js` | localStorage prefs + library cache, sessionStorage raw-text cache (all try/catch) |
+| `js/persist.js` | keeps the clippings file on-device between sessions |
 | `js/topics.js` | fixed 15-topic taxonomy, Open Library subject classifier |
 | `js/parser.js` | raw clippings text → records (`KC.parse`) |
 | `js/dedupe.js` | union-find over position overlap + text containment |
@@ -56,23 +58,33 @@ a module can only use what a script tag above it already defined:
 | `js/search.js` | tokenized, accent-insensitive search |
 | `js/sort.js` | right-pane ordering (date/book/topic) + group-key assignment |
 | `js/covers.js` | opt-in Open Library fetch queue, cover caching, SVG placeholder covers |
-| `js/exports.js` | md / json / csv / txt / anki builders + download |
+| `js/exports.js` | md / json / csv / txt / anki builders + download; the Anki TSV's `#`-headers must stay the first lines and every field is quoted |
+| `js/anki.js` | wires `#nav-anki` to the shared TSV builder — guarded, the button does not exist on `shelf.html` |
 | `js/obsidian.js` | Obsidian-native Markdown, one note per book (YAML frontmatter, callouts, blockquotes) |
+| `js/version.js` | `KC.version.CURRENT` + the `RELEASES` array (version/date/i18n keys) — pure data, no DOM |
 | `js/favorites.js` | starred "quotes" — content-derived keys in localStorage (`rec.id` is not stable) |
 | `js/stats.js` | pure statistics — totals, per-book, per-year, **dense** month + weekday/hour histograms, streaks (no DOM, no browser globals — the harness loads it) |
-| `js/quotecard.js` | canvas quote-card renderer + PNG blob/download; `SIZES` = nesthub / fhd / qhd / iphone / android / square |
+| `js/quotecard.js` | canvas quote-card renderer + JPEG blob/download; `SIZES` = nesthub / fhd / qhd / iphone / android / square. Its `THEMES`/`accentOf` colours are literals **mirroring `css/tokens.css`** — a canvas cannot read custom properties, so a repaint must touch both |
 | `js/modal.js` | generic overlay dialog — open/close, Esc, backdrop, focus return, body scroll lock |
+| `js/statsyears.js` | year picker for the stats timeline |
 | `js/statsview.js` | statistics panel render — KPI tiles, month timeline, per-year bars, top books, topics, weekday/hour rhythm, extremes (CSS bars/columns, no chart library) |
-| `js/quoteview.js` | quote-card gallery — pick, preview, download PNGs |
+| `js/quotesort.js` | quote-gallery ordering — newest / oldest / book A-Z / quote A-Z / longest |
+| `js/quoteview.js` | quote-card gallery — source toggle, book filter, search, sort, preview, download JPEGs |
+| `js/helpview.js` | help panel render (`#help-body`) — ten `.doc-section`s built from `i18n-help` keys |
+| `js/aboutview.js` | about panel render (`#about-body`) — what the app is, privacy note, `KC.version.RELEASES` changelog |
 | `js/cards.js` | single card render, group headers, `IntersectionObserver` pagination |
+| `js/cardactions.js` | per-card JPEG + export buttons. **Wraps `KC.cards.appendPage`** instead of editing `cards.js`, so every 200-card batch gets augmented; each processed `.entry` is marked `[data-ca-done]` |
 | `js/clipboard.js` | `copy` event interception + per-card copy button |
+| `js/topicfilter.js` | shared topic-chip selection used by BOTH `sidebar.js` and `shelf.js` |
 | `js/sidebar.js` | sidebar render (sort control, topic chips, book rows) + drag resizer |
 | `js/ui.js` | chrome render — book banner, sort bar, stat line, empty state, toast, `render()` |
+| `js/nav.js` | topbar disclosure / mobile chrome wiring |
 | `js/app.js` | `KC.state`, file loading, drag & drop, all event wiring (loaded last) |
 | `shelf.html` / `js/shelf.js` | standalone cover-shelf page; reads the localStorage book/library cache and, with covers on, fetches what is missing (it seeds `KC.state` and a minimal `KC.ui.toast` itself, since `js/app.js` is not loaded there) |
 
 The table order **is** the `<script>` order in `index.html`. `js/shelf.js` is not in that list — it is
-loaded only by `shelf.html`, after `i18n` / `store` / `topics` / `covers`.
+loaded only by `shelf.html`, after `i18n` / `i18n-topics` / `store` / `topics` / `covers` / `topicfilter`
+(and followed there by `nav`).
 
 `tests/harness.js` loads exactly ten modules — its `FILES` array — in this order, into a bare Node
 `vm` context whose only globals are `console`, `setTimeout`, `window` and `navigator`:
@@ -89,22 +101,24 @@ this reason — keep it that way or `stats.test.js` dies at load.
 
 ### CSS
 
-Seven sheets in `css/`, no build step, class names global across all of them. Load order differs per
+Nine sheets in `css/`, no build step, class names global across all of them. Load order differs per
 page and each page's order is the cascade:
 
 | Page | Order |
 |---|---|
-| `index.html` | `tokens` → `chrome` → `sidebar` → `reader` → `panels` → `mobile` |
-| `shelf.html` | `tokens` → `chrome` → `sidebar` → `shelf` → `mobile` |
+| `index.html` | `tokens` → `fonts` → `chrome` → `sidebar` → `reader` → `panels` → `docs` → `mobile` |
+| `shelf.html` | `tokens` → `fonts` → `chrome` → `sidebar` → `shelf` → `mobile` |
 
 | Sheet | Owns |
 |---|---|
 | `tokens.css` | reset, color tokens (light/dark), topic-hue mechanism, type scale, radii, shadows — **loaded first, everyone else assumes its custom properties** |
+| `fonts.css` | `@font-face` for the self-hosted variable fonts in `fonts/` — Fraunces (display/serif) and Inter (UI/sans), latin + latin-ext. No network at runtime |
 | `chrome.css` | top bar, buttons, switches, flag button, dropdown menu, toast, tooltip, segmented control, covers ring |
 | `sidebar.css` | shell grid, resizable sidebar, book rows with spine/badge, topic chip row, scrim |
 | `reader.css` | reading pane — dropzone, book banner, sort bar, stat line, cards, group headers |
 | `panels.css` | the two overlay dialogs — `.modal` shell, statistics panel (KPI tiles, `.bar-row`, `.cols` histograms) and the quote-card gallery (`.qc-*`) |
 | `shelf.css` | the standalone shelf page — page scroll, tools bar, cover cards grid, shelf plank |
+| `docs.css` | the two document panels — generic `.doc-*` system (jump nav, sections, term/desc items, callouts, `.doc-kbd`) shared by help and about, plus the `.about-release*` changelog list |
 | `mobile.css` | phone/tablet layer — `dvh` height, safe-area insets, 44px touch targets, sidebar drawer, `(hover: none)` reveals, landscape-phone topbar — **must stay last**, it overrides every sheet above it |
 
 ### Deliberate, easy-to-regress details
@@ -112,6 +126,11 @@ page and each page's order is the cascade:
 - The `root` of the `IntersectionObserver` in `cards.js` must be **the scrolling panel**, not the
   viewport — with `root: null` in this two-pane layout the pagination sentinel either never fires or
   fires immediately.
+- `js/cardactions.js` adds its buttons by **wrapping `KC.cards.appendPage`**, not by editing
+  `js/cards.js`. Every path that draws cards (first render, `fillPane()`'s top-up loop, the
+  observer) calls that property at call time, so the wrap catches all of them; `[data-ca-done]`
+  stops a later batch re-processing an existing card. Reassigning or inlining `appendPage` in
+  `cards.js` silently strips the buttons off every card past the first page.
 - The pagination reset key is `activeBook | activeTopic | query | showHidden | sortMode` — all five,
   or stale results survive a filter/sort change.
 - All DOM built from parsed clipping content uses `createElement` + `textContent`, never `innerHTML`
