@@ -1,16 +1,20 @@
 // ---
-// purpose: Quote-card panel — pick starred highlights, preview them as images, download JPEGs
-// exports: KC.quoteview.open(), close(), render(), refreshStars()
-// depends: js/quotecard.js, js/favorites.js, js/i18n.js, js/topics.js, js/modal.js
+// purpose: Quote-card panel — filter and order starred highlights, preview them, download JPEGs
+// exports: KC.quoteview.open(), close(), render(), set(), recById(), downloadOne(), downloadVisible()
+// depends: js/quotesort.js, js/quotecard.js, js/favorites.js, js/i18n.js, js/topics.js, js/modal.js
 // gotcha: previews draw at PREVIEW_SCALE to stay cheap; the download always redraws at scale 1
 // ---
 (function (KC) {
   'use strict';
 
-  var PREVIEW_SCALE = 0.42;
-  var PAGE = 18;
+  var PREVIEW_SCALE = 0.42, PAGE = 18, wired = false;
 
-  var view = { source: 'fav', query: '', sizeId: 'nesthub', theme: 'dark', shown: PAGE };
+  var view = {
+    source: 'fav', bookKey: 'all', mode: 'dateDesc', query: '',
+    sizeId: 'nesthub', theme: 'dark', shown: PAGE
+  };
+
+  function byId(id) { return document.getElementById(id); }
 
   function el(tag, cls, text) {
     var n = document.createElement(tag);
@@ -40,19 +44,10 @@
     return KC.i18n.fold(String(s || 'quote')).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40) || 'quote';
   }
 
-  function pool() {
-    var s = KC.state, out = [], i;
-    var all = s.visible || [];
-    var highlights = [];
-    for (i = 0; i < all.length; i++) {
-      if ((all[i].type === 'highlight' || all[i].type === 'clipping') && all[i].text) highlights.push(all[i]);
-    }
-    out = view.source === 'fav' ? KC.favorites.pick(highlights) : highlights;
-    if (!view.query) return out;
-    var q = KC.i18n.fold(view.query);
-    return out.filter(function (r) {
-      return KC.i18n.fold(r.text + ' ' + r.title).indexOf(q) !== -1;
-    });
+  // One pass for both numbers the panel shows: everything in this source, and what survives the filters.
+  function lists() {
+    var pool = KC.quotesort.pool(KC.state.visible || [], view.source);
+    return { pool: pool, list: KC.quotesort.apply(pool, view) };
   }
 
   function cardNode(rec) {
@@ -83,9 +78,45 @@
     return wrap;
   }
 
-  function paintControls() {
-    var m = document.getElementById('quotes-modal');
-    var i, nodes = m.querySelectorAll('[data-qc-src]');
+  function fillSelect(sel, opts, value) {
+    while (sel.firstChild) sel.removeChild(sel.firstChild);
+    for (var i = 0; i < opts.length; i++) {
+      var o = document.createElement('option');
+      o.value = opts[i][0];
+      o.textContent = opts[i][1];
+      sel.appendChild(o);
+    }
+    sel.value = value;
+  }
+
+  function titleOf(key) {
+    var books = KC.state.books || [];
+    for (var i = 0; i < books.length; i++) if (books[i].key === key) return books[i].title;
+    return key;
+  }
+
+  // A picked book survives a source switch: it stays listed with its real count, zero included.
+  function fillBooks(pool) {
+    var t = KC.i18n.t, books = KC.quotesort.books(pool), opts = [['all', t('qc.book.all')]], found = false, i;
+    for (i = 0; i < books.length; i++) {
+      opts.push([books[i].key, t('qc.book.opt', { title: books[i].title, n: books[i].n })]);
+      if (books[i].key === view.bookKey) found = true;
+    }
+    if (view.bookKey !== 'all' && !found) {
+      opts.push([view.bookKey, t('qc.book.opt', { title: titleOf(view.bookKey), n: 0 })]);
+    }
+    fillSelect(byId('qc-book'), opts, view.bookKey);
+  }
+
+  function fillSorts() {
+    var t = KC.i18n.t, modes = KC.quotesort.MODES, opts = [], i;
+    for (i = 0; i < modes.length; i++) opts.push([modes[i], t('qc.sort.' + modes[i])]);
+    fillSelect(byId('qc-sort'), opts, view.mode);
+  }
+
+  function paintControls(res) {
+    var t = KC.i18n.t, m = byId('quotes-modal'), i, nodes;
+    nodes = m.querySelectorAll('[data-qc-src]');
     for (i = 0; i < nodes.length; i++) {
       nodes[i].setAttribute('aria-pressed', nodes[i].getAttribute('data-qc-src') === view.source ? 'true' : 'false');
     }
@@ -93,8 +124,38 @@
     for (i = 0; i < nodes.length; i++) {
       nodes[i].setAttribute('aria-pressed', nodes[i].getAttribute('data-qc-theme') === view.theme ? 'true' : 'false');
     }
-    var sel = document.getElementById('qc-size');
-    if (sel && sel.value !== view.sizeId) sel.value = view.sizeId;
+    var size = byId('qc-size');
+    if (size && size.value !== view.sizeId) size.value = view.sizeId;
+    var q = byId('qc-q');
+    if (q && q.value !== view.query) q.value = view.query;
+    fillSorts();
+    fillBooks(res.pool);
+
+    var narrowed = view.bookKey !== 'all' || !!view.query;
+    var count = byId('qc-count');
+    count.textContent = t('qc.count', { n: res.list.length, total: res.pool.length });
+    count.className = narrowed ? 'qc-count is-narrow' : 'qc-count';
+    byId('qc-clear').hidden = !narrowed;
+  }
+
+  function emptyNode(res) {
+    var t = KC.i18n.t, box = el('div', 'qc-empty');
+    if (!res.pool.length && view.source === 'fav') {
+      box.appendChild(el('p', 'qc-empty-t', t('qc.emptyFav')));
+      return box;
+    }
+    box.appendChild(el('p', 'qc-empty-t', t('qc.empty.title')));
+    box.appendChild(el('p', 'qc-empty-h', t('qc.empty.hint')));
+    return box;
+  }
+
+  // The source/theme segments already ride app.js's delegated handler — these controls are ours.
+  function wire() {
+    if (wired) return;
+    wired = true;
+    byId('qc-sort').addEventListener('change', function (e) { KC.quoteview.set({ mode: e.target.value }); });
+    byId('qc-book').addEventListener('change', function (e) { KC.quoteview.set({ bookKey: e.target.value }); });
+    byId('qc-clear').addEventListener('click', function () { KC.quoteview.set({ bookKey: 'all', query: '' }); });
   }
 
   KC.quoteview = {
@@ -113,26 +174,20 @@
     },
 
     render: function () {
-      var host = document.getElementById('quotes-grid');
-      var foot = document.getElementById('quotes-foot');
-      var t = KC.i18n.t;
+      var host = byId('quotes-grid'), foot = byId('quotes-foot'), t = KC.i18n.t;
       if (!host) return;
       while (host.firstChild) host.removeChild(host.firstChild);
       while (foot.firstChild) foot.removeChild(foot.firstChild);
-      paintControls();
 
-      var list = pool();
-      if (!list.length) {
-        host.appendChild(el('p', 'stat-empty',
-          t(view.source === 'fav' ? 'qc.emptyFav' : 'empty.noResults')));
-        return;
-      }
+      var res = lists();
+      paintControls(res);
+      if (!res.list.length) { host.appendChild(emptyNode(res)); return; }
 
-      var end = Math.min(view.shown, list.length);
-      for (var i = 0; i < end; i++) host.appendChild(cardNode(list[i]));
+      var end = Math.min(view.shown, res.list.length);
+      for (var i = 0; i < end; i++) host.appendChild(cardNode(res.list[i]));
 
-      if (end < list.length) {
-        var more = el('button', 'btn', t('qc.more', { n: list.length - end }));
+      if (end < res.list.length) {
+        var more = el('button', 'btn', t('qc.more', { n: res.list.length - end }));
         more.type = 'button';
         more.setAttribute('data-qc-more', '1');
         foot.appendChild(more);
@@ -152,7 +207,7 @@
 
     // Browsers throttle a burst of downloads, so they are chained one after the other.
     downloadVisible: function () {
-      var list = pool().slice(0, view.shown), i = 0;
+      var list = lists().list.slice(0, view.shown), i = 0;
       if (!list.length) return;
       KC.ui.toast(KC.i18n.t('qc.downloadAll', { n: list.length }));
       (function next() {
@@ -165,6 +220,7 @@
     },
 
     open: function () {
+      wire();
       KC.quoteview.render();
       KC.modal.open('quotes-modal');
     },

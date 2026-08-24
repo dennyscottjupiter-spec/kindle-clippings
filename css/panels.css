@@ -1,7 +1,7 @@
 /* ---
    purpose: Overlay dialogs — statistics panel (tiles, bars, histograms) and the quote-card gallery
    depends: css/tokens.css, css/sidebar.css (.yr-chip extends its .chip)
-   gotcha: .modal is toggled with the [hidden] attribute, so its show rule MUST be :not([hidden])
+   gotcha: .modal and .qc-clear are toggled with [hidden] — see their :not([hidden]) / [hidden] rules
    --- */
 
 .modal[hidden] { display: none; }
@@ -158,11 +158,52 @@
 .facts dd { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
 
 /* ---- quote cards ---- */
-.qc-tools { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+/* The gallery head carries a whole console, so it wraps: title + close on row one, tools on row two. */
+#quotes-modal .modal-head { flex-wrap: wrap; }
+#quotes-modal .modal-close { order: 1; }
+.qc-tools {
+  order: 2;
+  flex: 1 1 100%;
+  display: flex;
+  align-items: flex-end;
+  gap: .5rem .8rem;
+  flex-wrap: wrap;
+  padding-top: .7rem;
+  border-top: 1px solid var(--rule);
+}
+.qc-field { display: flex; flex-direction: column; gap: .3rem; min-width: 0; }
+.qc-field-wide { flex: 1 1 11rem; }
+.qc-lab {
+  font-family: var(--font-mono);
+  font-size: .6rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .14em;
+  color: var(--mid);
+}
 .qc-tools select, .qc-tools input[type="search"] {
   background: var(--sunk); border: 1px solid var(--rule); border-radius: var(--r-pill);
-  padding: .45em .9em; color: var(--ink);
+  padding: .45em .9em; color: var(--ink); font-size: .84rem;
+  max-width: 100%; min-width: 0;
 }
+.qc-tools select:hover, .qc-tools input[type="search"]:hover { border-color: var(--brand-1); }
+/* the live tally is the one place the bar raises its voice — accented while a filter is narrowing */
+.qc-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--mid);
+  padding: .45em .75em;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+.qc-count.is-narrow { color: var(--brand-1); border-color: var(--brand-1); }
+/* .btn already sets display:inline-flex, which outranks [hidden] — undo it explicitly */
+.qc-clear[hidden] { display: none; }
+.qc-clear { font-size: .76rem; padding: .45em .8em; }
+.qc-empty { grid-column: 1 / -1; text-align: center; padding: 2.6rem 1rem; color: var(--mid); }
+.qc-empty-t { font-size: 1rem; font-weight: 600; color: var(--ink); margin-bottom: .35rem; }
+.qc-empty-h { font-size: .85rem; }
 .qc-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
@@ -199,6 +240,15 @@
   .modal-card { border-radius: 0; border: 0; height: 100%; }
   .bar-row { grid-template-columns: minmax(4.5rem, 8rem) 1fr auto; gap: .5rem; }
   .qc-grid { grid-template-columns: 1fr; }
+  /* fields pair up two per row; book and search take a row each — their values are long */
+  .qc-field { flex: 1 1 8.5rem; }
+  .qc-field-wide { flex: 1 1 100%; }
+  .qc-tools { gap: .45rem .6rem; padding-top: .6rem; }
+  /* 16px minimum or Safari zooms the whole page when a field takes focus */
+  .qc-tools select, .qc-tools input[type="search"] { font-size: 16px; min-height: 44px; width: 100%; }
+  /* the tally rides the title row instead of eating a whole row of a 390px screen */
+  #quotes-modal .modal-head { position: relative; }
+  .qc-count { position: absolute; top: 1.05rem; right: 4.6rem; margin: 0; }
   .facts { grid-template-columns: 1fr; gap: 0 0; }
   .facts dd { margin-bottom: .5rem; }
 }
