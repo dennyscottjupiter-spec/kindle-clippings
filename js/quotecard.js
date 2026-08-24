@@ -5,6 +5,7 @@
 // gotcha: draw() works in CSS pixels — it sets canvas.width = w * scale and ctx.scale(scale, scale),
 //   so every coordinate below is in `w` x `h` space, never device pixels. Type and padding derive
 //   from `base = Math.min(w, h)` so a tall phone card does not get giant fonts.
+// gotcha: THEMES/accentOf colors are literals mirroring css/tokens.css — update both on a repaint.
 // ---
 (function (KC) {
   'use strict';
@@ -18,21 +19,29 @@
     { id: 'square', w: 1080, h: 1080, label: 'Square' }
   ];
 
+  // Literals mirror the amber/ink palette in css/tokens.css (a canvas can't read custom
+  // properties) — update both places together if that palette changes.
   var THEMES = {
-    dark: { a: '#0E1016', b: '#1A1F2B', text: '#E9ECF2', muted: '#98A2B3', quote: 'rgba(233,236,242,.07)' },
-    light: { a: '#FFFFFF', b: '#F5F6FA', text: '#10131A', muted: '#5B6472', quote: 'rgba(16,19,26,.06)' },
-    paper: { a: '#FBF7EF', b: '#F3EADA', text: '#10131A', muted: '#5B6472', quote: 'rgba(16,19,26,.07)' }
+    dark: { a: '#16130F', b: '#2A231C', text: '#F2EAE0', muted: '#A79A8D', quote: 'rgba(242,234,224,.07)' },
+    light: { a: '#FFFFFF', b: '#FFFDFA', text: '#1C1917', muted: '#6B5F55', quote: 'rgba(28,25,23,.06)' },
+    paper: { a: '#FAF7F2', b: '#F1EBE1', text: '#1C1917', muted: '#6B5F55', quote: 'rgba(28,25,23,.07)' }
   };
 
-  var SERIF = 'Georgia, "Iowan Old Style", "Times New Roman", serif';
-  var SANS = '"Helvetica Neue", Arial, sans-serif';
+  // "Fraunces"/"Inter" lead the stacks opportunistically: if the app has already loaded them
+  // elsewhere on the page, canvas text uses them; if not, it silently falls back to the next
+  // name (spec behaviour, no error/blank glyphs) — this module still loads no fonts itself.
+  var SERIF = '"Fraunces", Georgia, "Iowan Old Style", "Times New Roman", serif';
+  var SANS = '"Inter", "Helvetica Neue", Arial, sans-serif';
   var LH = 1.35;
 
   // JPEG quality: below ~0.85 glyph edges on the flat card background show ringing artifacts.
   var JPEG_QUALITY = 0.92;
 
-  function accentOf(hue) {
-    return typeof hue === 'number' ? 'hsl(' + hue + ',70%,55%)' : '#6C63FF';
+  // The fallback follows the ground it sits on, exactly as css/tokens.css does: the lifted amber
+  // reads on the dark card, the deeper one on the two pale ones (it would wash out at #E8853C).
+  function accentOf(hue, theme) {
+    if (typeof hue === 'number') return 'hsl(' + hue + ',70%,55%)';
+    return theme === 'dark' ? '#E8853C' : '#C2410C';
   }
 
   // A real measured wrap: a word that cannot fit alone is hard-broken mid-word rather than
@@ -96,7 +105,7 @@
     var scale = opts.scale || 1;
     var th = THEMES[opts.theme] || THEMES.dark;
     var hue = typeof opts.hue === 'number' ? opts.hue : null;
-    var accent = accentOf(hue);
+    var accent = accentOf(hue, opts.theme);
 
     canvas.width = Math.round(w * scale);
     canvas.height = Math.round(h * scale);
