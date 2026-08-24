@@ -1,7 +1,7 @@
 // ---
 // purpose: Standalone shelf page — cover-card grid, topic chips, auto + manual missing-cover fetch
 // exports: nothing (wires itself on DOMContentLoaded)
-// depends: js/i18n.js, js/store.js, js/topics.js, js/covers.js
+// depends: js/i18n.js, js/store.js, js/topics.js, js/covers.js, js/topicfilter.js
 // gotcha: this page has no js/app.js, so it seeds KC.state and a minimal KC.ui.toast itself —
 //   js/covers.js reads both. It never touches highlight text; none is cached here.
 // ---
@@ -77,38 +77,7 @@
   }
 
   function renderTopics(books, lib) {
-    var host = byId('shelf-topics');
-    while (host.firstChild) host.removeChild(host.firstChild);
-
-    var counts = {}, anyReal = false, i;
-    for (i = 0; i < books.length; i++) {
-      var t = (lib[books[i].key] && lib[books[i].key].topic) || 'uncategorized';
-      if (t !== 'uncategorized') anyReal = true;
-      counts[t] = (counts[t] || 0) + 1;
-    }
-    host.hidden = !anyReal;
-    if (!anyReal) return;
-
-    var all = document.createElement('button');
-    all.type = 'button';
-    all.className = 'chip';
-    all.setAttribute('data-topic', 'all');
-    all.setAttribute('aria-pressed', currentTopic === null ? 'true' : 'false');
-    all.textContent = KC.i18n.t('topic.all');
-    host.appendChild(all);
-
-    for (i = 0; i < KC.topics.list.length; i++) {
-      var id = KC.topics.list[i].id;
-      if (!counts[id]) continue;
-      var chip = document.createElement('button');
-      chip.type = 'button';
-      chip.className = 'chip';
-      chip.setAttribute('data-topic', id);
-      chip.style.setProperty('--h', String(KC.topics.list[i].h));
-      chip.setAttribute('aria-pressed', currentTopic === id ? 'true' : 'false');
-      chip.textContent = KC.topics.label(id) + ' (' + KC.i18n.num(counts[id]) + ')';
-      host.appendChild(chip);
-    }
+    KC.topicfilter.render(byId('shelf-topics'), books, lib, currentTopic);
   }
 
   // Covers arrive one by one — repaint the affected cards in place instead of rebuilding the grid,

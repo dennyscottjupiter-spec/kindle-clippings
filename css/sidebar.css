@@ -60,8 +60,26 @@
   font: 600 .72rem/1 var(--font-sans);
   padding: .35em .7em;
   cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
 }
-.chip[aria-pressed="true"] { border-color: var(--topic-edge); box-shadow: 0 0 0 3px var(--topic-bg); }
+.chip:hover { border-color: var(--topic-edge); }
+/* pressed = filled with the topic's own edge tone, never just a ring — has to read at a glance */
+.chip[aria-pressed="true"] { background: var(--topic-edge); color: var(--accent-ink); border-color: var(--topic-edge); }
+
+/* "All topics" carries no hue, so it gets its own resting/pressed pair instead of the --h mechanism */
+.chip[data-topic="all"] { background: var(--sunk); color: var(--mid); }
+.chip[data-topic="all"]:hover { border-color: var(--rule); }
+.chip[data-topic="all"][aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+
+.topic-discover {
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem .85rem;
+}
+.topic-discover-text { flex: 1 1 14rem; font-size: .78rem; line-height: 1.4; color: var(--mid); }
+.topic-discover-cta { flex: 0 0 auto; white-space: nowrap; }
 
 .book-list { flex: 1 1 auto; }
 

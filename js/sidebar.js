@@ -1,8 +1,9 @@
 // ---
 // purpose: Render the sidebar (sort control, topic chips, book rows) and the drag resizer
 // exports: KC.sidebar.render(), KC.sidebar.sortBooks(books, mode), KC.sidebar.installResizer()
-// depends: js/i18n.js, js/topics.js, js/covers.js (cached thumb), js/store.js (width pref)
-// gotcha: topic-row stays hidden until at least one book resolves to a real topic
+// depends: js/i18n.js, js/topics.js, js/covers.js (cached thumb), js/topicfilter.js, js/store.js (width pref)
+// gotcha: with no real topic resolved yet, the row shows a discovery prompt instead of hiding —
+//   see js/topicfilter.js for that logic; chip CLICKS are still handled by js/app.js (delegated)
 // ---
 (function (KC) {
   'use strict';
@@ -10,11 +11,6 @@
   var MIN_W = 200, MAX_W = 560;
 
   function byId(id) { return document.getElementById(id); }
-
-  function topicOfBook(book) {
-    var entry = KC.state.lib[book.key];
-    return (entry && entry.topic) || 'uncategorized';
-  }
 
   function sortBooks(books, mode) {
     var lang = KC.i18n.lang;
@@ -63,37 +59,8 @@
 
   function renderTopicRow(host, books) {
     var row = el('div', 'topic-row');
-    row.hidden = true;
-
-    var counts = {}, anyReal = false;
-    for (var i = 0; i < books.length; i++) {
-      var t = topicOfBook(books[i]);
-      if (t !== 'uncategorized') anyReal = true;
-      counts[t] = (counts[t] || 0) + 1;
-    }
-
-    if (anyReal) {
-      row.hidden = false;
-      var all = el('button', 'chip');
-      all.type = 'button';
-      all.setAttribute('data-topic', 'all');
-      all.setAttribute('aria-pressed', KC.state.activeTopic === null ? 'true' : 'false');
-      all.textContent = KC.i18n.t('topic.all');
-      row.appendChild(all);
-
-      for (i = 0; i < KC.topics.list.length; i++) {
-        var id = KC.topics.list[i].id;
-        if (!counts[id]) continue;
-        var chip = el('button', 'chip');
-        chip.type = 'button';
-        chip.setAttribute('data-topic', id);
-        chip.style.setProperty('--h', String(KC.topics.list[i].h));
-        chip.setAttribute('aria-pressed', KC.state.activeTopic === id ? 'true' : 'false');
-        chip.textContent = KC.topics.label(id) + ' (' + KC.i18n.num(counts[id]) + ')';
-        row.appendChild(chip);
-      }
-    }
     host.appendChild(row);
+    KC.topicfilter.render(row, books, KC.state.lib || {}, KC.state.activeTopic);
   }
 
   function bookRow(key, title, count, topic, hue, thumb) {
