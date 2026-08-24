@@ -338,6 +338,8 @@
       KC.ui.render();
       if (KC.modal.isOpen('stats-modal')) KC.statsview.render();
       if (KC.modal.isOpen('quotes-modal')) KC.quoteview.render();
+      if (KC.modal.isOpen('help-modal')) KC.helpview.render();
+      if (KC.modal.isOpen('about-modal')) KC.aboutview.render();
     };
   }
 
