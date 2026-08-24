@@ -121,14 +121,16 @@
   padding: 3rem 1rem;
 }
 
-/* entry */
+/* entry — a neutral card; the topic rail (not a background wash) is the only colour signal */
 .entry {
   background: var(--panel);
   border-radius: var(--r-md);
-  padding: 1.15rem 1.25rem;
+  padding: 1.15rem 1.25rem 1.15rem 1.4rem;
   box-shadow: var(--sh-1);
-  border-left: 3px solid var(--topic-edge);
+  border-left: 4px solid var(--topic-edge);
 }
+/* notes swap the rail to the gold note token instead of the topic hue — same precedent as .note-attached below */
+.entry[data-type="note"] { border-left-color: var(--marker-note); }
 .entry.is-hidden-record {
   opacity: .62;
   background-image: repeating-linear-gradient(135deg, transparent 0 6px, var(--sunk) 6px 7px);
@@ -141,20 +143,10 @@
   overflow-wrap: anywhere;
 }
 
+/* cap the reading measure without narrowing the card itself */
 .entry .q-text {
-  background-image: linear-gradient(var(--swipe), var(--swipe));
-  background-repeat: no-repeat;
-  background-position: 0 62%;
-  background-size: 0% 68%;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-  transition: background-size .5s ease;
-}
-.entry.is-drawn .q-text { background-size: 100% 68%; }
-.entry[data-type="note"] .q-text { background-image: linear-gradient(var(--swipe-note), var(--swipe-note)); }
-
-@media (prefers-reduced-motion: reduce) {
-  .q-text { background-size: 100% 68%; transition: none; }
+  display: block;
+  max-width: 92ch;
 }
 
 .entry .note-attached {

@@ -8,7 +8,6 @@
   'use strict';
 
   var PAGE = 200;
-  var STAGGER = 12;
   var observer = null;
   var sentinelNode = null;
   var lastGroup = null;
@@ -34,6 +33,11 @@
     return el('span', 'card-flag ' + cls, text);
   }
 
+  // Shared by build() and groupHead() — a record's topic comes from its book, not itself.
+  function topicOf(rec) {
+    return (KC.state.lib[rec.bookKey] && KC.state.lib[rec.bookKey].topic) || 'uncategorized';
+  }
+
   KC.cards = {
     build: function (rec) {
       var art = el('article', 'entry');
@@ -42,6 +46,12 @@
       if (rec.tag) art.setAttribute('data-tag', rec.tag);
       if (rec.hiddenReason) art.className += ' is-hidden-record';
       if (KC.favorites.has(rec)) art.className += ' is-fav';
+
+      // Drives the topic rail in reader.css (var(--topic-edge) is only defined under [data-topic]).
+      var topicId = topicOf(rec);
+      art.setAttribute('data-topic', topicId);
+      var hue = KC.topics.hueOf(topicId);
+      if (hue !== null && hue !== undefined) art.style.setProperty('--h', String(hue));
 
       var q = el('p', 'q');
       q.appendChild(el('span', 'q-text', rec.text || KC.i18n.t('type.' + rec.type)));
@@ -92,7 +102,7 @@
     groupHead: function (rec) {
       var mode = KC.state.sortMode;
       var isTopic = mode === 'topic';
-      var topicId = isTopic ? rec._group : ((KC.state.lib[rec.bookKey] && KC.state.lib[rec.bookKey].topic) || 'uncategorized');
+      var topicId = isTopic ? rec._group : topicOf(rec);
       var h = el('h3', 'group-head');
       h.setAttribute('data-topic', topicId);
       var hue = KC.topics.hueOf(topicId);
@@ -115,7 +125,6 @@
       var host = document.getElementById('cards');
       var frag = document.createDocumentFragment();
       var end = Math.min(s.rendered + PAGE, s.filtered.length);
-      var fresh = [];
 
       for (var i = s.rendered; i < end; i++) {
         var rec = s.filtered[i];
@@ -123,21 +132,11 @@
           frag.appendChild(KC.cards.groupHead(rec));
           lastGroup = rec._group;
         }
-        var node = KC.cards.build(rec);
-        fresh.push(node);
-        frag.appendChild(node);
+        frag.appendChild(KC.cards.build(rec));
       }
       host.appendChild(frag);
       var drawn = s.rendered;
       s.rendered = end;
-
-      // The marker swipe draws itself in, staggered across the first cards only.
-      for (var j = 0; j < fresh.length; j++) {
-        if (drawn > 0 || j >= STAGGER) { fresh[j].className += ' is-drawn'; continue; }
-        (function (n, k) {
-          setTimeout(function () { n.className += ' is-drawn'; }, k * 35);
-        })(fresh[j], j);
-      }
       return end - drawn;
     },
 
