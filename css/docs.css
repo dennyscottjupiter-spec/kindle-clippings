@@ -2,6 +2,8 @@
    purpose: Reusable document-panel system — jump nav, headings, lead text, term/desc items, callouts
    exports (classes): .doc-body, .doc-toc, .doc-toc-link, .doc-section, .doc-h, .doc-lead, .doc-item,
      .doc-term, .doc-desc, .doc-note, .doc-kbd
+   about.js additions: .about-releases, .about-release, .about-release-head, .about-release-v,
+     .about-release-badge, .about-release-date, .about-release-list, .about-release-item
    depends: css/tokens.css (color/radius/shadow custom properties); hosted inside a css/panels.css .modal-body
    gotcha: generic and content-agnostic on purpose — a later "About / changelog" panel reuses these
      same classes, so nothing help-specific is welded on here; add new PREFIXED classes instead
@@ -84,4 +86,46 @@
 @media (max-width: 720px) {
   .doc-item { grid-template-columns: 1fr; gap: .15rem; }
   .doc-term { font-size: .88rem; }
+}
+
+/* ---- about panel: version history (js/aboutview.js) ---- */
+.about-releases { display: flex; flex-direction: column; }
+
+.about-release { padding: .9rem 0; border-top: 1px solid var(--rule); }
+.about-release:first-child { border-top: 0; padding-top: 0; }
+
+.about-release-head {
+  display: flex;
+  align-items: baseline;
+  gap: .6rem;
+  margin-bottom: .4rem;
+}
+.about-release-v {
+  font-family: var(--font-mono);
+  font-size: .84rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.about-release.is-current .about-release-v { color: var(--brand-1); }
+.about-release-badge {
+  font-family: var(--font-mono);
+  font-size: .65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--brand-1);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-line);
+  border-radius: var(--r-pill);
+  padding: .1em .6em;
+}
+.about-release-date { font-size: .78rem; color: var(--mid); margin-left: auto; }
+
+.about-release-list { list-style: disc; padding-left: 1.2em; }
+.about-release-item { font-size: .86rem; color: var(--mid); line-height: 1.55; padding: .15rem 0; }
+.about-release-item::marker { color: var(--brand-1); }
+
+@media (max-width: 720px) {
+  .about-release-head { flex-wrap: wrap; }
+  .about-release-date { margin-left: 0; }
 }
