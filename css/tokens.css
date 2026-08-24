@@ -1,7 +1,9 @@
 /* ---
-   purpose: Reset, color tokens (light/dark), topic-hue mechanism, type scale, radii, shadows
+   purpose: Reset, ember/ink color tokens (light/dark), topic-hue mechanism, type scale, radii, elevation
    depends: nothing — loaded first, every other css/ file assumes these custom properties exist
    gotcha: never define a color only inside a media/[data-theme] block — bare :root first, always
+   gotcha: --brand-1..4 are one ember ramp now; --brand-3 must stay LIGHT (chrome.css hardcodes #04241F on it)
+   gotcha: --grad-primary carries hardcoded #fff text (.btn.primary, .yr-chip) — every stop stays dark enough
    --- */
 *, *::before, *::after { box-sizing: border-box; }
 * { margin: 0; }
@@ -10,35 +12,48 @@ button, input { font: inherit; color: inherit; }
 ul { list-style: none; padding: 0; }
 
 :root {
-  /* surfaces — light */
-  --paper:  #F5F6FA;
-  --panel:  #FFFFFF;
-  --sunk:   #EEF0F7;
-  --ink:    #10131A;
-  --mid:    #5B6472;
-  --rule:   #E2E6EF;
+  color-scheme: light;
 
-  /* brand */
-  --brand-1: #6C63FF;
-  --brand-2: #FF5C7A;
-  --brand-3: #00C2A8;
-  --brand-4: #FFC53D;
-  --brand-green: #0E6B4F;
-  --grad-primary: linear-gradient(135deg, var(--brand-1) 0%, var(--brand-2) 100%);
+  /* ember — the one accent. Everything chromatic in the app descends from these four. */
+  --accent:      #C2410C;
+  --accent-hot:  #9A3412;
+  --accent-lift: #E8853C;
+  --accent-ink:  #FFF7EF;
 
-  /* marker (unchanged lineage) */
-  --marker: #FFC53D;
-  --marker-note: #6C63FF;
-  --marker-tint: rgba(255,197,61,.35);
-  --marker-note-tint: rgba(108,99,255,.18);
-  --swipe: #FFC53D;
-  --swipe-note: rgba(108,99,255,.45);
+  /* surfaces — paper cream over warm ink */
+  --paper:  #FAF7F2;
+  --panel:  #FFFDFA;
+  --surface-raised: #FFFFFF;
+  --sunk:   #F1EBE1;
+  --ink:    #1C1917;
+  --mid:    #6B5F55;
+  --rule:   #E7DDCE;
 
-  /* form */
+  /* derived tints — re-resolve per theme because their inputs do */
+  --accent-soft: color-mix(in srgb, var(--accent)  9%, var(--panel));
+  --accent-line: color-mix(in srgb, var(--accent) 30%, var(--rule));
+
+  /* brand — legacy names, retuned as one ember ramp: ember · clay · honey · antique gold */
+  --brand-1: var(--accent);
+  --brand-2: #7C2D12;
+  --brand-3: #EBC98D;
+  --brand-4: #A16207;
+  --brand-green: #5C7A2E;
+  --grad-primary: linear-gradient(135deg, #C2410C 0%, #AA380B 46%, #7C2D12 100%);
+
+  /* marker (unchanged lineage) — highlights read ember, notes read gold */
+  --marker: var(--accent);
+  --marker-note: var(--brand-4);
+  --marker-tint:      color-mix(in srgb, var(--accent)    13%, transparent);
+  --marker-note-tint: color-mix(in srgb, var(--brand-4)   14%, transparent);
+  --swipe:            color-mix(in srgb, var(--accent)    10%, transparent);
+  --swipe-note:       color-mix(in srgb, var(--brand-4)   12%, transparent);
+
+  /* form — elevation is warm umber, never neutral black */
   --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-pill: 999px;
-  --sh-1: 0 1px 2px rgba(16,19,26,.06), 0 2px 8px rgba(16,19,26,.05);
-  --sh-2: 0 8px 24px rgba(16,19,26,.10), 0 2px 6px rgba(16,19,26,.06);
-  --sh-lift: 0 18px 40px rgba(16,19,26,.18);
+  --sh-1: 0 1px 1px rgba(58,38,22,.05), 0 2px 6px rgba(58,38,22,.06);
+  --sh-2: 0 1px 2px rgba(58,38,22,.05), 0 6px 14px rgba(58,38,22,.07), 0 14px 32px rgba(58,38,22,.07);
+  --sh-lift: 0 2px 4px rgba(58,38,22,.06), 0 12px 26px rgba(58,38,22,.10), 0 28px 60px rgba(58,38,22,.14);
 
   /* type */
   --font-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
@@ -51,70 +66,95 @@ ul { list-style: none; padding: 0; }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --paper: #0E1016;
-    --panel: #161A22;
-    --sunk:  #11141B;
-    --ink:   #E9ECF2;
-    --mid:   #98A2B3;
-    --rule:  #262C38;
-    --marker-tint: rgba(255,197,61,.22);
-    --marker-note-tint: rgba(108,99,255,.26);
-    --swipe: rgba(255,197,61,.34);
-    --swipe-note: rgba(108,99,255,.40);
-    --sh-1: 0 1px 2px rgba(0,0,0,.4);
-    --sh-2: 0 8px 24px rgba(0,0,0,.45);
-    --sh-lift: 0 18px 40px rgba(0,0,0,.55);
-    --brand-green: #2FBE8C;
+    color-scheme: dark;
+    --accent: #E8853C; --accent-hot: #C2410C; --accent-lift: #F2A566; --accent-ink: #1C1008;
+    --paper: #16130F;
+    --panel: #211C16;
+    --surface-raised: #2A231C;
+    --sunk:  #120E0A;
+    --ink:   #F2EAE0;
+    --mid:   #A79A8D;
+    --rule:  #352D25;
+    --brand-2: #C86A45;
+    --brand-3: #E0B978;
+    --brand-4: #E3B341;
+    --brand-green: #9CBF5E;
+    --grad-primary: linear-gradient(135deg, #CC4A0D 0%, #B23C0C 46%, #9E3A12 100%);
+    --marker-tint:      color-mix(in srgb, var(--accent)  20%, transparent);
+    --marker-note-tint: color-mix(in srgb, var(--brand-4) 20%, transparent);
+    --swipe:            color-mix(in srgb, var(--accent)  15%, transparent);
+    --swipe-note:       color-mix(in srgb, var(--brand-4) 16%, transparent);
+    /* the last layer is a warm rim-light, not a border — it separates panel from paper at low contrast */
+    --sh-1: 0 1px 2px rgba(0,0,0,.45), 0 0 0 1px rgba(255,214,170,.03);
+    --sh-2: 0 6px 16px rgba(0,0,0,.50), 0 16px 36px rgba(0,0,0,.42), 0 0 0 1px rgba(255,214,170,.04);
+    --sh-lift: 0 12px 28px rgba(0,0,0,.55), 0 30px 64px rgba(0,0,0,.50), 0 0 0 1px rgba(255,214,170,.05);
   }
   :root:not([data-theme="light"]) [data-topic] {
-    --topic-fg:   hsl(var(--h) 70% 74%);
-    --topic-bg:   hsl(var(--h) 40% 18%);
-    --topic-edge: hsl(var(--h) 65% 60%);
+    --topic-fg:   color-mix(in srgb, hsl(var(--h) 48% 74%) 88%, var(--accent));
+    --topic-bg:   color-mix(in srgb, hsl(var(--h) 34% 22%) 74%, var(--paper));
+    --topic-edge: color-mix(in srgb, hsl(var(--h) 46% 58%) 86%, var(--accent));
   }
 }
 
 :root[data-theme="dark"] {
-  --paper: #0E1016;
-  --panel: #161A22;
-  --sunk:  #11141B;
-  --ink:   #E9ECF2;
-  --mid:   #98A2B3;
-  --rule:  #262C38;
-  --marker-tint: rgba(255,197,61,.22);
-  --marker-note-tint: rgba(108,99,255,.26);
-  --swipe: rgba(255,197,61,.34);
-  --swipe-note: rgba(108,99,255,.40);
-  --sh-1: 0 1px 2px rgba(0,0,0,.4);
-  --sh-2: 0 8px 24px rgba(0,0,0,.45);
-  --sh-lift: 0 18px 40px rgba(0,0,0,.55);
-  --brand-green: #2FBE8C;
+  color-scheme: dark;
+  --accent: #E8853C; --accent-hot: #C2410C; --accent-lift: #F2A566; --accent-ink: #1C1008;
+  --paper: #16130F;
+  --panel: #211C16;
+  --surface-raised: #2A231C;
+  --sunk:  #120E0A;
+  --ink:   #F2EAE0;
+  --mid:   #A79A8D;
+  --rule:  #352D25;
+  --brand-2: #C86A45;
+  --brand-3: #E0B978;
+  --brand-4: #E3B341;
+  --brand-green: #9CBF5E;
+  --grad-primary: linear-gradient(135deg, #CC4A0D 0%, #B23C0C 46%, #9E3A12 100%);
+  --marker-tint:      color-mix(in srgb, var(--accent)  20%, transparent);
+  --marker-note-tint: color-mix(in srgb, var(--brand-4) 20%, transparent);
+  --swipe:            color-mix(in srgb, var(--accent)  15%, transparent);
+  --swipe-note:       color-mix(in srgb, var(--brand-4) 16%, transparent);
+  --sh-1: 0 1px 2px rgba(0,0,0,.45), 0 0 0 1px rgba(255,214,170,.03);
+  --sh-2: 0 6px 16px rgba(0,0,0,.50), 0 16px 36px rgba(0,0,0,.42), 0 0 0 1px rgba(255,214,170,.04);
+  --sh-lift: 0 12px 28px rgba(0,0,0,.55), 0 30px 64px rgba(0,0,0,.50), 0 0 0 1px rgba(255,214,170,.05);
 }
 :root[data-theme="dark"] [data-topic] {
-  --topic-fg:   hsl(var(--h) 70% 74%);
-  --topic-bg:   hsl(var(--h) 40% 18%);
-  --topic-edge: hsl(var(--h) 65% 60%);
+  --topic-fg:   color-mix(in srgb, hsl(var(--h) 48% 74%) 88%, var(--accent));
+  --topic-bg:   color-mix(in srgb, hsl(var(--h) 34% 22%) 74%, var(--paper));
+  --topic-edge: color-mix(in srgb, hsl(var(--h) 46% 58%) 86%, var(--accent));
 }
 :root[data-theme="light"] {
-  --paper: #F5F6FA;
-  --panel: #FFFFFF;
-  --sunk:  #EEF0F7;
-  --ink:   #10131A;
-  --mid:   #5B6472;
-  --rule:  #E2E6EF;
-  --marker-tint: rgba(255,197,61,.35);
-  --marker-note-tint: rgba(108,99,255,.18);
-  --swipe: #FFC53D;
-  --swipe-note: rgba(108,99,255,.45);
-  --sh-1: 0 1px 2px rgba(16,19,26,.06), 0 2px 8px rgba(16,19,26,.05);
-  --sh-2: 0 8px 24px rgba(16,19,26,.10), 0 2px 6px rgba(16,19,26,.06);
-  --sh-lift: 0 18px 40px rgba(16,19,26,.18);
+  color-scheme: light;
+  --accent: #C2410C; --accent-hot: #9A3412; --accent-lift: #E8853C; --accent-ink: #FFF7EF;
+  --paper: #FAF7F2;
+  --panel: #FFFDFA;
+  --surface-raised: #FFFFFF;
+  --sunk:  #F1EBE1;
+  --ink:   #1C1917;
+  --mid:   #6B5F55;
+  --rule:  #E7DDCE;
+  --brand-2: #7C2D12;
+  --brand-3: #EBC98D;
+  --brand-4: #A16207;
+  --brand-green: #5C7A2E;
+  --grad-primary: linear-gradient(135deg, #C2410C 0%, #AA380B 46%, #7C2D12 100%);
+  --marker-tint:      color-mix(in srgb, var(--accent)  13%, transparent);
+  --marker-note-tint: color-mix(in srgb, var(--brand-4) 14%, transparent);
+  --swipe:            color-mix(in srgb, var(--accent)  10%, transparent);
+  --swipe-note:       color-mix(in srgb, var(--brand-4) 12%, transparent);
+  --sh-1: 0 1px 1px rgba(58,38,22,.05), 0 2px 6px rgba(58,38,22,.06);
+  --sh-2: 0 1px 2px rgba(58,38,22,.05), 0 6px 14px rgba(58,38,22,.07), 0 14px 32px rgba(58,38,22,.07);
+  --sh-lift: 0 2px 4px rgba(58,38,22,.06), 0 12px 26px rgba(58,38,22,.10), 0 28px 60px rgba(58,38,22,.14);
 }
 
-/* topic-hue mechanism — one rule set for all 15 topics, each element sets style="--h:<hue>" */
+/* topic-hue mechanism — one rule set for all 15 topics, each element sets style="--h:<hue>".
+   Every hue is mixed with the house accent and the page surface, so the 15 read as one family
+   on cream instead of 15 unrelated pastels. */
 [data-topic] {
-  --topic-fg:   hsl(var(--h) 62% 38%);
-  --topic-bg:   hsl(var(--h) 82% 94%);
-  --topic-edge: hsl(var(--h) 70% 52%);
+  --topic-fg:   color-mix(in srgb, hsl(var(--h) 46% 32%) 88%, var(--accent));
+  --topic-bg:   color-mix(in srgb, hsl(var(--h) 52% 90%) 72%, var(--paper));
+  --topic-edge: color-mix(in srgb, hsl(var(--h) 46% 52%) 86%, var(--accent));
 }
 [data-topic="uncategorized"] {
   --topic-fg: var(--mid); --topic-bg: var(--sunk); --topic-edge: var(--rule);
@@ -122,13 +162,16 @@ ul { list-style: none; padding: 0; }
 
 html { height: 100%; }
 
-/* The page itself never scrolls — the sidebar and the pane are the scroll containers. */
+/* The page itself never scrolls — the sidebar and the pane are the scroll containers.
+   The radial wash is a single warm light source at the top-left; it only shows in the gutters. */
 body {
   height: 100%;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: var(--paper);
+  background:
+    radial-gradient(1100px 560px at 10% -10%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 62%),
+    var(--paper);
   color: var(--ink);
   font-family: var(--font-sans);
   line-height: 1.5;
