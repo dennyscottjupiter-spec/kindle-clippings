@@ -3,6 +3,9 @@
    depends: css/tokens.css
    gotcha: .statline:not([hidden]) — a bare display: rule outranks [hidden] at equal specificity
    gotcha: --pane-pad on .pane-inner is the pane gutter; .book-banner bleeds edge-to-edge off it
+   gotcha: the .meta separator-dot selector's :not() list also excludes .ca-img/.ca-menu (per-card
+     actions, js/cardactions.js) alongside .copy — any future meta action button needs the same
+     exclusion or it grows a stray "·" before it, same as .fav's own comment below explains
    --- */
 
 .pane { overflow-y: auto; height: 100%; min-width: 0; }
@@ -160,7 +163,7 @@
   color: var(--mid);
 }
 
-.entry .meta > *:not(:first-child):not(.copy)::before {
+.entry .meta > *:not(:first-child):not(.copy):not(.ca-img):not(.ca-menu)::before {
   content: "·";
   margin-right: .55em;
   color: var(--rule);
@@ -203,6 +206,29 @@
 .entry .meta > .fav::before { content: none; margin-right: 0; }
 .meta .fav:hover { color: var(--brand-4); transform: scale(1.15); }
 .meta .fav.is-on, .meta .fav[aria-pressed="true"] { color: var(--brand-4); }
+
+/* per-card actions (js/cardactions.js) — save as JPEG + export this one highlight, same quiet pill
+   as .copy; the export trigger reuses css/chrome.css's .menu/.menu-list dropdown verbatim */
+.meta .ca-btn {
+  background: transparent;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  padding: .2em .7em;
+  cursor: pointer;
+}
+.meta .ca-btn:hover { border-color: var(--brand-1); }
+@media (max-width: 720px) {
+  /* mirrors css/mobile.css's .meta .copy/.fav 44px hit-area trick for these two — that file is
+     never edited, so the same invisible-::after expansion is reproduced here instead */
+  .meta .ca-btn { position: relative; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+  .meta .ca-btn::after {
+    content: "";
+    position: absolute;
+    left: -6px; right: -6px; top: 50%;
+    height: 44px; min-width: 44px;
+    transform: translateY(-50%);
+  }
+}
 
 /* starred cards keep the topic edge and gain an inset amber rail beside it */
 .entry.is-fav { box-shadow: var(--sh-1), inset 2px 0 0 var(--brand-4); }
