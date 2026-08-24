@@ -2,13 +2,16 @@
    purpose: Reading pane — dropzone, book banner, sort bar, stat line, cards, group headers
    depends: css/tokens.css
    gotcha: .statline:not([hidden]) — a bare display: rule outranks [hidden] at equal specificity
+   gotcha: --pane-pad on .pane-inner is the pane gutter; .book-banner bleeds edge-to-edge off it
    --- */
 
-.pane { overflow-y: auto; height: 100%; }
+.pane { overflow-y: auto; height: 100%; min-width: 0; }
 .pane-inner {
-  max-width: 88ch;
+  --pane-pad: clamp(1rem, 2vw, 2.5rem);
+  width: 100%;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 2rem 1.5rem 6rem;
+  padding: 2rem var(--pane-pad) 6rem;
 }
 
 /* dropzone */
@@ -39,8 +42,8 @@
   display: flex;
   gap: 1.25rem;
   align-items: flex-end;
-  padding: 1.5rem 1rem 1.25rem;
-  margin: -1.5rem -1rem 1.5rem;
+  padding: 1.5rem var(--pane-pad, 1rem) 1.25rem;
+  margin: -1.5rem calc(var(--pane-pad, 1rem) * -1) 1.5rem;
   border-bottom: 1px solid var(--rule);
   background: linear-gradient(180deg, var(--topic-bg), transparent);
 }
@@ -243,6 +246,6 @@
 }
 
 @media (max-width: 860px) {
-  .book-banner:not([hidden]) { flex-wrap: wrap; margin: -1rem -1rem 1.25rem; }
+  .book-banner:not([hidden]) { flex-wrap: wrap; margin: -1rem calc(var(--pane-pad, 1rem) * -1) 1.25rem; }
   .bb-cover img { height: 96px; }
 }
