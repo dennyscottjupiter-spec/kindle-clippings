@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#6C63FF">
+<meta name="theme-color" content="#FAF7F2">
+<meta name="theme-color" content="#16130F" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -12,12 +13,14 @@
 <title>Kindle Clippings</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/chrome.css">
 <link rel="stylesheet" href="css/sidebar.css">
 <link rel="stylesheet" href="css/reader.css">
 <link rel="stylesheet" href="css/panels.css">
+<link rel="stylesheet" href="css/docs.css">
 <link rel="stylesheet" href="css/mobile.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F5F6FA'/%3E%3Crect x='4' y='13' width='24' height='7' fill='%236C63FF'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23FAF7F2'/%3E%3Crect x='4' y='13' width='24' height='7' fill='%23C2410C'/%3E%3C/svg%3E">
 </head>
 <body>
 <a class="skip" href="#main" id="skip-link">Ir para os destaques</a>
@@ -91,6 +94,18 @@
             <li><button type="button" data-export="obsidian" data-i18n="export.obsidian"></button></li>
           </ul>
         </div>
+        <span class="tip-host">
+          <button class="btn" id="nav-anki" type="button" data-i18n="anki.button" aria-describedby="tip-anki"></button>
+          <span class="tip" id="tip-anki" role="tooltip" data-i18n="tip.anki"></span>
+        </span>
+        <span class="tip-host">
+          <button class="btn icon" id="nav-help" type="button" data-i18n-label="help.label" aria-describedby="tip-help">?</button>
+          <span class="tip" id="tip-help" role="tooltip" data-i18n="tip.help"></span>
+        </span>
+        <span class="tip-host">
+          <button class="btn icon" id="nav-about" type="button" data-i18n-label="about.label" aria-describedby="tip-about">i</button>
+          <span class="tip" id="tip-about" role="tooltip" data-i18n="tip.about"></span>
+        </span>
         <button class="btn" id="btn-reset" type="button" data-i18n="action.reset"></button>
       </div>
     </div>
@@ -148,17 +163,41 @@
     <header class="modal-head">
       <h2 id="quotes-title" data-i18n="qc.title"></h2>
       <div class="qc-tools">
-        <div class="seg" id="qc-source" role="group">
-          <button type="button" data-qc-src="fav" data-i18n="qc.source.fav" aria-pressed="true"></button>
-          <button type="button" data-qc-src="all" data-i18n="qc.source.all" aria-pressed="false"></button>
+        <div class="qc-field">
+          <span class="qc-lab" id="qc-lab-src" data-i18n="qc.source"></span>
+          <div class="seg" id="qc-source" role="group" aria-labelledby="qc-lab-src">
+            <button type="button" data-qc-src="fav" data-i18n="qc.source.fav" aria-pressed="true"></button>
+            <button type="button" data-qc-src="all" data-i18n="qc.source.all" aria-pressed="false"></button>
+          </div>
         </div>
-        <input id="qc-q" type="search" autocomplete="off" data-i18n-ph="qc.search" data-i18n-label="qc.search">
-        <select id="qc-size" data-i18n-label="qc.size"></select>
-        <div class="seg" id="qc-themes" role="group">
-          <button type="button" data-qc-theme="dark" data-i18n="qc.theme.dark" aria-pressed="true"></button>
-          <button type="button" data-qc-theme="light" data-i18n="qc.theme.light" aria-pressed="false"></button>
-          <button type="button" data-qc-theme="paper" data-i18n="qc.theme.paper" aria-pressed="false"></button>
+        <div class="qc-field">
+          <label class="qc-lab" for="qc-sort" data-i18n="qc.sort"></label>
+          <!-- options come from KC.quotesort.MODES via js/quoteview.js — intentionally empty markup -->
+          <select id="qc-sort"></select>
         </div>
+        <div class="qc-field qc-field-wide">
+          <label class="qc-lab" for="qc-book" data-i18n="qc.book"></label>
+          <!-- options are the loaded library, rebuilt on every render — intentionally empty markup -->
+          <select id="qc-book"></select>
+        </div>
+        <div class="qc-field qc-field-wide">
+          <label class="qc-lab" for="qc-q" data-i18n="qc.find"></label>
+          <input id="qc-q" type="search" autocomplete="off" data-i18n-ph="qc.search">
+        </div>
+        <div class="qc-field">
+          <label class="qc-lab" for="qc-size" data-i18n="qc.size"></label>
+          <select id="qc-size"></select>
+        </div>
+        <div class="qc-field">
+          <span class="qc-lab" id="qc-lab-theme" data-i18n="qc.theme"></span>
+          <div class="seg" id="qc-themes" role="group" aria-labelledby="qc-lab-theme">
+            <button type="button" data-qc-theme="dark" data-i18n="qc.theme.dark" aria-pressed="true"></button>
+            <button type="button" data-qc-theme="light" data-i18n="qc.theme.light" aria-pressed="false"></button>
+            <button type="button" data-qc-theme="paper" data-i18n="qc.theme.paper" aria-pressed="false"></button>
+          </div>
+        </div>
+        <p class="qc-count" id="qc-count" aria-live="polite"></p>
+        <button class="btn qc-clear" id="qc-clear" type="button" data-i18n="qc.clear" hidden></button>
       </div>
       <button class="btn icon modal-close" type="button" data-close="quotes-modal" aria-label="×">×</button>
     </header>
@@ -167,9 +206,35 @@
   </div>
 </div>
 
+<div class="modal" id="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+  <div class="modal-card">
+    <header class="modal-head">
+      <h2 id="help-title" data-i18n="help.title"></h2>
+      <button class="btn icon modal-close" type="button" data-close="help-modal" aria-label="×">×</button>
+    </header>
+    <div class="modal-body" id="help-body"></div>
+  </div>
+</div>
+
+<div class="modal" id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-title" hidden>
+  <div class="modal-card">
+    <header class="modal-head">
+      <h2 id="about-title" data-i18n="about.title"></h2>
+      <button class="btn icon modal-close" type="button" data-close="about-modal" aria-label="×">×</button>
+    </header>
+    <div class="modal-body" id="about-body"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/i18n.js"></script>
+<script src="js/i18n-anki.js"></script>
+<script src="js/i18n-qc.js"></script>
+<script src="js/i18n-help.js"></script>
+<script src="js/i18n-about.js"></script>
+<script src="js/i18n-topics.js"></script>
+<script src="js/i18n-cardactions.js"></script>
 <script src="js/store.js"></script>
 <script src="js/persist.js"></script>
 <script src="js/topics.js"></script>
@@ -181,16 +246,23 @@
 <script src="js/sort.js"></script>
 <script src="js/covers.js"></script>
 <script src="js/exports.js"></script>
+<script src="js/anki.js"></script>
 <script src="js/obsidian.js"></script>
+<script src="js/version.js"></script>
 <script src="js/favorites.js"></script>
 <script src="js/stats.js"></script>
 <script src="js/quotecard.js"></script>
 <script src="js/modal.js"></script>
 <script src="js/statsyears.js"></script>
 <script src="js/statsview.js"></script>
+<script src="js/quotesort.js"></script>
 <script src="js/quoteview.js"></script>
+<script src="js/helpview.js"></script>
+<script src="js/aboutview.js"></script>
 <script src="js/cards.js"></script>
+<script src="js/cardactions.js"></script>
 <script src="js/clipboard.js"></script>
+<script src="js/topicfilter.js"></script>
 <script src="js/sidebar.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/nav.js"></script>

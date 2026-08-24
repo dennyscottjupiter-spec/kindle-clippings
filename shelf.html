@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#6C63FF">
+<meta name="theme-color" content="#FAF7F2">
+<meta name="theme-color" content="#16130F" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -12,11 +13,12 @@
 <link rel="manifest" href="manifest.webmanifest">
 <title>Kindle Clippings — Shelf</title>
 <link rel="stylesheet" href="css/tokens.css">
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/chrome.css">
 <link rel="stylesheet" href="css/sidebar.css">
 <link rel="stylesheet" href="css/shelf.css">
 <link rel="stylesheet" href="css/mobile.css">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23F5F6FA'/%3E%3Crect x='4' y='13' width='24' height='7' fill='%236C63FF'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23FAF7F2'/%3E%3Crect x='4' y='13' width='24' height='7' fill='%23C2410C'/%3E%3C/svg%3E">
 </head>
 <body class="shelf-page">
 <header class="topbar shelf-bar">
@@ -59,9 +61,11 @@
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
 <script src="js/i18n.js"></script>
+<script src="js/i18n-topics.js"></script>
 <script src="js/store.js"></script>
 <script src="js/topics.js"></script>
 <script src="js/covers.js"></script>
+<script src="js/topicfilter.js"></script>
 <script src="js/shelf.js"></script>
 <script src="js/nav.js"></script>
 </body>

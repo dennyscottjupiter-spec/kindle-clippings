@@ -1,0 +1,87 @@
+/* ---
+   purpose: Reusable document-panel system — jump nav, headings, lead text, term/desc items, callouts
+   exports (classes): .doc-body, .doc-toc, .doc-toc-link, .doc-section, .doc-h, .doc-lead, .doc-item,
+     .doc-term, .doc-desc, .doc-note, .doc-kbd
+   depends: css/tokens.css (color/radius/shadow custom properties); hosted inside a css/panels.css .modal-body
+   gotcha: generic and content-agnostic on purpose — a later "About / changelog" panel reuses these
+     same classes, so nothing help-specific is welded on here; add new PREFIXED classes instead
+   --- */
+
+.doc-body { max-width: 46rem; }
+
+.doc-toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-bottom: 1.4rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--rule);
+}
+.doc-toc-link {
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--mid);
+  background: transparent;
+  cursor: pointer;
+  padding: .4em .8em;
+  border: 1px solid var(--rule);
+  border-radius: var(--r-pill);
+  white-space: nowrap;
+}
+.doc-toc-link:hover, .doc-toc-link:focus-visible { color: var(--ink); border-color: var(--brand-1); }
+
+.doc-section { margin-bottom: 1.8rem; }
+.doc-section:last-child { margin-bottom: 0; }
+
+.doc-h {
+  font-family: var(--font-mono);
+  font-size: .78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--brand-1);
+  margin-bottom: .35rem;
+}
+.doc-lead { font-size: .86rem; color: var(--mid); margin-bottom: .9rem; max-width: 40rem; }
+
+.doc-item {
+  display: grid;
+  grid-template-columns: minmax(7rem, 11rem) 1fr;
+  gap: .3rem 1.2rem;
+  padding: .6rem 0;
+  border-top: 1px solid var(--rule);
+}
+.doc-item:first-of-type { border-top: 0; }
+.doc-term { font-weight: 700; font-size: .9rem; }
+.doc-desc { font-size: .86rem; color: var(--mid); line-height: 1.55; }
+.doc-desc strong { color: var(--ink); font-weight: 600; }
+
+.doc-note {
+  font-size: .82rem;
+  color: var(--mid);
+  background: var(--accent-soft);
+  border-left: 3px solid var(--brand-1);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  padding: .6rem .9rem;
+  margin-top: .8rem;
+}
+
+.doc-kbd {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: .74em;
+  padding: .1em .45em;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: var(--r-sm);
+  background: var(--panel);
+  color: var(--ink);
+}
+
+@media (max-width: 720px) {
+  .doc-item { grid-template-columns: 1fr; gap: .15rem; }
+  .doc-term { font-size: .88rem; }
+}

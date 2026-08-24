@@ -1,6 +1,6 @@
 // ---
 // purpose: i18n catalog + helpers (pt-BR/en) for the Kindle clippings viewer
-// exports: KC.i18n.t(), setLang(), num(), date(), fold(), lang
+// exports: KC.i18n.t(), add(), setLang(), num(), date(), fold(), lang
 // gotcha: fold() is for SEARCH only; dedup comparison keeps accents (see clean.js)
 // ---
 (function (KC) {
@@ -404,9 +404,20 @@
     KC.i18n.lang = lang;
     if (typeof KC.i18n.onChange === 'function') { KC.i18n.onChange(); }
   }
+  // Feature modules ship their own strings in js/i18n-<feature>.js instead of growing this catalog.
+  function add(map) {
+    for (var lang in map) {
+      if (!Object.prototype.hasOwnProperty.call(map, lang)) { continue; }
+      if (!CATALOG[lang]) { CATALOG[lang] = {}; }
+      for (var key in map[lang]) {
+        if (Object.prototype.hasOwnProperty.call(map[lang], key)) { CATALOG[lang][key] = map[lang][key]; }
+      }
+    }
+  }
   KC.i18n = {
     lang: detectLang(),
     t: t,
+    add: add,
     setLang: setLang,
     num: num,
     date: date,
