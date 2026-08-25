@@ -47,9 +47,9 @@ a module can only use what a script tag above it already defined:
 | File | Role |
 |---|---|
 | `js/i18n.js` | pt-BR/en catalogs, accent-folding `fold()`, `Intl` formatters, `KC.i18n.add()` |
-| `js/i18n-*.js` | per-feature string packs, each calling `KC.i18n.add()` — `anki` · `qc` · `help` · `about` · `topics` · `cardactions`. Loaded as a contiguous block right after `i18n.js`, before any consumer |
-| `js/store.js` | localStorage prefs + library cache, sessionStorage raw-text cache (all try/catch) |
-| `js/persist.js` | IndexedDB — keeps the clippings file on-device between sessions, plus the favourites mirror |
+| `js/i18n-*.js` | per-feature string packs, each calling `KC.i18n.add()` — `anki` · `qc` · `help` · `about` · `topics` · `cardactions` · `favio`. Loaded as a contiguous block right after `i18n.js`, before any consumer |
+| `js/store.js` | localStorage prefs + library cache, sessionStorage raw-text cache (all try/catch); `prefs.set` mirrors to IndexedDB and `prefs.hydrate()` unions it back at boot |
+| `js/persist.js` | IndexedDB — keeps the clippings file on-device between sessions, plus the favourites and prefs mirrors |
 | `js/topics.js` | fixed 15-topic taxonomy, Open Library subject classifier |
 | `js/parser.js` | raw clippings text → records (`KC.parse`) |
 | `js/dedupe.js` | union-find over position overlap + text containment |
@@ -62,7 +62,8 @@ a module can only use what a script tag above it already defined:
 | `js/anki.js` | wires `#nav-anki` to the shared TSV builder — guarded, the button does not exist on `shelf.html` |
 | `js/obsidian.js` | Obsidian-native Markdown, one note per book (YAML frontmatter, callouts, blockquotes) |
 | `js/version.js` | `KC.version.CURRENT` + the `RELEASES` array (version/date/i18n keys) — pure data, no DOM |
-| `js/favorites.js` | starred "quotes" — content-derived keys (`rec.id` is not stable), written to localStorage **and** the `js/persist.js` IndexedDB mirror; `hydrate()` unions the two at boot |
+| `js/favorites.js` | starred "quotes" — content-derived keys (`rec.id` is not stable), written to localStorage **and** the `js/persist.js` IndexedDB mirror; `hydrate()` unions the two at boot, `merge(keys)` is the key-level union the JSON import uses |
+| `js/favio.js` | manual favourites backup — builds/downloads the `.json` of starred keys and reads one back (union only, never a replace) |
 | `js/stats.js` | pure statistics — totals, per-book, per-year, **dense** month + weekday/hour histograms, streaks (no DOM, no browser globals — the harness loads it) |
 | `js/quotecard.js` | canvas quote-card renderer + JPEG blob/download; `SIZES` = nesthub / fhd / qhd / iphone / android / square. Its `THEMES`/`accentOf` colours are literals **mirroring `css/tokens.css`** — a canvas cannot read custom properties, so a repaint must touch both |
 | `js/modal.js` | generic overlay dialog — open/close, Esc, backdrop, focus return, body scroll lock |
@@ -131,6 +132,16 @@ page and each page's order is the cascade:
   observer) calls that property at call time, so the wrap catches all of them; `[data-ca-done]`
   stops a later batch re-processing an existing card. Reassigning or inlining `appendPage` in
   `cards.js` silently strips the buttons off every card past the first page.
+- Every `<script src>` and `<link href>` in `index.html` / `shelf.html` carries `?v=<KC.version.CURRENT>`.
+  Bumping `CURRENT` in `js/version.js` without rewriting those query strings (and vice-versa) leaves
+  browsers on the old bundle — the deployed nginx sends `Cache-Control: no-store`, but nothing else
+  serving these files does. Both pages must be rewritten together, all `css/` and `js/` URLs.
+- `js/app.js#applyPrefs()` runs **twice** on a boot that recovered prefs: once synchronously so the
+  theme is right on the first painted frame, once after `KC.store.prefs.hydrate()` resolves. The
+  second pass only runs when hydrate reports it restored something, and a restored `lang` re-renders
+  through `KC.i18n.onChange` — do not add an `applyStrings()` call beside it.
+- `KC.store.prefs.hydrate()` merges **key by key, localStorage winning** — the mirror only fills in
+  what is missing. Making the mirror win would resurrect a pref the user just changed in another tab.
 - `KC.favorites.hydrate()` must resolve **before** the first render in `js/app.js`'s
   `DOMContentLoaded` — it pulls the IndexedDB mirror back into localStorage. Render first and a
   session whose localStorage was cleared paints every highlight unstarred and then saves that empty

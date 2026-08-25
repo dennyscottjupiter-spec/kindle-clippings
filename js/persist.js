@@ -1,8 +1,8 @@
 // ---
-// purpose: Durable IndexedDB store for the raw clippings text (and the favourites mirror) so both
-//   survive closing the browser
+// purpose: Durable IndexedDB store for the raw clippings text (plus the favourites and prefs
+//   mirrors) so all three survive closing the browser
 // exports: KC.persist.available, save(text, name), load(), clear(), saveFavorites(), loadFavorites(),
-//   requestDurable()
+//   savePrefs(), loadPrefs(), requestDurable()
 // gotcha: writes settle on tx.oncomplete, NOT req.onsuccess — a readwrite transaction can still
 //   abort on quota after the request reported success
 // gotcha: every promise resolves — a private window, blocked site data, a quota abort or a hung
@@ -16,6 +16,7 @@
   var STORE = 'files';
   var KEY = 'clippings';
   var FAV_KEY = 'favorites';
+  var PREFS_KEY = 'prefs';
   var OPEN_TIMEOUT = 3000;
 
   var idb = null;
@@ -117,6 +118,25 @@
       }).then(function (r) {
         var rec = r && r.value;
         return (rec && Object.prototype.toString.call(rec.keys) === '[object Array]') ? rec.keys : null;
+      });
+    },
+
+    // Same reasoning as the favourites mirror: theme, language and sort live in localStorage, so a
+    // clear-on-exit browser resets the app to defaults while the IndexedDB file survives.
+    savePrefs: function (prefs) {
+      var copy = {}, k;
+      for (k in prefs) if (Object.prototype.hasOwnProperty.call(prefs, k)) copy[k] = prefs[k];
+      return withStore('readwrite', function (store) {
+        return store.put({ prefs: copy, ts: Date.now() }, PREFS_KEY);
+      }).then(function (r) { return r !== null; });
+    },
+
+    loadPrefs: function () {
+      return withStore('readonly', function (store) {
+        return store.get(PREFS_KEY);
+      }).then(function (r) {
+        var rec = r && r.value;
+        return (rec && rec.prefs && typeof rec.prefs === 'object') ? rec.prefs : null;
       });
     },
 

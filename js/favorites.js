@@ -1,6 +1,6 @@
 // ---
 // purpose: Persistent set of hand-picked favourite highlights, stored in localStorage
-// exports: KC.favorites.keyOf/has/toggle/add/remove/list/count/pick/clear/hydrate
+// exports: KC.favorites.keyOf/has/toggle/add/remove/merge/list/count/pick/clear/hydrate
 // depends: js/store.js, js/persist.js
 // gotcha: rec.id is 'r' + index and shifts on every append — the key is content-derived, not the id
 // gotcha: every write goes to BOTH localStorage and the IndexedDB mirror, and hydrate() unions them
@@ -59,6 +59,22 @@
         save();
         return added > 0;
       })['catch'](function () { return false; });
+    },
+
+    // Key-level union used by the JSON import (js/favio.js) — never replaces, only adds.
+    merge: function (keys) {
+      if (Object.prototype.toString.call(keys) !== '[object Array]') return 0;
+      var list = load(), seen = {}, i, added = 0;
+      for (i = 0; i < list.length; i++) seen[list[i]] = true;
+      for (i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (typeof k !== 'string' || !k || seen[k]) continue;
+        seen[k] = true;
+        list.push(k);
+        added++;
+      }
+      if (added) save();
+      return added;
     },
 
     has: function (rec) { return indexOf(rec) !== -1; },

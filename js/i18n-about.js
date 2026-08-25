@@ -23,6 +23,11 @@
       'about.credit.h': 'Créditos',
       'about.credit.body': 'Este app foi construído com a ajuda do Claude Code, da Anthropic.',
 
+      'about.rel.2_1_0.1': 'Suas preferências (tema, idioma, ordenação) agora ficam guardadas em dois lugares — se o navegador limpar um, o outro devolve tudo.',
+      'about.rel.2_1_0.2': 'Novo backup manual dos favoritos: baixe um arquivo .json com suas estrelas e restaure-o quando quiser, em qualquer aparelho.',
+      'about.rel.2_1_0.3': 'Cada nova versão do app chega ao seu navegador na hora, sem depender de recarregar a página com força.',
+      'about.rel.2_1_0.4': 'O menu "exportar" de um destaque não abre mais fora da tela no celular.',
+
       'about.rel.2_0_0.1': 'Visual totalmente novo: paleta âmbar e tinta quente no lugar do índigo frio.',
       'about.rel.2_0_0.2': 'As fontes agora vêm embutidas no próprio app — carregamento mais rápido e 100% offline, sem pedir nada à internet.',
       'about.rel.2_0_0.3': 'A área de leitura agora ocupa a largura toda da tela, em vez de ficar espremida ao centro.',
@@ -68,6 +73,11 @@
       'about.current': 'current',
       'about.credit.h': 'Credits',
       'about.credit.body': 'This app was built with the help of Claude Code, by Anthropic.',
+
+      'about.rel.2_1_0.1': 'Your preferences (theme, language, sorting) are now kept in two places — if the browser wipes one, the other brings them back.',
+      'about.rel.2_1_0.2': 'A manual backup for favourites: download a .json file with your stars and restore it whenever you like, on any device.',
+      'about.rel.2_1_0.3': 'Every new version of the app reaches your browser straight away, with no forced reload.',
+      'about.rel.2_1_0.4': 'A highlight’s "export" menu no longer opens off the edge of a phone screen.',
 
       'about.rel.2_0_0.1': 'A whole new look: warm amber and ink instead of the cool indigo palette.',
       'about.rel.2_0_0.2': 'Fonts are now bundled with the app itself — faster loading and fully offline, with no request made to the internet.',

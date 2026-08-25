@@ -294,6 +294,23 @@
       });
     });
 
+    byId('fav-export').addEventListener('click', function () {
+      var n = KC.favio.save();
+      KC.ui.toast(n ? KC.i18n.t('favio.saved', { n: n }) : KC.i18n.t('favio.empty'));
+    });
+    byId('fav-import-btn').addEventListener('click', function () { byId('fav-import').click(); });
+    byId('fav-import').addEventListener('change', function (e) {
+      var input = e.target;
+      KC.favio.read(input.files[0]).then(function (r) {
+        input.value = '';  // same file must fire `change` again
+        if (!r.ok) { KC.ui.toast(KC.i18n.t('favio.badFile')); return; }
+        KC.ui.toast(r.added
+          ? KC.i18n.t('favio.restored', { n: r.added, total: r.total })
+          : KC.i18n.t('favio.nothingNew'));
+        if (r.added) { KC.state.rendered = 0; KC.ui.render(); }
+      });
+    });
+
     byId('nav-stats').addEventListener('click', function () { KC.statsview.open(); });
     byId('nav-quotes').addEventListener('click', function () { KC.quoteview.open(); });
 
@@ -355,7 +372,9 @@
     sel.value = KC.quoteview.state.sizeId;
   }
 
-  document.addEventListener('DOMContentLoaded', function () {
+  // Read straight from localStorage so the theme is right on the first painted frame; the
+  // IndexedDB mirror can only add what localStorage lost, so a second pass after hydrate is safe.
+  function applyPrefs() {
     var prefs = KC.store.prefs.get();
     if (prefs.theme) KC.ui.setTheme(prefs.theme);
     if (prefs.lang) KC.i18n.setLang(prefs.lang);
@@ -364,6 +383,10 @@
     KC.state.sortMode = prefs.sortMode || 'order';
     KC.state.showHidden = !!prefs.showHidden;
     KC.state.coversOn = !!prefs.coversOn;
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    applyPrefs();
 
     var params = new URLSearchParams(location.search);
     pendingBook = params.get('book');
@@ -391,8 +414,10 @@
     }
 
     // Stars must be back in memory before anything renders a card, or a session that lost its
-    // localStorage would paint every highlight unstarred and then overwrite the mirror.
-    KC.favorites.hydrate().then(function () {
+    // localStorage would paint every highlight unstarred and then overwrite the mirror. Prefs ride
+    // the same barrier: a restored theme/language must land before the first render, not after it.
+    Promise.all([KC.favorites.hydrate(), KC.store.prefs.hydrate()]).then(function (done) {
+      if (done[1]) applyPrefs();  // a restored lang re-runs applyStrings through KC.i18n.onChange
       var savedText = KC.store.session.load();
       if (savedText) {
         KC.app.load(savedText);          // instant same-tab restore

@@ -1,7 +1,7 @@
 ---
 title: Kindle Clippings Reader
 status: current
-updated: 2026-08-21
+updated: 2026-08-25
 ---
 
 # Kindle Clippings Reader
@@ -64,6 +64,10 @@ A Kindle logs every highlight, note, and bookmark into a single text file that:
 - **Sort the reading pane** by file order, newest/oldest, book, or topic (with sticky group headers);
   **sort the book list** by title, highlight count, or most recently highlighted; **resize the
   sidebar** by dragging or with the arrow keys.
+- **Nothing is lost when the browser forgets.** The clippings file, the starred highlights and the
+  preferences all live in IndexedDB as well as in `localStorage`, and are merged back at boot — plus
+  a *Save favourites* / *Restore favourites* pair that writes the stars to a `.json` you keep
+  yourself (it holds no highlight text, only content-derived keys).
 - **Works on a phone.** `css/mobile.css` collapses the two-pane layout into a drawer + reading pane.
 
 ## Usage
@@ -191,6 +195,7 @@ plain `<script src>` tag — works the same over `file://` and behind nginx. **T
 | `js/exports.js` | md / json / csv / txt / anki + download |
 | `js/obsidian.js` | Obsidian-native Markdown, one note per book |
 | `js/favorites.js` | starred quotes, content-derived keys in localStorage + an IndexedDB mirror |
+| `js/favio.js` | favourites backup — download the stars as JSON, read one back |
 | `js/stats.js` | pure statistics — totals, per-book, year/month/weekday/hour, streaks |
 | `js/quotecard.js` | canvas quote-card renderer + PNG download, one size per target screen |
 | `js/modal.js` | generic overlay dialog — open/close, Esc, backdrop, focus return |
