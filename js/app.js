@@ -390,27 +390,31 @@
       if (pendingBook) hint.textContent = KC.i18n.t('restore.pending', { book: decodeURIComponent(pendingBook) });
     }
 
-    var savedText = KC.store.session.load();
-    if (savedText) {
-      KC.app.load(savedText);            // instant same-tab restore
-      return;
-    }
-
-    KC.ui.render();
-    if (!KC.persist.available) { showDropzone(); return; }
-
-    // Durable restore is async: keep the dropzone out of the way instead of flashing it.
-    byId('dropzone').hidden = true;
-    hint.hidden = false;
-    hint.textContent = KC.i18n.t('restore.loading');
-    KC.persist.load().then(function (rec) {
-      if (rec && rec.text) {
-        KC.store.session.save(rec.text);
-        KC.app.load(rec.text);
-        KC.ui.toast(KC.i18n.t('restore.loaded'));
-      } else {
-        showDropzone(KC.store.hadFile.get() > 0);  // marker without a record = the browser evicted it
+    // Stars must be back in memory before anything renders a card, or a session that lost its
+    // localStorage would paint every highlight unstarred and then overwrite the mirror.
+    KC.favorites.hydrate().then(function () {
+      var savedText = KC.store.session.load();
+      if (savedText) {
+        KC.app.load(savedText);          // instant same-tab restore
+        return;
       }
+
+      KC.ui.render();
+      if (!KC.persist.available) { showDropzone(); return; }
+
+      // Durable restore is async: keep the dropzone out of the way instead of flashing it.
+      byId('dropzone').hidden = true;
+      hint.hidden = false;
+      hint.textContent = KC.i18n.t('restore.loading');
+      KC.persist.load().then(function (rec) {
+        if (rec && rec.text) {
+          KC.store.session.save(rec.text);
+          KC.app.load(rec.text);
+          KC.ui.toast(KC.i18n.t('restore.loaded'));
+        } else {
+          showDropzone(KC.store.hadFile.get() > 0);  // marker without a record = the browser evicted it
+        }
+      });
     });
   });
 })(window.KC = window.KC || {});

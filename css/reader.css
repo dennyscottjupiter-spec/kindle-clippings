@@ -3,6 +3,8 @@
    depends: css/tokens.css
    gotcha: .statline:not([hidden]) — a bare display: rule outranks [hidden] at equal specificity
    gotcha: --pane-pad on .pane-inner is the pane gutter; .book-banner bleeds edge-to-edge off it
+   gotcha: .ca-menu > .menu-list re-anchors chrome.css's dropdown to left: 0 — right: 0 would open it
+     off the left edge of the screen, since the trigger sits at the start of a card's meta row
    gotcha: the .meta separator-dot selector's :not() list also excludes .ca-img/.ca-menu (per-card
      actions, js/cardactions.js) alongside .copy — any future meta action button needs the same
      exclusion or it grows a stray "·" before it, same as .fav's own comment below explains
@@ -217,6 +219,14 @@
   cursor: pointer;
 }
 .meta .ca-btn:hover { border-color: var(--brand-1); }
+/* chrome.css anchors .menu-list with right: 0 — right for the topbar, wrong here: this trigger sits
+   near the LEFT edge of a card, so a right-anchored 12rem list opens off the left of the screen. */
+.ca-menu > .menu-list {
+  left: 0;
+  right: auto;
+  min-width: 10rem;
+  max-width: calc(100vw - 2rem);
+}
 @media (max-width: 720px) {
   /* mirrors css/mobile.css's .meta .copy/.fav 44px hit-area trick for these two — that file is
      never edited, so the same invisible-::after expansion is reproduced here instead */

@@ -1,8 +1,10 @@
 // ---
 // purpose: Persistent set of hand-picked favourite highlights, stored in localStorage
-// exports: KC.favorites.keyOf/has/toggle/add/remove/list/count/pick/clear
-// depends: js/store.js
+// exports: KC.favorites.keyOf/has/toggle/add/remove/list/count/pick/clear/hydrate
+// depends: js/store.js, js/persist.js
 // gotcha: rec.id is 'r' + index and shifts on every append — the key is content-derived, not the id
+// gotcha: every write goes to BOTH localStorage and the IndexedDB mirror, and hydrate() unions them
+//   at boot — browsers clear localStorage far more eagerly than IndexedDB
 // ---
 (function (KC) {
   'use strict';
@@ -18,7 +20,9 @@
   }
 
   function save() {
-    KC.store.set(KEY, load());
+    var list = load();
+    KC.store.set(KEY, list);
+    if (KC.persist && KC.persist.saveFavorites) KC.persist.saveFavorites(list);
   }
 
   function keyOf(rec) {
@@ -35,6 +39,27 @@
 
   KC.favorites = {
     keyOf: keyOf,
+
+    // Call once at boot, before the first render. Unions the durable mirror into the localStorage
+    // list (localStorage order wins, mirror-only keys are appended) and writes the result back to
+    // both, so a cleared localStorage is refilled from IndexedDB instead of losing every star.
+    hydrate: function () {
+      if (!KC.persist || !KC.persist.loadFavorites) return Promise.resolve(false);
+      return KC.persist.loadFavorites().then(function (mirrored) {
+        var list = load();
+        if (!mirrored) { if (list.length) save(); return false; }
+        var seen = {}, i, added = 0;
+        for (i = 0; i < list.length; i++) seen[list[i]] = true;
+        for (i = 0; i < mirrored.length; i++) {
+          if (seen[mirrored[i]]) continue;
+          seen[mirrored[i]] = true;
+          list.push(mirrored[i]);
+          added++;
+        }
+        save();
+        return added > 0;
+      })['catch'](function () { return false; });
+    },
 
     has: function (rec) { return indexOf(rec) !== -1; },
 

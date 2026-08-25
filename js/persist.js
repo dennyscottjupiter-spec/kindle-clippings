@@ -1,6 +1,8 @@
 // ---
-// purpose: Durable IndexedDB store for the raw clippings text so it survives closing the browser
-// exports: KC.persist.available, save(text, name), load(), clear(), requestDurable()
+// purpose: Durable IndexedDB store for the raw clippings text (and the favourites mirror) so both
+//   survive closing the browser
+// exports: KC.persist.available, save(text, name), load(), clear(), saveFavorites(), loadFavorites(),
+//   requestDurable()
 // gotcha: writes settle on tx.oncomplete, NOT req.onsuccess — a readwrite transaction can still
 //   abort on quota after the request reported success
 // gotcha: every promise resolves — a private window, blocked site data, a quota abort or a hung
@@ -13,6 +15,7 @@
   var DB_VERSION = 1;
   var STORE = 'files';
   var KEY = 'clippings';
+  var FAV_KEY = 'favorites';
   var OPEN_TIMEOUT = 3000;
 
   var idb = null;
@@ -98,6 +101,23 @@
       return withStore('readwrite', function (store) {
         return store['delete'](KEY);
       }).then(function () { /* always resolves */ });
+    },
+
+    // The favourites list lives in localStorage, which some browsers clear far more eagerly than
+    // IndexedDB — this mirror is what actually carries the stars across sessions.
+    saveFavorites: function (keys) {
+      return withStore('readwrite', function (store) {
+        return store.put({ keys: keys.slice(), ts: Date.now() }, FAV_KEY);
+      }).then(function (r) { return r !== null; });
+    },
+
+    loadFavorites: function () {
+      return withStore('readonly', function (store) {
+        return store.get(FAV_KEY);
+      }).then(function (r) {
+        var rec = r && r.value;
+        return (rec && Object.prototype.toString.call(rec.keys) === '[object Array]') ? rec.keys : null;
+      });
     },
 
     // Safari drops script-writable storage after 7 days without a visit; persisted storage is the

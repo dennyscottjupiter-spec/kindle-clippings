@@ -190,7 +190,7 @@ plain `<script src>` tag — works the same over `file://` and behind nginx. **T
 | `js/covers.js` | opt-in Open Library fetch queue, SVG placeholder covers |
 | `js/exports.js` | md / json / csv / txt / anki + download |
 | `js/obsidian.js` | Obsidian-native Markdown, one note per book |
-| `js/favorites.js` | starred quotes, content-derived keys in localStorage |
+| `js/favorites.js` | starred quotes, content-derived keys in localStorage + an IndexedDB mirror |
 | `js/stats.js` | pure statistics — totals, per-book, year/month/weekday/hour, streaks |
 | `js/quotecard.js` | canvas quote-card renderer + PNG download, one size per target screen |
 | `js/modal.js` | generic overlay dialog — open/close, Esc, backdrop, focus return |
