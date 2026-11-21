@@ -31,7 +31,7 @@ non-zero if any assertion failed:
 | `stats.test.js` | stats totals, per-book/topic aggregates, time histograms, streaks |
 | `real.test.js` | regression against the user's real `My Clippings.txt` at repo root — gitignored, personal; self-skips when the file is absent |
 
-Baseline as of this writing: **245 passed, 0 failed** with the real file present.
+Baseline as of this writing: **248 passed, 0 failed** with the real file present.
 
 To view the app itself: open `index.html` directly (double-click / `file://`), or serve it — there
 is no dev server script, any static file server works (e.g. `python -m http.server`).
@@ -48,6 +48,7 @@ a module can only use what a script tag above it already defined:
 |---|---|
 | `js/i18n.js` | pt-BR/en catalogs, accent-folding `fold()`, `Intl` formatters, `KC.i18n.add()` |
 | `js/i18n-*.js` | per-feature string packs, each calling `KC.i18n.add()` — `anki` · `qc` · `help` · `about` · `topics` · `cardactions` · `favio`. Loaded as a contiguous block right after `i18n.js`, before any consumer |
+| `js/profile.js` | optional two-person mode (A/B, off by default, toggled in the ⋯ settings panel) — `KC.profile.key(k)` namespaces every storage key; A uses bare keys (pre-existing data stays A's), B appends `@B`; switching reloads the page. Must load before `store.js` on BOTH pages |
 | `js/store.js` | localStorage prefs + library cache, sessionStorage raw-text cache (all try/catch); `prefs.set` mirrors to IndexedDB and `prefs.hydrate()` unions it back at boot |
 | `js/persist.js` | IndexedDB — keeps the clippings file on-device between sessions, plus the favourites and prefs mirrors |
 | `js/topics.js` | fixed 15-topic taxonomy, Open Library subject classifier |
@@ -84,7 +85,7 @@ a module can only use what a script tag above it already defined:
 | `shelf.html` / `js/shelf.js` | standalone cover-shelf page; reads the localStorage book/library cache and, with covers on, fetches what is missing (it seeds `KC.state` and a minimal `KC.ui.toast` itself, since `js/app.js` is not loaded there) |
 
 The table order **is** the `<script>` order in `index.html`. `js/shelf.js` is not in that list — it is
-loaded only by `shelf.html`, after `i18n` / `i18n-topics` / `store` / `topics` / `covers` / `topicfilter`
+loaded only by `shelf.html`, after `i18n` / `i18n-topics` / `profile` / `store` / `topics` / `covers` / `topicfilter`
 (and followed there by `nav`).
 
 `tests/harness.js` loads exactly ten modules — its `FILES` array — in this order, into a bare Node

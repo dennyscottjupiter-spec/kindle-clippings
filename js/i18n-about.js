@@ -23,6 +23,8 @@
       'about.credit.h': 'Créditos',
       'about.credit.body': 'Este app foi construído com a ajuda do Claude Code, da Anthropic.',
 
+      'about.rel.2_2_0.1': 'Novo modo "Duas pessoas" nas configurações: A e B no mesmo aparelho, cada um com seus destaques, favoritos e ajustes.',
+      'about.rel.2_2_0.2': 'Ao abrir o app, ele pede ao navegador para guardar seus dados de forma permanente — no iPhone, adicione à Tela de Início para nunca perdê-los.',
       'about.rel.2_1_0.1': 'Suas preferências (tema, idioma, ordenação) agora ficam guardadas em dois lugares — se o navegador limpar um, o outro devolve tudo.',
       'about.rel.2_1_0.2': 'Novo backup manual dos favoritos: baixe um arquivo .json com suas estrelas e restaure-o quando quiser, em qualquer aparelho.',
       'about.rel.2_1_0.3': 'Cada nova versão do app chega ao seu navegador na hora, sem depender de recarregar a página com força.',
@@ -74,6 +76,8 @@
       'about.credit.h': 'Credits',
       'about.credit.body': 'This app was built with the help of Claude Code, by Anthropic.',
 
+      'about.rel.2_2_0.1': 'New "Two people" mode in settings: A and B on the same device, each with their own highlights, favourites and settings.',
+      'about.rel.2_2_0.2': 'On launch the app asks the browser to keep your data permanently — on iPhone, add it to the Home Screen so it is never cleared.',
       'about.rel.2_1_0.1': 'Your preferences (theme, language, sorting) are now kept in two places — if the browser wipes one, the other brings them back.',
       'about.rel.2_1_0.2': 'A manual backup for favourites: download a .json file with your stars and restore it whenever you like, on any device.',
       'about.rel.2_1_0.3': 'Every new version of the app reaches your browser straight away, with no forced reload.',

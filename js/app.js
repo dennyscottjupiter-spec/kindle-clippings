@@ -418,6 +418,7 @@
     // the same barrier: a restored theme/language must land before the first render, not after it.
     Promise.all([KC.favorites.hydrate(), KC.store.prefs.hydrate()]).then(function (done) {
       if (done[1]) applyPrefs();  // a restored lang re-runs applyStrings through KC.i18n.onChange
+      if (KC.store.hadFile.get() > 0) KC.persist.requestDurable();  // re-ask every visit; Chrome grants by engagement
       var savedText = KC.store.session.load();
       if (savedText) {
         KC.app.load(savedText);          // instant same-tab restore

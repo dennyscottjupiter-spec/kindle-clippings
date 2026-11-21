@@ -157,7 +157,22 @@
 /* green = the one control that talks to the network; violet = a purely local view setting */
 #toggle-covers[aria-checked="true"] .sw-track { background: var(--brand-green); }
 #toggle-hidden[aria-checked="true"] .sw-track { background: var(--brand-1); }
+#toggle-profile[aria-checked="true"] .sw-track { background: var(--brand-1); }
 @media (prefers-reduced-motion: reduce) { .sw-thumb, .sw-track { transition: none; } }
+
+/* two-person mode: one tappable monogram, hidden unless the setting is on (js/profile.js) */
+.profile-pill:not([hidden]) {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 2.4em; height: 2.4em; flex-shrink: 0;
+  border: 0; border-radius: 50%; cursor: pointer;
+  font: 700 1rem/1 var(--font-display, var(--font-sans));
+  color: #fff; background: var(--brand-1); box-shadow: var(--sh-1);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.profile-pill[data-profile="B"] { background: var(--brand-green); }
+.profile-pill:hover { box-shadow: var(--sh-2); transform: scale(1.06); }
+.profile-pill:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .profile-pill { transition: none; } }
 
 /* language flag — the button is sized by the flag, not by the icon-button square */
 .flag-btn { padding: .35em .5em; }
