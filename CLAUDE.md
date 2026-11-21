@@ -137,6 +137,9 @@ page and each page's order is the cascade:
   Bumping `CURRENT` in `js/version.js` without rewriting those query strings (and vice-versa) leaves
   browsers on the old bundle — the deployed nginx sends `Cache-Control: no-store`, but nothing else
   serving these files does. Both pages must be rewritten together, all `css/` and `js/` URLs.
+- `icons/icon-192.png`, `icon-512.png` and `apple-touch-icon.png` are rendered from `icons/icon.svg`
+  (full-bleed, book inside the 40% maskable safe circle); `favicon.svg` is the same art with rounded
+  corners. Android ignores SVG manifest icons for the home screen — change the SVG, re-render the PNGs.
 - `js/app.js#applyPrefs()` runs **twice** on a boot that recovered prefs: once synchronously so the
   theme is right on the first painted frame, once after `KC.store.prefs.hydrate()` resolves. The
   second pass only runs when hydrate reports it restored something, and a restored `lang` re-renders

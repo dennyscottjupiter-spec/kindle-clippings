@@ -23,6 +23,7 @@
       'about.credit.h': 'Créditos',
       'about.credit.body': 'Este app foi construído com a ajuda do Claude Code, da Anthropic.',
 
+      'about.rel.2_2_1.1': 'O app ganhou um ícone próprio — um livro aberto — na Tela de Início do celular e na aba do navegador.',
       'about.rel.2_2_0.1': 'Novo modo "Duas pessoas" nas configurações: A e B no mesmo aparelho, cada um com seus destaques, favoritos e ajustes.',
       'about.rel.2_2_0.2': 'Ao abrir o app, ele pede ao navegador para guardar seus dados de forma permanente — no iPhone, adicione à Tela de Início para nunca perdê-los.',
       'about.rel.2_1_0.1': 'Suas preferências (tema, idioma, ordenação) agora ficam guardadas em dois lugares — se o navegador limpar um, o outro devolve tudo.',
@@ -76,6 +77,7 @@
       'about.credit.h': 'Credits',
       'about.credit.body': 'This app was built with the help of Claude Code, by Anthropic.',
 
+      'about.rel.2_2_1.1': 'The app now has its own icon — an open book — on your phone’s Home Screen and in the browser tab.',
       'about.rel.2_2_0.1': 'New "Two people" mode in settings: A and B on the same device, each with their own highlights, favourites and settings.',
       'about.rel.2_2_0.2': 'On launch the app asks the browser to keep your data permanently — on iPhone, add it to the Home Screen so it is never cleared.',
       'about.rel.2_1_0.1': 'Your preferences (theme, language, sorting) are now kept in two places — if the browser wipes one, the other brings them back.',
