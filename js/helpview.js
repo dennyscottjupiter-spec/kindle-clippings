@@ -1,7 +1,7 @@
 // ---
 // purpose: Render the in-app Help guide into #help-modal — a didactic walkthrough of every feature
 // exports: KC.helpview.render(), open(), close(), install()
-// depends: js/i18n.js, js/i18n-help.js (strings), js/modal.js
+// depends: js/i18n.js, js/i18n-help.js + js/i18n-ux.js (strings), js/modal.js
 // gotcha: #nav-help does not exist on shelf.html — install() is guarded, same convention as js/anki.js
 // ---
 (function (KC) {
@@ -19,7 +19,8 @@
     ] },
     { code: 'search', h: 'help.search.h', items: [
       ['help.search.find.t', 'help.search.find.d'],
-      ['help.search.sort.t', 'help.search.sort.d']
+      ['help.search.sort.t', 'help.search.sort.d'],
+      ['help.search.back.t', 'help.search.back.d']
     ] },
     { code: 'dup', h: 'help.dup.h', lead: 'help.dup.lead', items: [
       ['help.dup.what.t', 'help.dup.what.d'],
@@ -29,7 +30,8 @@
     ] },
     { code: 'fav', h: 'help.fav.h', items: [
       ['help.fav.star.t', 'help.fav.star.d'],
-      ['help.fav.copy.t', 'help.fav.copy.d']
+      ['help.fav.copy.t', 'help.fav.copy.d'],
+      ['help.fav.image.t', 'help.fav.image.d']
     ] },
     { code: 'export', h: 'help.export.h', lead: 'help.export.lead', items: [
       ['help.export.md.t', 'help.export.md.d'],
@@ -42,6 +44,7 @@
     ] },
     { code: 'stats', h: 'help.stats.h', items: [
       ['help.stats.totals.t', 'help.stats.totals.d'],
+      ['help.stats.drill.t', 'help.stats.drill.d'],
       ['help.stats.timeline.t', 'help.stats.timeline.d'],
       ['help.stats.rank.t', 'help.stats.rank.d'],
       ['help.stats.rhythm.t', 'help.stats.rhythm.d'],

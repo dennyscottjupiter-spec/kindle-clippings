@@ -25,6 +25,13 @@ html { -webkit-text-size-adjust: 100%; }
   }
   .brand h1 { font-size: .74rem; letter-spacing: .1em; }
   .brand-home { padding: .4em .7em; }
+  /* one row: brand (+ ← when present), Books, ⋯ — the brand gives way (ellipsis) instead of pushing
+     the buttons onto a second row. flex-basis 0 is what keeps it from forcing a wrap. */
+  .brand { flex: 1 1 0; min-width: 0; }
+  .brand-home { max-width: 100%; min-width: 0; }
+  .brand h1 { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .actions { flex-wrap: nowrap; flex-shrink: 0; }
+  .drawer-toggle { padding-left: .75em; padding-right: .8em; gap: .35em; }
   .more-panel:not([hidden]) {
     max-height: calc(100svh - 8rem);
     max-width: calc(100vw - max(1.6rem, env(safe-area-inset-left) + env(safe-area-inset-right)));
@@ -38,7 +45,7 @@ html { -webkit-text-size-adjust: 100%; }
   }
 
   /* --- touch targets: 44x44 without growing the visual pill ----------- */
-  .btn, .switch, .seg button, .chip, .book-item, .meta .copy, .meta .fav {
+  .btn, .switch, .seg button, .chip, .book-item {
     touch-action: manipulation;              /* removes the legacy 300ms tap delay */
     -webkit-tap-highlight-color: transparent;
     position: relative;
@@ -49,13 +56,14 @@ html { -webkit-text-size-adjust: 100%; }
   .flag-btn { padding: .4em .6em; }
   .book-item { min-height: 48px; padding: .7em .9rem; }
 
-  /* ::after expands the hit area past the small visual box, invisibly. */
-  .seg button, .chip, .meta .copy, .meta .fav {
+  /* ::after expands the hit area past the small visual box, invisibly. (Card tray buttons need no
+     such trick: reader.css makes each a 50px cell on phones.) */
+  .seg button, .chip {
     min-height: 32px;
     display: inline-flex;
     align-items: center;
   }
-  .seg button::after, .chip::after, .meta .copy::after, .meta .fav::after {
+  .seg button::after, .chip::after {
     content: "";
     position: absolute;
     left: 0; right: 0;
@@ -64,7 +72,6 @@ html { -webkit-text-size-adjust: 100%; }
     transform: translateY(-50%);
     min-width: 44px;
   }
-  .meta .fav::after, .meta .copy::after { left: -6px; right: -6px; }
 
   /* --- sidebar drawer -------------------------------------------------- */
   .resizer { display: none; }                /* col-resize is meaningless on touch */
@@ -89,9 +96,8 @@ html { -webkit-text-size-adjust: 100%; }
 
   .entry { padding: 1rem .95rem; border-radius: var(--r-sm); }
   .entry .q { font-size: 1.05rem; line-height: 1.6; overflow-wrap: anywhere; }
-  .entry .meta { gap: .5em; font-size: .72rem; }
   /* Long sideloaded-PDF titles are the usual cause of sideways page scroll. */
-  .book-item .book-title, .bb-meta .bb-title, .group-head, .meta .book {
+  .book-item .book-title, .bb-meta .bb-title, .group-head, .meta-info .book {
     overflow-wrap: anywhere;
   }
   .book-item .book-title { white-space: normal; overflow: visible; }
@@ -142,8 +148,7 @@ html { -webkit-text-size-adjust: 100%; }
   .tip-host:focus-within .tip { opacity: 1; visibility: visible; transform: none; }
 
   /* Card actions must never depend on hover to be discoverable. */
-  .meta .fav, .meta .copy { opacity: 1; visibility: visible; }
-  .meta .fav:hover { transform: none; }
+  .entry .meta-actions { opacity: 1; }
   .btn:hover, .book-item:hover, .menu-list button:hover, .switch:hover { box-shadow: var(--sh-1); }
   .shelf-card:hover { transform: none; }
   .shelf-card:active { transform: scale(.985); }
@@ -160,6 +165,7 @@ html { -webkit-text-size-adjust: 100%; }
   .brand .sub { display: none; }
   .btn, .switch { min-height: 38px; }
   .btn.icon { width: 38px; height: 38px; }
+  .act { min-height: 40px; padding-left: .85em; padding-right: .85em; }   /* card tray, still thumb-sized */
   .pane-inner { padding-top: .8rem; }
   .dropzone { padding: 1.1rem 1rem; }
   .bb-cover img { height: 64px; }

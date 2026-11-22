@@ -6,11 +6,19 @@
 (function (KC) {
   'use strict';
 
-  var CURRENT = '2.2.1';
+  var CURRENT = '2.3.0';
 
   // Newest first. Each `changes` entry is an i18n key resolved against js/i18n-about.js by
   // js/aboutview.js, so the release history reads correctly in both pt-BR and en.
   var RELEASES = [
+    {
+      version: '2.3.0',
+      date: '2026-11-22',
+      changes: [
+        'about.rel.2_3_0.1', 'about.rel.2_3_0.2', 'about.rel.2_3_0.3', 'about.rel.2_3_0.4',
+        'about.rel.2_3_0.5', 'about.rel.2_3_0.6', 'about.rel.2_3_0.7'
+      ]
+    },
     {
       version: '2.2.1',
       date: '2026-11-21',

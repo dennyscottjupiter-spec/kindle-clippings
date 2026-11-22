@@ -1,7 +1,7 @@
 // ---
 // purpose: Generic overlay dialog — open/close, Esc, backdrop click, focus return, body scroll lock
-// exports: KC.modal.open(id), close(id), closeAll(), isOpen(id)
-// depends: nothing
+// exports: KC.modal.open(id), close(id), closeAll(), isOpen(id), requestClose(id)
+// depends: nothing (js/backnav.js replaces requestClose + wraps open once it installs)
 // gotcha: the show rule must be written .modal:not([hidden]) — a bare display: rule outranks [hidden]
 // ---
 (function (KC) {
@@ -42,6 +42,10 @@
       if (lastFocus && lastFocus.focus) lastFocus.focus();
     },
 
+    // What the user's ×, Esc and backdrop tap call. Plain close by default; js/backnav.js swaps in a
+    // history-aware version so the phone's back stack stays in step with what is on screen.
+    requestClose: function (id) { KC.modal.close(id); },
+
     closeAll: function () {
       var open = document.querySelectorAll('.modal:not([hidden])');
       for (var i = 0; i < open.length; i++) KC.modal.close(open[i].id);
@@ -51,14 +55,17 @@
     install: function () {
       document.addEventListener('click', function (e) {
         var closer = e.target.closest ? e.target.closest('[data-close]') : null;
-        if (closer) { KC.modal.close(closer.getAttribute('data-close')); return; }
-        if (e.target.className && String(e.target.className).indexOf('modal') === 0 &&
-            e.target.id) {
-          KC.modal.close(e.target.id);
+        if (closer) { KC.modal.requestClose(closer.getAttribute('data-close')); return; }
+        // Exactly the .modal backdrop — a prefix test also matched .modal-body#stats-body, so a tap
+        // on the panel's own padding used to "close" (hide) the body instead of the dialog.
+        if (e.target.classList && e.target.classList.contains('modal') && e.target.id) {
+          KC.modal.requestClose(e.target.id);
         }
       });
       document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && anyOpen()) KC.modal.closeAll();
+        if (e.key !== 'Escape' || !anyOpen()) return;
+        var open = document.querySelectorAll('.modal:not([hidden])');
+        KC.modal.requestClose(open[open.length - 1].id);
       });
     }
   };

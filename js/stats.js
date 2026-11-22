@@ -1,6 +1,6 @@
 // ---
 // purpose: Pure statistics over cleaned records — totals, per-book, time histograms, streaks
-// exports: KC.stats.compute(visible, books, lib), KC.stats.bucketMonths(monthList, budget)
+// exports: KC.stats.compute(visible, books, lib), details(visible, nowMs, opts), bucketMonths(monthList, budget), LENGTHS
 // depends: nothing (no DOM, no browser globals — must stay loadable in tests/harness.js)
 // gotcha: day buckets use LOCAL calendar days, so a streak matches what the reader saw on the device
 // gotcha: byMonth is DENSE — empty months between the first and last are emitted with count 0
@@ -20,6 +20,13 @@
   function dayIndex(ms) {
     var d = new Date(ms);
     return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY);
+  }
+
+  // Back from a dayIndex to LOCAL midnight of that day. `day * DAY` is UTC midnight, which a
+  // UTC−3 device (Brazil) formats as 21:00 of the day BEFORE — the busiest day was off by one.
+  function dayStartMs(day) {
+    var u = new Date(day * DAY);
+    return new Date(u.getUTCFullYear(), u.getUTCMonth(), u.getUTCDate()).getTime();
   }
 
   function monthKey(ms) {
@@ -83,8 +90,64 @@
     return { longest: longest, current: run };
   }
 
+  // Highlight length classes for the Words drill-down — upper bounds inclusive, in words.
+  var LENGTHS = [['xs', 10], ['s', 25], ['m', 50], ['l', 100], ['xl', Infinity]];
+
   KC.stats = {
     bucketMonths: bucketMonths,
+    LENGTHS: LENGTHS,
+
+    // The granular numbers behind the four stats tiles. `nowMs` is passed in (never Date.now()
+    // here) so "last 30 days" / "this year" stay deterministic under test.
+    details: function (visible, nowMs, opts) {
+      var topN = (opts && opts.top) || 5;
+      var lengths = LENGTHS.map(function (l) { return { id: l[0], max: l[1], count: 0 }; });
+      var hl = [], notes = [], perDay = {}, i, j;
+      var last30 = 0, thisYear = 0, withNote = 0;
+      var now = new Date(nowMs), yearNow = now.getFullYear(), cutoff = nowMs - 30 * DAY;
+
+      for (i = 0; i < visible.length; i++) {
+        var rec = visible[i];
+        if (rec.deviceFooter) continue;
+        if (rec.type === 'highlight' || rec.type === 'clipping') {
+          var w = words(rec.text);
+          for (j = 0; j < lengths.length; j++) if (w <= lengths[j].max) { lengths[j].count++; break; }
+          hl.push({ id: rec.id, text: rec.text, title: rec.title, bookKey: rec.bookKey, words: w,
+            dateMs: rec.dateMs || null, order: rec.order || 0 });
+          if (rec.note && rec.note.text) withNote++;
+          if (rec.dateMs) {
+            var di = dayIndex(rec.dateMs);
+            perDay[di] = (perDay[di] || 0) + 1;
+            if (rec.dateMs >= cutoff && rec.dateMs <= nowMs) last30++;
+            if (new Date(rec.dateMs).getFullYear() === yearNow) thisYear++;
+          }
+        } else if (rec.type === 'note' && rec.text) {
+          notes.push({ text: rec.text, title: rec.title, bookKey: rec.bookKey, dateMs: rec.dateMs || null });
+        }
+        if (rec.note && rec.note.text) {
+          notes.push({ text: rec.note.text, title: rec.title, bookKey: rec.bookKey,
+            dateMs: rec.note.dateMs || rec.dateMs || null });
+        }
+      }
+
+      hl.sort(function (a, b) { return b.words - a.words || a.order - b.order; });
+      notes.sort(function (a, b) { return (b.dateMs || 0) - (a.dateMs || 0); });
+
+      var days = [], k;
+      for (k in perDay) days.push({ day: Number(k), count: perDay[k] });
+      days.sort(function (a, b) { return b.count - a.count || b.day - a.day; });
+
+      return {
+        highlights: hl.length,
+        lengths: lengths,
+        longest: hl.slice(0, topN),
+        notes: notes,
+        withNote: withNote,
+        topDays: days.slice(0, topN).map(function (d) { return { ms: dayStartMs(d.day), count: d.count }; }),
+        last30: last30,
+        thisYear: thisYear
+      };
+    },
 
     compute: function (visible, books, lib) {
       lib = lib || {};
@@ -214,7 +277,7 @@
         lastMs: lastMs,
         spanDays: (firstMs !== null && lastMs !== null) ? Math.round((lastMs - firstMs) / DAY) : 0,
         activeDays: days.length,
-        busiestDay: busiest ? { ms: busiest.day * DAY, count: busiest.count } : null,
+        busiestDay: busiest ? { ms: dayStartMs(busiest.day), count: busiest.count } : null,
         longestStreak: st.longest,
         currentStreak: st.current
       };

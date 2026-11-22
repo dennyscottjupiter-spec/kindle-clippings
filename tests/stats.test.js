@@ -150,6 +150,32 @@ function run() {
   eq(z.longest, null, 'no longest highlight');
   eq(z.busiestDay, null, 'no busiest day');
   eq(z.longestStreak, 0, 'no streak');
+
+  section('stats — busiest day is LOCAL midnight (off-by-one in UTC− zones)');
+  const bd = new Date(s.busiestDay.ms);
+  eq([bd.getFullYear(), bd.getMonth(), bd.getDate(), bd.getHours()], [2024, 0, 5, 0],
+    'busiestDay.ms formats as Jan 5 00:00 local, not 21:00 the evening before');
+
+  section('stats — details (the drill-down behind each tile)');
+  const NOW = at(2024, 0, 20, 12, 0);
+  const d = KC.stats.details(build(), NOW);
+  eq(d.highlights, 6, 'details counts the same six highlights');
+  eq(d.lengths.map(function (l) { return l.id + ':' + l.count; }), ['xs:6', 's:0', 'm:0', 'l:0', 'xl:0'],
+    'every fixture highlight is ≤ 10 words — all land in the xs length class');
+  eq(d.lengths.reduce(function (n, l) { return n + l.count; }, 0), d.highlights, 'length classes partition the highlights');
+  eq(d.longest[0].id, 'h2', 'longest list starts with the 7-word highlight');
+  eq(d.longest.map(function (h) { return h.words; }), [7, 4, 3, 2, 2], 'longest is word-count descending, top 5');
+  eq(d.notes.length, 2, 'notes = the standalone note + the one attached to h6');
+  eq(d.notes.map(function (n) { return n.text; }).sort(), ['a standalone note', 'attached'], 'both note texts are listed');
+  eq(d.withNote, 1, 'one highlight carries an attached note');
+  eq(d.last30, 5, 'five dated highlights fall within 30 days of Jan 20');
+  eq(d.thisYear, 5, 'five dated highlights are in 2024 (h6 is undated)');
+  eq(d.topDays[0].count, 2, 'busiest detail day has two highlights');
+  const td = new Date(d.topDays[0].ms);
+  eq([td.getMonth(), td.getDate()], [0, 5], 'and it is Jan 5, local');
+  eq(KC.stats.details(build(), at(2025, 6, 1)).last30, 0, 'nothing in the last 30 days of a later "now"');
+  const dz = KC.stats.details([], NOW);
+  eq([dz.highlights, dz.longest.length, dz.notes.length, dz.topDays.length], [0, 0, 0, 0], 'details([]) is empty, not broken');
 }
 
 module.exports = { run };

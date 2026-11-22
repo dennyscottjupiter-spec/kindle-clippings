@@ -1,7 +1,7 @@
 // ---
 // purpose: localStorage prefs + library cache + sessionStorage raw-text cache, all failure-tolerant
 // exports: KC.store.get/set, prefs (incl. hydrate), lib, books, session, hadFile, libFull
-// depends: js/profile.js (key namespacing), js/persist.js at call time only — index.html loads it after this file, never before
+// depends: js/persist.js at call time only — index.html loads it after this file, never before
 // gotcha: private windows, disabled site data and quota all throw — every access is try/catch guarded
 // gotcha: `session` is only the fast same-tab cache; the durable copy lives in js/persist.js (IndexedDB)
 // gotcha: prefs are mirrored to IndexedDB on every write and hydrate() unions them back at boot —
@@ -17,12 +17,13 @@
   var HADFILE_KEY = 'kc.hadFile';
   var SESSION_MAX = 4e6;
 
-  // Per-person key when two-person mode is on (js/profile.js); bare key otherwise.
-  function K(k) { return KC.profile ? KC.profile.key(k) : k; }
+  // The retired two-person mode (v2.2) namespaced keys per person; its device-level switch is
+  // dropped here so nobody stays stuck on person B's (now unread) '@B' keys.
+  try { localStorage.removeItem('kc.profile'); } catch (e) { /* ignore */ }
 
   function get(key, fallback) {
     try {
-      var v = localStorage.getItem(K(key));
+      var v = localStorage.getItem(key);
       return v ? JSON.parse(v) : fallback;
     } catch (e) {
       return fallback;
@@ -31,7 +32,7 @@
 
   function set(key, value) {
     try {
-      localStorage.setItem(K(key), JSON.stringify(value));
+      localStorage.setItem(key, JSON.stringify(value));
       return true;
     } catch (e) {
       return false;
@@ -100,13 +101,13 @@
     session: {
       save: function (text) {
         if (text.length > SESSION_MAX) return false;
-        try { sessionStorage.setItem(K(SESSION_KEY), text); return true; } catch (e) { return false; }
+        try { sessionStorage.setItem(SESSION_KEY, text); return true; } catch (e) { return false; }
       },
       load: function () {
-        try { return sessionStorage.getItem(K(SESSION_KEY)); } catch (e) { return null; }
+        try { return sessionStorage.getItem(SESSION_KEY); } catch (e) { return null; }
       },
       clear: function () {
-        try { sessionStorage.removeItem(K(SESSION_KEY)); } catch (e) { /* ignore */ }
+        try { sessionStorage.removeItem(SESSION_KEY); } catch (e) { /* ignore */ }
       }
     },
 
@@ -115,7 +116,7 @@
       get: function () { return get(HADFILE_KEY, 0); },
       set: function () { return set(HADFILE_KEY, Date.now()); },
       clear: function () {
-        try { localStorage.removeItem(K(HADFILE_KEY)); } catch (e) { /* ignore */ }
+        try { localStorage.removeItem(HADFILE_KEY); } catch (e) { /* ignore */ }
       }
     }
   };

@@ -1,7 +1,7 @@
 // ---
 // purpose: Quote-card panel — filter and order starred highlights, preview them, download JPEGs
 // exports: KC.quoteview.open(), close(), render(), set(), recById(), downloadOne(), downloadVisible()
-// depends: js/quotesort.js, js/quotecard.js, js/favorites.js, js/i18n.js, js/topics.js, js/modal.js
+// depends: js/icons.js, js/quotesort.js, js/quotecard.js, js/favorites.js, js/i18n.js, js/topics.js, js/modal.js
 // gotcha: previews draw at PREVIEW_SCALE to stay cheap; the download always redraws at scale 1
 // ---
 (function (KC) {
@@ -61,14 +61,17 @@
     bar.appendChild(el('span', 'qc-title', rec.title));
 
     var isFav = KC.favorites.has(rec);
-    var star = el('button', isFav ? 'qc-btn is-on' : 'qc-btn', '★');
+    var star = el('button', isFav ? 'qc-btn qc-star is-on' : 'qc-btn qc-star');
+    star.appendChild(KC.icons.svg('star'));
     star.type = 'button';
     star.setAttribute('data-qc-fav', rec.id);
     star.setAttribute('aria-pressed', isFav ? 'true' : 'false');
     star.title = KC.i18n.t('fav.toggle');
+    star.setAttribute('aria-label', KC.i18n.t('fav.toggle'));
     bar.appendChild(star);
 
-    var dl = el('button', 'qc-btn', '↓ JPG');
+    var dl = el('button', 'qc-btn', 'JPG');
+    dl.insertBefore(KC.icons.svg('download'), dl.firstChild);
     dl.type = 'button';
     dl.setAttribute('data-qc-dl', rec.id);
     dl.title = KC.i18n.t('qc.download');

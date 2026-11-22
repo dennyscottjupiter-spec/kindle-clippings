@@ -1,5 +1,6 @@
 /* ---
-   purpose: Overlay dialogs — statistics panel (tiles, bars, histograms) and the quote-card gallery
+   purpose: Overlay dialogs — statistics panel (tappable tiles, drill-down views, bars, histograms) and
+     the quote-card gallery
    depends: css/tokens.css, css/sidebar.css (.yr-chip extends its .chip)
    gotcha: .modal and .qc-clear are toggled with [hidden] — see their :not([hidden]) / [hidden] rules
    --- */
@@ -80,8 +81,108 @@
 .kpi-b { border-top-color: var(--brand-2); }
 .kpi-c { border-top-color: var(--brand-3); }
 .kpi-d { border-top-color: var(--brand-4); }
-.kpi-v { display: block; font-size: 1.7rem; line-height: 1.1; font-weight: 700; }
+.kpi-v { display: block; font-size: 1.7rem; line-height: 1.1; font-weight: 700; font-variant-numeric: tabular-nums; }
 .kpi-l { font-size: .74rem; color: var(--mid); text-transform: uppercase; letter-spacing: .08em; }
+
+/* overview tiles are buttons — each opens its drill-down (js/statsview.js) */
+.kpi { position: relative; }
+.kpi-link {
+  display: block; width: 100%;
+  text-align: left; font: inherit; color: inherit;
+  cursor: pointer;
+  transition: transform .14s ease, box-shadow .15s ease, border-color .15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.kpi-link:active { transform: scale(.97); }
+.kpi-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (hover: hover) and (pointer: fine) {
+  .kpi-link:hover { transform: translateY(-2px); box-shadow: var(--sh-2); border-color: var(--accent-line); }
+  .kpi-link:hover .kpi-go .ico { transform: translateX(3px); }
+}
+.kpi-ico {
+  position: absolute; top: .75rem; right: .75rem;
+  display: flex; align-items: center; justify-content: center;
+  width: 2rem; height: 2rem; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent);
+}
+.kpi-ico .ico { width: 1.05rem; height: 1.05rem; }
+.kpi-b .kpi-ico { color: var(--brand-2); }
+.kpi-c .kpi-ico { color: var(--brand-4); background: var(--marker-note-tint); }
+.kpi-d .kpi-ico { color: var(--brand-4); background: var(--marker-note-tint); }
+.kpi-link .kpi-v { padding-right: 2.4rem; }
+.kpi-link .kpi-l { display: block; }
+.kpi-go {
+  display: flex; align-items: center; gap: .2em;
+  margin-top: .55rem;
+  font: 700 .7rem/1 var(--font-sans);
+  color: var(--accent);
+}
+.kpi-go .ico { width: .9rem; height: .9rem; transition: transform .15s ease; }
+
+/* detail views: smaller tiles, a sticky "← Overview" header */
+.kpis-mini { grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: .5rem; margin-bottom: 1.2rem; }
+.kpis-mini .kpi { padding: .7rem .8rem; }
+.kpis-mini .kpi-v { font-size: 1.3rem; padding-right: 2rem; }
+.kpis-mini .kpi-l { font-size: .66rem; display: block; line-height: 1.3; }
+.kpis-mini .kpi-ico { top: .6rem; right: .6rem; width: 1.7rem; height: 1.7rem; }
+.st-detail { animation: kc-detail-in .22s cubic-bezier(.2,.8,.3,1); }
+.st-dhead {
+  position: sticky; top: -1.1rem; z-index: 2;
+  display: flex; align-items: center; gap: .8rem;
+  margin: -1.1rem -1.1rem 1rem; padding: .7rem 1.1rem;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid var(--rule);
+}
+.st-back { color: var(--accent); border-color: var(--accent-line); background: var(--accent-soft); }
+.st-back .ico { width: 1.1rem; height: 1.1rem; }
+.st-dtitle { font: 700 1.05rem/1.2 var(--font-sans); }
+.st-seg { margin-bottom: .8rem; max-width: 100%; overflow-x: auto; }
+
+/* tappable book rows + their one-line sub-caption */
+.bar-row.is-link { cursor: pointer; border-radius: var(--r-sm); margin: 0 -.4rem; padding: .3rem .4rem; }
+.bar-row.is-link:active { background: var(--sunk); }
+@media (hover: hover) and (pointer: fine) {
+  .bar-row.is-link:hover { background: var(--sunk); }
+  .bar-row.is-link:hover .bar-label { color: var(--accent); }
+}
+.bar-sub {
+  grid-column: 1 / -1;
+  margin-top: -.15rem;
+  font-size: .7rem; line-height: 1.4; color: var(--mid);
+}
+
+/* quote/note rows (latest notes, longest highlights) — the whole row opens the book */
+.st-quotes { display: flex; flex-direction: column; gap: .55rem; }
+.st-quote {
+  display: flex; flex-direction: column; gap: .45rem;
+  width: 100%; text-align: left;
+  padding: .8rem .95rem;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: var(--sh-1);
+  transition: transform .12s ease, box-shadow .15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.st-detail-notes .st-quote { border-left-color: var(--marker-note); }
+.st-quote:active { transform: scale(.985); }
+@media (hover: hover) and (pointer: fine) { .st-quote:hover { box-shadow: var(--sh-2); } }
+.st-quote-t { font-family: var(--font-serif); font-size: .95rem; line-height: 1.55; }
+.st-quote-m { display: flex; flex-wrap: wrap; gap: .2rem .7rem; font-size: .72rem; color: var(--mid); }
+.st-quote-b { font-style: italic; }
+.st-quote-d { font-family: var(--font-mono); }
+
+@keyframes kc-detail-in { from { opacity: 0; transform: translateX(14px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .kpi-link, .kpi-go .ico, .st-quote { transition: none; }
+  .st-detail { animation: none; }
+}
 
 .stat-sec { margin-bottom: 1.6rem; }
 .stat-h {
@@ -121,7 +222,6 @@
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .bar-label.is-link { cursor: pointer; }
-.bar-label.is-link:hover { color: var(--brand-1); text-decoration: underline; }
 .bar-track { background: var(--sunk); border-radius: var(--r-pill); height: .62rem; overflow: hidden; }
 .bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--grad-primary); }
 .bar-fill.is-topic { background: var(--topic-edge, var(--brand-1)); }
@@ -231,7 +331,10 @@
   padding: .2em .6em; font-size: .74rem; font-weight: 600; color: var(--mid); cursor: pointer;
 }
 .qc-btn:hover { border-color: var(--brand-1); color: var(--ink); }
+.qc-btn { display: inline-flex; align-items: center; gap: .3em; }
+.qc-btn .ico { width: .95rem; height: .95rem; }
 .qc-btn.is-on, .qc-btn[aria-pressed="true"] { color: var(--brand-4); border-color: var(--brand-4); }
+.qc-btn.is-on .ico { fill: currentColor; }
 .qc-note { font-size: .74rem; color: var(--mid); }
 @media (prefers-reduced-motion: reduce) { .qc { transition: none; } }
 
@@ -239,6 +342,9 @@
   .modal:not([hidden]) { padding: 0; }
   .modal-card { border-radius: 0; border: 0; height: 100%; }
   .bar-row { grid-template-columns: minmax(4.5rem, 8rem) 1fr auto; gap: .5rem; }
+  .st-detail .bar-row.is-link { grid-template-columns: minmax(6rem, 11rem) 1fr auto; }
+  .kpi-v { font-size: 1.5rem; }
+  .kpi { padding: .8rem .85rem; }
   .qc-grid { grid-template-columns: 1fr; }
   /* fields pair up two per row; book and search take a row each — their values are long */
   .qc-field { flex: 1 1 8.5rem; }

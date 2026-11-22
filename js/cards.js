@@ -1,7 +1,7 @@
 // ---
 // purpose: Build one highlight card + group header, and paginate the list behind an IntersectionObserver
-// exports: KC.cards.build(rec), KC.cards.groupHead(rec), KC.cards.reset(), KC.cards.appendPage(), KC.cards.observe()
-// depends: js/i18n.js, js/clean.js (record shape), js/topics.js (group header label/hue), js/favorites.js
+// exports: KC.cards.build(rec), groupHead(rec), reset(), appendPage(), observe(), actBtn(cls, icon, label)
+// depends: js/i18n.js, js/icons.js, js/clean.js (record shape), js/topics.js (group header label/hue), js/favorites.js
 // gotcha: DOM is built with createElement + textContent only — highlight text is untrusted input
 // ---
 (function (KC) {
@@ -19,14 +19,49 @@
     return n;
   }
 
-  function locLabel(rec) {
-    var out = [];
-    if (rec.page) out.push(KC.i18n.t('meta.page', { n: rec.page }));
-    if (rec.locStart !== null && rec.locStart !== undefined) {
-      var range = rec.locEnd && rec.locEnd !== rec.locStart ? rec.locStart + '–' + rec.locEnd : String(rec.locStart);
-      out.push(KC.i18n.t('meta.loc', { range: range }));
+  function locRange(rec) {
+    if (rec.locStart === null || rec.locStart === undefined) return '';
+    return rec.locEnd && rec.locEnd !== rec.locStart ? rec.locStart + '–' + rec.locEnd : String(rec.locStart);
+  }
+
+  // An icon + text pill for the info row (page, location).
+  function chip(cls, icon, text) {
+    var n = el('span', cls);
+    n.appendChild(KC.icons.svg(icon));
+    n.appendChild(el('span', null, text));
+    return n;
+  }
+
+  // One action-tray button: icon over (phone) or beside (desktop) a short label. Shared shape with
+  // js/cardactions.js, which builds the same structure for its own buttons.
+  function actBtn(cls, icon, label) {
+    var b = el('button', 'act ' + cls);
+    b.type = 'button';
+    b.appendChild(KC.icons.svg(icon));
+    b.appendChild(el('span', 'act-lbl', label));
+    return b;
+  }
+
+  // "23 mar 2015, 00:22" — the long form (KC.i18n.date) wraps badly in a phone-width chip, so it
+  // moves to the tooltip and the chip keeps the medium one.
+  function shortDate(ms) {
+    try {
+      return new Intl.DateTimeFormat(KC.i18n.lang, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(ms));
+    } catch (e) { return KC.i18n.date(ms); }
+  }
+
+  // "3 months ago" for the date's tooltip — Intl.RelativeTimeFormat, absent on very old browsers.
+  var REL_STEPS = [[60, 'second'], [60, 'minute'], [24, 'hour'], [30.44, 'day'], [12, 'month'], [Infinity, 'year']];
+  function relative(ms) {
+    if (typeof Intl === 'undefined' || !Intl.RelativeTimeFormat) return '';
+    var v = (ms - Date.now()) / 1000, i;
+    for (i = 0; i < REL_STEPS.length; i++) {
+      if (Math.abs(v) < REL_STEPS[i][0]) break;
+      v /= REL_STEPS[i][0];
     }
-    return out.join(' · ');
+    try {
+      return new Intl.RelativeTimeFormat(KC.i18n.lang, { numeric: 'auto' }).format(Math.round(v), REL_STEPS[i][1]);
+    } catch (e) { return ''; }
   }
 
   function flag(cls, text) {
@@ -39,6 +74,8 @@
   }
 
   KC.cards = {
+    actBtn: actBtn,
+
     build: function (rec) {
       var art = el('article', 'entry');
       art.setAttribute('data-id', rec.id);
@@ -61,39 +98,57 @@
 
       if (rec.note && rec.note.text) {
         var wrap = el('div', 'note-attached');
+        var nl = el('span', 'note-label');
+        nl.appendChild(KC.icons.svg('note'));
+        nl.appendChild(el('span', null, KC.i18n.t('card.noteLabel').replace(/:$/, '')));
+        wrap.appendChild(nl);
         wrap.appendChild(el('p', 'note-text', rec.note.text));
         art.appendChild(wrap);
       }
 
+      // Footer = an info row (where + when) over an action tray. js/cardactions.js appends its JPG +
+      // export buttons into .meta-actions, so the tray must exist before appendPage returns.
       var meta = el('div', 'meta');
-      meta.appendChild(el('span', 'book', rec.title));
-      var loc = locLabel(rec);
-      if (loc) meta.appendChild(el('span', 'loc', loc));
+      var info = el('div', 'meta-info');
+      info.appendChild(el('span', 'book', rec.title));
+      if (rec.page) info.appendChild(chip('loc loc-page', 'page', KC.i18n.t('meta.page', { n: rec.page })));
+      var range = locRange(rec);
+      if (range) info.appendChild(chip('loc loc-pos', 'pin', KC.i18n.t('meta.loc', { range: range })));
 
-      var t = el('time', null, rec.dateMs ? KC.i18n.date(rec.dateMs) : rec.dateRaw);
-      if (rec.dateMs) t.setAttribute('datetime', new Date(rec.dateMs).toISOString());
-      meta.appendChild(t);
+      if (rec.dateMs || rec.dateRaw) {
+        var t = el('time', 'when');
+        t.appendChild(KC.icons.svg('calendar'));
+        t.appendChild(el('span', null, rec.dateMs ? shortDate(rec.dateMs) : rec.dateRaw));
+        if (rec.dateMs) {
+          t.setAttribute('datetime', new Date(rec.dateMs).toISOString());
+          var ago = relative(rec.dateMs);
+          t.title = KC.i18n.date(rec.dateMs) + (ago ? ' · ' + ago : '');
+        }
+        info.appendChild(t);
+      }
 
       if (rec.duplicates && rec.duplicates.length) {
-        meta.appendChild(flag('flag-dup', KC.i18n.t('card.duplicatesHidden', { n: rec.duplicates.length })));
+        info.appendChild(flag('flag-dup', KC.i18n.t('card.duplicatesHidden', { n: rec.duplicates.length })));
       }
-      if (rec.hiddenReason === 'duplicate') meta.appendChild(flag('flag-dup', KC.i18n.t('card.possibleDuplicate')));
-      if (rec.truncated) meta.appendChild(flag('flag-trunc', KC.i18n.t('card.truncated')));
-      if (rec.noteMatch === 'near') meta.appendChild(flag('flag-near', '≈ ' + KC.i18n.t('card.noteNear')));
+      if (rec.hiddenReason === 'duplicate') info.appendChild(flag('flag-dup', KC.i18n.t('card.possibleDuplicate')));
+      if (rec.truncated) info.appendChild(flag('flag-trunc', KC.i18n.t('card.truncated')));
+      if (rec.noteMatch === 'near') info.appendChild(flag('flag-near', '≈ ' + KC.i18n.t('card.noteNear')));
+      meta.appendChild(info);
 
+      var acts = el('div', 'meta-actions');
       var isFav = KC.favorites.has(rec);
-      var fav = el('button', isFav ? 'fav is-on' : 'fav', '★');
-      fav.type = 'button';
+      var fav = actBtn('fav', 'star', KC.i18n.t(isFav ? 'card.starred' : 'card.star'));
+      if (isFav) fav.className += ' is-on';
       fav.setAttribute('data-fav', rec.id);
       fav.setAttribute('aria-pressed', isFav ? 'true' : 'false');
       fav.setAttribute('aria-label', KC.i18n.t('fav.toggle'));
       fav.title = KC.i18n.t('fav.toggle');
-      meta.appendChild(fav);
+      acts.appendChild(fav);
 
-      var copy = el('button', 'copy', KC.i18n.t('card.copy'));
-      copy.type = 'button';
+      var copy = actBtn('copy', 'copy', KC.i18n.t('card.copy'));
       copy.setAttribute('data-copy', rec.id);
-      meta.appendChild(copy);
+      acts.appendChild(copy);
+      meta.appendChild(acts);
 
       art.appendChild(meta);
       return art;

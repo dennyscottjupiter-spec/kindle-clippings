@@ -12,14 +12,14 @@
 <meta name="apple-mobile-web-app-title" content="Clippings">
 <title>Kindle Clippings</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="css/tokens.css?v=2.2.1">
-<link rel="stylesheet" href="css/fonts.css?v=2.2.1">
-<link rel="stylesheet" href="css/chrome.css?v=2.2.1">
-<link rel="stylesheet" href="css/sidebar.css?v=2.2.1">
-<link rel="stylesheet" href="css/reader.css?v=2.2.1">
-<link rel="stylesheet" href="css/panels.css?v=2.2.1">
-<link rel="stylesheet" href="css/docs.css?v=2.2.1">
-<link rel="stylesheet" href="css/mobile.css?v=2.2.1">
+<link rel="stylesheet" href="css/tokens.css?v=2.3.0">
+<link rel="stylesheet" href="css/fonts.css?v=2.3.0">
+<link rel="stylesheet" href="css/chrome.css?v=2.3.0">
+<link rel="stylesheet" href="css/sidebar.css?v=2.3.0">
+<link rel="stylesheet" href="css/reader.css?v=2.3.0">
+<link rel="stylesheet" href="css/panels.css?v=2.3.0">
+<link rel="stylesheet" href="css/docs.css?v=2.3.0">
+<link rel="stylesheet" href="css/mobile.css?v=2.3.0">
 <link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
 <link rel="icon" href="icons/icon-192.png" sizes="192x192" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -28,6 +28,8 @@
 <a class="skip" href="#main" id="skip-link">Ir para os destaques</a>
 
 <header class="topbar">
+  <!-- js/backnav.js shows this only while there is somewhere to go back to -->
+  <button class="btn icon back-btn" id="nav-back" type="button" data-i18n-label="nav.back" hidden><span data-icon="back"></span></button>
   <div class="brand">
     <a class="brand-home" id="nav-home" href="index.html" data-i18n-label="nav.home">
       <span class="brand-dot" aria-hidden="true"></span>
@@ -41,93 +43,102 @@
   </div>
 
   <div class="actions">
-    <button class="profile-pill" id="profile-pill" type="button" data-i18n-label="profile.label" hidden>A</button>
-    <button class="btn drawer-toggle" id="drawer-toggle" type="button" data-i18n="toggle.books" aria-expanded="false"></button>
+    <!-- desktop-only shortcuts: each forwards its click to the real control inside the ⋯ panel -->
+    <nav class="topnav">
+      <a class="btn ghost" href="shelf.html"><span data-icon="books"></span><span class="lbl" data-i18n="nav.shelf"></span></a>
+      <button class="btn ghost" type="button" data-proxy="nav-stats"><span data-icon="stats"></span><span class="lbl" data-i18n="nav.stats"></span></button>
+      <button class="btn ghost" type="button" data-proxy="nav-quotes"><span data-icon="quote"></span><span class="lbl" data-i18n="nav.quotes"></span></button>
+    </nav>
+    <button class="btn drawer-toggle" id="drawer-toggle" type="button" aria-expanded="false"><span data-icon="books"></span><span class="lbl" data-i18n="toggle.books"></span></button>
     <div class="more" id="more">
       <!-- APG disclosure, NOT a menu button: the panel holds links, switches and a nested dropdown,
            none of which are legal inside role="menu" — so no role and no aria-haspopup here. -->
       <button class="btn icon more-btn" id="more-btn" type="button" aria-expanded="false"
-              aria-controls="more-panel" data-i18n-label="more.label">⋯</button>
-      <!-- On desktop this wrapper is display:contents, so the controls sit in .actions exactly as before. -->
+              aria-controls="more-panel" data-i18n-label="more.label"><span data-icon="more"></span></button>
       <div class="more-panel" id="more-panel" hidden>
-        <span class="tip-host">
-          <a class="btn" id="nav-shelf" href="shelf.html" data-i18n="nav.shelf" aria-describedby="tip-shelf"></a>
-          <span class="tip" id="tip-shelf" role="tooltip" data-i18n="tip.shelf"></span>
-        </span>
-        <span class="tip-host">
-          <button class="btn" id="nav-stats" type="button" data-i18n="nav.stats" aria-describedby="tip-stats"></button>
-          <span class="tip" id="tip-stats" role="tooltip" data-i18n="tip.stats"></span>
-        </span>
-        <span class="tip-host">
-          <button class="btn" id="nav-quotes" type="button" data-i18n="nav.quotes" aria-describedby="tip-quotes"></button>
-          <span class="tip" id="tip-quotes" role="tooltip" data-i18n="tip.quotes"></span>
-        </span>
-        <span class="tip-host covers-host">
-          <button class="switch" id="toggle-covers" type="button" role="switch" aria-checked="false" aria-describedby="tip-covers">
-            <span class="sw-text" data-i18n="switch.covers"></span>
-            <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
-          </button>
-          <svg class="covers-ring" id="covers-ring" viewBox="0 0 20 20" hidden aria-hidden="true">
-            <circle class="ring-track" cx="10" cy="10" r="8"></circle>
-            <circle class="ring-fill" id="covers-ring-fill" cx="10" cy="10" r="8"></circle>
-          </svg>
-          <span class="tip" id="tip-covers" role="tooltip" data-i18n="tip.covers"></span>
-        </span>
-        <span class="tip-host">
-          <button class="switch" id="toggle-hidden" type="button" role="switch" aria-checked="false" aria-describedby="tip-hidden">
-            <span class="sw-text" data-i18n="switch.duplicates"></span>
-            <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
-          </button>
-          <span class="tip" id="tip-hidden" role="tooltip" data-i18n="tip.hidden"></span>
-        </span>
-        <span class="tip-host">
-          <button class="switch" id="toggle-profile" type="button" role="switch" aria-checked="false" aria-describedby="tip-profile">
-            <span class="sw-text" data-i18n="switch.profile"></span>
-            <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
-          </button>
-          <span class="tip" id="tip-profile" role="tooltip" data-i18n="tip.profile"></span>
-        </span>
-        <button class="btn icon" id="toggle-theme" type="button" data-i18n-label="toggle.theme">◐</button>
-        <button class="btn flag-btn" id="toggle-lang" type="button">
-          <img class="flag" id="lang-flag" alt="" width="26" height="18">
-        </button>
-        <div class="menu" id="export-menu">
-          <button class="btn" id="export-btn" type="button" aria-haspopup="true" aria-expanded="false"
-                  data-i18n="export.menu"></button>
-          <ul class="menu-list" id="export-list" hidden>
-            <li><button type="button" data-export="md" data-i18n="export.md"></button></li>
-            <li><button type="button" data-export="mdBook" data-i18n="export.mdBook"></button></li>
-            <li><button type="button" data-export="json" data-i18n="export.json"></button></li>
-            <li><button type="button" data-export="csv" data-i18n="export.csv"></button></li>
-            <li><button type="button" data-export="txt" data-i18n="export.txt"></button></li>
-            <li><button type="button" data-export="anki" data-i18n="export.anki"></button></li>
-            <li><button type="button" data-export="obsidian" data-i18n="export.obsidian"></button></li>
-          </ul>
+        <div class="mp-tiles">
+          <a class="mp-tile" id="nav-shelf" href="shelf.html"><span class="mp-tile-ico" data-icon="books"></span><span class="lbl" data-i18n="nav.shelf"></span></a>
+          <button class="mp-tile" id="nav-stats" type="button"><span class="mp-tile-ico" data-icon="stats"></span><span class="lbl" data-i18n="nav.stats"></span></button>
+          <button class="mp-tile" id="nav-quotes" type="button"><span class="mp-tile-ico" data-icon="quote"></span><span class="lbl" data-i18n="nav.quotes"></span></button>
         </div>
-        <span class="tip-host">
-          <button class="btn" id="nav-anki" type="button" data-i18n="anki.button" aria-describedby="tip-anki"></button>
-          <span class="tip" id="tip-anki" role="tooltip" data-i18n="tip.anki"></span>
-        </span>
-        <span class="tip-host">
-          <button class="btn icon" id="nav-help" type="button" data-i18n-label="help.label" aria-describedby="tip-help">?</button>
-          <span class="tip" id="tip-help" role="tooltip" data-i18n="tip.help"></span>
-        </span>
-        <span class="tip-host">
-          <button class="btn icon" id="nav-about" type="button" data-i18n-label="about.label" aria-describedby="tip-about">i</button>
-          <span class="tip" id="tip-about" role="tooltip" data-i18n="tip.about"></span>
-        </span>
-        <span class="tip-host">
-          <button class="btn" id="fav-export" type="button" data-i18n="favio.export" aria-describedby="tip-fav-export"></button>
-          <span class="tip" id="tip-fav-export" role="tooltip" data-i18n="tip.favio.export"></span>
-        </span>
-        <span class="tip-host">
-          <button class="btn" id="fav-import-btn" type="button" data-i18n="favio.import" aria-describedby="tip-fav-import"></button>
-          <span class="tip" id="tip-fav-import" role="tooltip" data-i18n="tip.favio.import"></span>
-        </span>
-        <!-- opened by #fav-import-btn, never clicked directly: a <label for> on a hidden input is
-             not reliably activated on every mobile browser -->
-        <input type="file" id="fav-import" accept=".json,application/json" hidden>
-        <button class="btn" id="btn-reset" type="button" data-i18n="action.reset"></button>
+
+        <p class="mp-label" data-i18n="menu.view"></p>
+        <div class="mp-group">
+          <span class="tip-host covers-host">
+            <button class="switch" id="toggle-covers" type="button" role="switch" aria-checked="false" aria-describedby="tip-covers" data-keep-open>
+              <span class="mp-ico" data-icon="image"></span>
+              <span class="sw-text" data-i18n="switch.covers"></span>
+              <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
+            </button>
+            <svg class="covers-ring" id="covers-ring" viewBox="0 0 20 20" hidden aria-hidden="true">
+              <circle class="ring-track" cx="10" cy="10" r="8"></circle>
+              <circle class="ring-fill" id="covers-ring-fill" cx="10" cy="10" r="8"></circle>
+            </svg>
+            <span class="tip" id="tip-covers" role="tooltip" data-i18n="tip.covers"></span>
+          </span>
+          <span class="tip-host">
+            <button class="switch" id="toggle-hidden" type="button" role="switch" aria-checked="false" aria-describedby="tip-hidden" data-keep-open>
+              <span class="mp-ico" data-icon="layers"></span>
+              <span class="sw-text" data-i18n="switch.duplicates"></span>
+              <span class="sw-track" aria-hidden="true"><span class="sw-thumb"></span></span>
+            </button>
+            <span class="tip" id="tip-hidden" role="tooltip" data-i18n="tip.hidden"></span>
+          </span>
+          <div class="mp-pair">
+            <button class="mp-item" id="toggle-theme" type="button" data-i18n-label="toggle.theme" data-keep-open>
+              <span class="mp-ico" id="theme-ico" data-icon="moon"></span><span class="lbl" id="theme-lbl"></span>
+            </button>
+            <button class="mp-item flag-btn" id="toggle-lang" type="button" data-keep-open>
+              <img class="flag" id="lang-flag" alt="" width="26" height="18"><span class="lbl" id="lang-lbl"></span>
+            </button>
+          </div>
+        </div>
+
+        <p class="mp-label" data-i18n="menu.data"></p>
+        <div class="mp-group">
+          <div class="menu" id="export-menu">
+            <button class="mp-item mp-disclose" id="export-btn" type="button" aria-haspopup="true" aria-expanded="false" data-keep-open>
+              <span class="mp-ico" data-icon="share"></span><span class="lbl" data-i18n="export.menu"></span><span class="mp-chev" data-icon="chevron"></span>
+            </button>
+            <ul class="menu-list" id="export-list" hidden>
+              <li><button type="button" data-export="md" data-i18n="export.md"></button></li>
+              <li><button type="button" data-export="mdBook" data-i18n="export.mdBook"></button></li>
+              <li><button type="button" data-export="json" data-i18n="export.json"></button></li>
+              <li><button type="button" data-export="csv" data-i18n="export.csv"></button></li>
+              <li><button type="button" data-export="txt" data-i18n="export.txt"></button></li>
+              <li><button type="button" data-export="anki" data-i18n="export.anki"></button></li>
+              <li><button type="button" data-export="obsidian" data-i18n="export.obsidian"></button></li>
+            </ul>
+          </div>
+          <span class="tip-host">
+            <button class="mp-item" id="nav-anki" type="button" aria-describedby="tip-anki"><span class="mp-ico" data-icon="cards"></span><span class="lbl" data-i18n="anki.button"></span></button>
+            <span class="tip" id="tip-anki" role="tooltip" data-i18n="tip.anki"></span>
+          </span>
+          <span class="tip-host">
+            <button class="mp-item" id="fav-export" type="button" aria-describedby="tip-fav-export"><span class="mp-ico" data-icon="download"></span><span class="lbl" data-i18n="favio.export"></span></button>
+            <span class="tip" id="tip-fav-export" role="tooltip" data-i18n="tip.favio.export"></span>
+          </span>
+          <span class="tip-host">
+            <button class="mp-item" id="fav-import-btn" type="button" aria-describedby="tip-fav-import"><span class="mp-ico" data-icon="upload"></span><span class="lbl" data-i18n="favio.import"></span></button>
+            <span class="tip" id="tip-fav-import" role="tooltip" data-i18n="tip.favio.import"></span>
+          </span>
+          <!-- opened by #fav-import-btn, never clicked directly: a <label for> on a hidden input is
+               not reliably activated on every mobile browser -->
+          <input type="file" id="fav-import" accept=".json,application/json" hidden>
+          <button class="mp-item is-quiet" id="btn-reset" type="button"><span class="mp-ico" data-icon="reset"></span><span class="lbl" data-i18n="action.reset"></span></button>
+        </div>
+
+        <!-- help + about live at the very bottom of the panel, never in the middle of the list -->
+        <div class="mp-foot">
+          <span class="tip-host">
+            <button class="mp-foot-btn" id="nav-help" type="button" aria-describedby="tip-help"><span class="mp-ico" data-icon="help"></span><span class="lbl" data-i18n="help.label"></span></button>
+            <span class="tip" id="tip-help" role="tooltip" data-i18n="tip.help"></span>
+          </span>
+          <span class="tip-host">
+            <button class="mp-foot-btn" id="nav-about" type="button" aria-describedby="tip-about"><span class="mp-ico" data-icon="info"></span><span class="lbl" data-i18n="about.label"></span></button>
+            <span class="tip" id="tip-about" role="tooltip" data-i18n="tip.about"></span>
+          </span>
+        </div>
       </div>
     </div>
   </div>
@@ -173,7 +184,7 @@
   <div class="modal-card">
     <header class="modal-head">
       <h2 id="stats-title" data-i18n="st.title"></h2>
-      <button class="btn icon modal-close" type="button" data-close="stats-modal" aria-label="×">×</button>
+      <button class="btn icon modal-close" type="button" data-close="stats-modal" data-i18n-label="modal.close"><span data-icon="close"></span></button>
     </header>
     <div class="modal-body" id="stats-body"></div>
   </div>
@@ -220,7 +231,7 @@
         <p class="qc-count" id="qc-count" aria-live="polite"></p>
         <button class="btn qc-clear" id="qc-clear" type="button" data-i18n="qc.clear" hidden></button>
       </div>
-      <button class="btn icon modal-close" type="button" data-close="quotes-modal" aria-label="×">×</button>
+      <button class="btn icon modal-close" type="button" data-close="quotes-modal" data-i18n-label="modal.close"><span data-icon="close"></span></button>
     </header>
     <div class="modal-body"><div class="qc-grid" id="quotes-grid"></div></div>
     <footer class="modal-foot" id="quotes-foot"></footer>
@@ -231,7 +242,7 @@
   <div class="modal-card">
     <header class="modal-head">
       <h2 id="help-title" data-i18n="help.title"></h2>
-      <button class="btn icon modal-close" type="button" data-close="help-modal" aria-label="×">×</button>
+      <button class="btn icon modal-close" type="button" data-close="help-modal" data-i18n-label="modal.close"><span data-icon="close"></span></button>
     </header>
     <div class="modal-body" id="help-body"></div>
   </div>
@@ -241,7 +252,7 @@
   <div class="modal-card">
     <header class="modal-head">
       <h2 id="about-title" data-i18n="about.title"></h2>
-      <button class="btn icon modal-close" type="button" data-close="about-modal" aria-label="×">×</button>
+      <button class="btn icon modal-close" type="button" data-close="about-modal" data-i18n-label="modal.close"><span data-icon="close"></span></button>
     </header>
     <div class="modal-body" id="about-body"></div>
   </div>
@@ -249,47 +260,49 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="js/i18n.js?v=2.2.1"></script>
-<script src="js/i18n-anki.js?v=2.2.1"></script>
-<script src="js/i18n-qc.js?v=2.2.1"></script>
-<script src="js/i18n-help.js?v=2.2.1"></script>
-<script src="js/i18n-about.js?v=2.2.1"></script>
-<script src="js/i18n-topics.js?v=2.2.1"></script>
-<script src="js/i18n-cardactions.js?v=2.2.1"></script>
-<script src="js/i18n-favio.js?v=2.2.1"></script>
-<script src="js/profile.js?v=2.2.1"></script>
-<script src="js/store.js?v=2.2.1"></script>
-<script src="js/persist.js?v=2.2.1"></script>
-<script src="js/topics.js?v=2.2.1"></script>
-<script src="js/parser.js?v=2.2.1"></script>
-<script src="js/dedupe.js?v=2.2.1"></script>
-<script src="js/clean.js?v=2.2.1"></script>
-<script src="js/tags.js?v=2.2.1"></script>
-<script src="js/search.js?v=2.2.1"></script>
-<script src="js/sort.js?v=2.2.1"></script>
-<script src="js/covers.js?v=2.2.1"></script>
-<script src="js/exports.js?v=2.2.1"></script>
-<script src="js/anki.js?v=2.2.1"></script>
-<script src="js/obsidian.js?v=2.2.1"></script>
-<script src="js/version.js?v=2.2.1"></script>
-<script src="js/favorites.js?v=2.2.1"></script>
-<script src="js/favio.js?v=2.2.1"></script>
-<script src="js/stats.js?v=2.2.1"></script>
-<script src="js/quotecard.js?v=2.2.1"></script>
-<script src="js/modal.js?v=2.2.1"></script>
-<script src="js/statsyears.js?v=2.2.1"></script>
-<script src="js/statsview.js?v=2.2.1"></script>
-<script src="js/quotesort.js?v=2.2.1"></script>
-<script src="js/quoteview.js?v=2.2.1"></script>
-<script src="js/helpview.js?v=2.2.1"></script>
-<script src="js/aboutview.js?v=2.2.1"></script>
-<script src="js/cards.js?v=2.2.1"></script>
-<script src="js/cardactions.js?v=2.2.1"></script>
-<script src="js/clipboard.js?v=2.2.1"></script>
-<script src="js/topicfilter.js?v=2.2.1"></script>
-<script src="js/sidebar.js?v=2.2.1"></script>
-<script src="js/ui.js?v=2.2.1"></script>
-<script src="js/nav.js?v=2.2.1"></script>
-<script src="js/app.js?v=2.2.1"></script>
+<script src="js/i18n.js?v=2.3.0"></script>
+<script src="js/i18n-anki.js?v=2.3.0"></script>
+<script src="js/i18n-qc.js?v=2.3.0"></script>
+<script src="js/i18n-help.js?v=2.3.0"></script>
+<script src="js/i18n-about.js?v=2.3.0"></script>
+<script src="js/i18n-topics.js?v=2.3.0"></script>
+<script src="js/i18n-cardactions.js?v=2.3.0"></script>
+<script src="js/i18n-favio.js?v=2.3.0"></script>
+<script src="js/i18n-ux.js?v=2.3.0"></script>
+<script src="js/icons.js?v=2.3.0"></script>
+<script src="js/store.js?v=2.3.0"></script>
+<script src="js/persist.js?v=2.3.0"></script>
+<script src="js/topics.js?v=2.3.0"></script>
+<script src="js/parser.js?v=2.3.0"></script>
+<script src="js/dedupe.js?v=2.3.0"></script>
+<script src="js/clean.js?v=2.3.0"></script>
+<script src="js/tags.js?v=2.3.0"></script>
+<script src="js/search.js?v=2.3.0"></script>
+<script src="js/sort.js?v=2.3.0"></script>
+<script src="js/covers.js?v=2.3.0"></script>
+<script src="js/exports.js?v=2.3.0"></script>
+<script src="js/anki.js?v=2.3.0"></script>
+<script src="js/obsidian.js?v=2.3.0"></script>
+<script src="js/version.js?v=2.3.0"></script>
+<script src="js/favorites.js?v=2.3.0"></script>
+<script src="js/favio.js?v=2.3.0"></script>
+<script src="js/stats.js?v=2.3.0"></script>
+<script src="js/quotecard.js?v=2.3.0"></script>
+<script src="js/modal.js?v=2.3.0"></script>
+<script src="js/statsyears.js?v=2.3.0"></script>
+<script src="js/statsview.js?v=2.3.0"></script>
+<script src="js/quotesort.js?v=2.3.0"></script>
+<script src="js/quoteview.js?v=2.3.0"></script>
+<script src="js/helpview.js?v=2.3.0"></script>
+<script src="js/aboutview.js?v=2.3.0"></script>
+<script src="js/cards.js?v=2.3.0"></script>
+<script src="js/cardactions.js?v=2.3.0"></script>
+<script src="js/clipboard.js?v=2.3.0"></script>
+<script src="js/topicfilter.js?v=2.3.0"></script>
+<script src="js/sidebar.js?v=2.3.0"></script>
+<script src="js/ui.js?v=2.3.0"></script>
+<script src="js/backnav.js?v=2.3.0"></script>
+<script src="js/nav.js?v=2.3.0"></script>
+<script src="js/app.js?v=2.3.0"></script>
 </body>
 </html>

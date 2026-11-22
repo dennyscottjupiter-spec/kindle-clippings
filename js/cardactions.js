@@ -1,9 +1,11 @@
 // ---
 // purpose: Per-card actions beside the star/copy buttons — save one highlight as a JPEG quote card,
 //   or export just that one record (md/json/txt/anki)
-// exports: nothing — wires itself onto #cards and wraps KC.cards.appendPage
-// depends: js/cards.js (wrapped, never edited), js/quotecard.js, js/exports.js, js/topics.js,
-//   js/i18n-cardactions.js, css/chrome.css (.menu/.menu-list — reused verbatim for the dropdown)
+// exports: KC.cardactions.flash(btn, i18nKey) — the "done" morph, reused by js/app.js's copy button;
+//   otherwise wires itself onto #cards and wraps KC.cards.appendPage
+// depends: js/cards.js (wrapped, never edited inline — its KC.cards.actBtn builds every tray button),
+//   js/icons.js, js/quotecard.js, js/exports.js, js/topics.js, js/i18n-cardactions.js,
+//   css/chrome.css (.menu/.menu-list — reused verbatim for the dropdown)
 // gotcha: js/cards.js paginates in batches of 200 via an IntersectionObserver, so buttons cannot be
 //   built once at install time — KC.cards.appendPage is wrapped so every batch gets augmented, and
 //   each processed .entry is marked [data-ca-done] so a later batch never re-processes it
@@ -46,27 +48,46 @@
   // Same call shape as js/quoteview.js#downloadOne: SIZES[0] and the gallery's own default theme
   // ('dark'), never the gallery's live (possibly user-changed) selection — so a card-saved image is
   // identical to one saved from the gallery with default settings.
-  function saveImage(id) {
+  function saveImage(id, btn) {
     var rec = recById(id);
     if (!rec) return;
+    if (btn && btn.className.indexOf('is-busy') !== -1) return;  // a double tap must not save twice
     var s = KC.quotecard.SIZES[0];
     var opts = { w: s.w, h: s.h, theme: 'dark', hue: hueOf(rec), scale: 1 };
     var name = slug(rec.title) + '-' + s.w + 'x' + s.h + '.jpg';
+    if (btn) btn.className += ' is-busy';
     KC.quotecard.download(rec, opts, name).then(function () {
       KC.ui.toast(KC.i18n.t('ca.img.done'));
+      if (btn) KC.cardactions.flash(btn, 'card.imageDone');
     }, function () {
       KC.ui.toast(KC.i18n.t('ca.img.failed'));
+      if (btn) btn.className = btn.className.replace(/\s*is-busy/g, '');
     });
   }
 
-  function exportOne(kind, id) {
-    var rec = recById(id);
-    if (!rec) return;
-    var built = KC.exports.build(kind, [rec], { bookTitle: rec.title });
-    var dot = built.name.lastIndexOf('.');
-    var name = built.name.slice(0, dot) + '-highlight' + built.name.slice(dot);
-    KC.exports.download(name, built.text, built.mime);
-    KC.ui.toast(KC.i18n.t('export.done'));
+  // Brief success morph shared with the copy button (js/app.js): icon → check, label → "Done",
+  // then back. The original label is read from the DOM so a language switch mid-flash is harmless.
+  function flash(btn, key) {
+    var lbl = btn.querySelector('.act-lbl');
+    // Remember the resting state only once: a second tap mid-flash must not capture the check mark.
+    if (!btn._kcRest) {
+      var icon = btn.querySelector('svg.ico');
+      btn._kcRest = {
+        name: icon ? (icon.getAttribute('class').match(/ico-([a-z]+)/) || [])[1] : null,
+        text: lbl ? lbl.textContent : ''
+      };
+    }
+    clearTimeout(btn._kcFlash);
+    btn.className = btn.className.replace(/\s*is-busy/g, '').replace(/\s*is-done/g, '') + ' is-done';
+    KC.icons.swap(btn, 'check');
+    if (lbl) lbl.textContent = KC.i18n.t(key);
+    btn._kcFlash = setTimeout(function () {
+      var rest = btn._kcRest;
+      btn._kcRest = null;
+      btn.className = btn.className.replace(/\s*is-done/g, '');
+      if (rest && rest.name) KC.icons.swap(btn, rest.name);
+      if (lbl && rest) lbl.textContent = rest.text;
+    }, 1600);
   }
 
   function closeMenu() {
@@ -87,8 +108,7 @@
   }
 
   function buildImgBtn(id) {
-    var b = el('button', 'ca-btn ca-img', '↓ JPG'); // matches js/quoteview.js's own '↓ JPG' label
-    b.type = 'button';
+    var b = KC.cards.actBtn('ca-btn ca-img', 'image', KC.i18n.t('card.image'));
     b.setAttribute('data-ca-img', id);
     b.setAttribute('aria-label', KC.i18n.t('ca.img.aria'));
     b.title = KC.i18n.t('ca.img.aria');
@@ -97,8 +117,7 @@
 
   function buildExportMenu(id) {
     var wrap = el('span', 'menu ca-menu');
-    var trigger = el('button', 'ca-btn ca-export', KC.i18n.t('export.menu'));
-    trigger.type = 'button';
+    var trigger = KC.cards.actBtn('ca-btn ca-export', 'share', KC.i18n.t('export.menu'));
     trigger.setAttribute('data-ca-export', id);
     trigger.setAttribute('aria-haspopup', 'true');
     trigger.setAttribute('aria-expanded', 'false');
@@ -128,17 +147,19 @@
     for (var i = 0; i < arts.length; i++) {
       var art = arts[i];
       art.setAttribute('data-ca-done', '1');
-      var meta = art.querySelector('.meta');
+      var tray = art.querySelector('.meta-actions') || art.querySelector('.meta');
       var id = art.getAttribute('data-id');
-      if (!meta || !id) continue;
-      meta.appendChild(buildImgBtn(id));
-      meta.appendChild(buildExportMenu(id));
+      if (!tray || !id) continue;
+      tray.appendChild(buildImgBtn(id));
+      tray.appendChild(buildExportMenu(id));
     }
   }
 
   // js/cards.js is never edited — every path that adds cards funnels through KC.cards.appendPage
   // (the initial render, fillPane's top-up loop, and the IntersectionObserver), so wrapping the one
   // shared function here means every future batch gets buttons too, not just the first page.
+  KC.cardactions = { flash: flash };
+
   if (KC.cards && typeof KC.cards.appendPage === 'function') {
     (function () {
       var origAppendPage = KC.cards.appendPage;
@@ -155,7 +176,7 @@
     cardsHost.addEventListener('click', function (e) {
       var t = e.target, closest = function (sel) { return t.closest ? t.closest(sel) : null; };
       var imgBtn = closest('[data-ca-img]');
-      if (imgBtn) { saveImage(imgBtn.getAttribute('data-ca-img')); return; }
+      if (imgBtn) { saveImage(imgBtn.getAttribute('data-ca-img'), imgBtn); return; }
       var expBtn = closest('[data-ca-export]');
       if (expBtn) { openMenuFor(expBtn); return; }
       var runBtn = closest('[data-ca-run]');

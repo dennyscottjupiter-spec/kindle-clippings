@@ -2,7 +2,7 @@
 // purpose: Render the chrome — strings, sidebar delegate, book banner, sort bar, stat line, toast
 // exports: KC.ui.applyStrings(), renderSidebar(), renderBookBanner(), render(), toast(), setTheme(),
 //   fillPane(), updateCoversButton()
-// depends: js/i18n.js, js/search.js, js/sort.js, js/cards.js, js/sidebar.js, js/covers.js, js/topics.js
+// depends: js/i18n.js, js/icons.js, js/search.js, js/sort.js, js/cards.js, js/sidebar.js, js/covers.js, js/topics.js
 // gotcha: the pagination reset key is activeBook | activeTopic | query | showHidden | sortMode — all five
 // ---
 (function (KC) {
@@ -35,6 +35,9 @@
       var toPt = KC.i18n.lang === 'en';
       byId('lang-flag').src = toPt ? 'assets/flags/br.svg' : 'assets/flags/gb.svg';
       byId('toggle-lang').setAttribute('aria-label', t('toggle.lang') + ': ' + t(toPt ? 'lang.pt' : 'lang.en'));
+      var ll = byId('lang-lbl');
+      if (ll) ll.textContent = toPt ? 'Português' : 'English';
+      KC.icons.paintTheme();
 
       n = byId('toggle-hidden');
       n.setAttribute('aria-checked', KC.state.showHidden ? 'true' : 'false');
@@ -182,6 +185,7 @@
 
     setTheme: function (theme) {
       document.documentElement.setAttribute('data-theme', theme);
+      KC.icons.paintTheme();
     }
   };
 })(window.KC = window.KC || {});

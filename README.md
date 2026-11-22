@@ -183,6 +183,7 @@ plain `<script src>` tag — works the same over `file://` and behind nginx. **T
 | File | Role |
 |---|---|
 | `js/i18n.js` | pt-BR/en catalogs, accent-free `fold()`, `Intl` formatters |
+| `js/icons.js` | the app's own line icons, drawn offline as inline SVG |
 | `js/store.js` | localStorage prefs + library cache, sessionStorage raw-text cache |
 | `js/topics.js` | fixed 15-topic taxonomy, Open Library subject classifier |
 | `js/parser.js` | raw text → records (`KC.parse`) |
@@ -199,12 +200,13 @@ plain `<script src>` tag — works the same over `file://` and behind nginx. **T
 | `js/stats.js` | pure statistics — totals, per-book, year/month/weekday/hour, streaks |
 | `js/quotecard.js` | canvas quote-card renderer + PNG download, one size per target screen |
 | `js/modal.js` | generic overlay dialog — open/close, Esc, backdrop, focus return |
-| `js/statsview.js` | statistics panel render (CSS bars/columns, no chart library) |
+| `js/statsview.js` | statistics panel render + tap-a-tile drill-downs (CSS bars/columns, no chart library) |
 | `js/quoteview.js` | quote-card gallery — pick, preview, download PNGs |
 | `js/cards.js` | single card render + `IntersectionObserver` pagination |
 | `js/clipboard.js` | `copy` event interception + per-card copy button |
 | `js/sidebar.js` | sidebar render (sort control, topic chips, book rows), drag resizer |
 | `js/ui.js` | chrome render — book banner, sort bar, stat line, toast |
+| `js/backnav.js` | ← back button + phone back gesture, restoring the exact spot you left |
 | `js/app.js` | state, file loading, drag & drop, wiring |
 | `shelf.html` / `js/shelf.js` | standalone cover-shelf page |
 

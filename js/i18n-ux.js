@@ -1,0 +1,118 @@
+// ---
+// purpose: Strings for the v2.3 UX pass — back navigation, the ⋯ panel sections, card action tray,
+//   theme button label and the stats drill-down views
+// exports: nothing — registers strings via KC.i18n.add()
+// depends: js/i18n.js (must load right after it; loaded by index.html AND shelf.html)
+// ---
+(function (KC) {
+  'use strict';
+
+  KC.i18n.add({
+    'pt-BR': {
+      'nav.back': 'Voltar para onde eu estava',
+      'modal.close': 'Fechar',
+      'menu.view': 'Exibição',
+      'menu.data': 'Exportar e backup',
+      'theme.toDark': 'Modo escuro',
+      'theme.toLight': 'Modo claro',
+
+      'card.star': 'Favoritar',
+      'card.starred': 'Favorito',
+      'card.copyDone': 'Copiado',
+      'card.image': 'Imagem',
+      'card.imageDone': 'Salva',
+
+      'st.open': 'Detalhes',
+      'st.overview': 'Visão geral',
+      'st.last30': 'Últimos 30 dias',
+      'st.thisYear': 'Este ano',
+      'st.perActiveDay': 'Por dia com destaques',
+      'st.byMonth': 'Por mês',
+      'st.byMonthHint': 'Meses com destaques, do mais recente — até {n}.',
+      'st.topDays': 'Dias mais intensos',
+      'st.allBooks': 'Todos os livros',
+      'st.tapBook': 'Toque num livro para abrir os destaques dele.',
+      'st.sortCount': 'Mais destaques',
+      'st.sortTitle': 'A–Z',
+      'st.sortRecent': 'Recentes',
+      'st.bookNotes': '{n} notas',
+      'st.bookLast': 'último em {d}',
+      'st.topBookCount': 'No livro campeão',
+      'st.withNotes': 'Livros com notas',
+      'st.noteShare': 'Destaques com nota',
+      'st.notesPerBook': 'Notas por livro',
+      'st.latestNotes': 'Notas mais recentes',
+      'st.noNotes': 'Nenhuma nota ainda — as notas que você escrever no Kindle aparecem aqui.',
+      'st.pages': 'Páginas de livro (≈ 250 palavras cada)',
+      'st.lengths': 'Tamanho dos destaques',
+      'st.lengthsHint': 'Quantos destaques caem em cada faixa de palavras.',
+      'st.len.xs': 'Até 10 palavras',
+      'st.len.s': '11 a 25',
+      'st.len.m': '26 a 50',
+      'st.len.l': '51 a 100',
+      'st.len.xl': 'Mais de 100',
+      'st.wordsPerBook': 'Palavras por livro',
+      'st.longestN': 'Os destaques mais longos',
+
+      'help.search.back.t': '← Voltar',
+      'help.search.back.d': 'Abriu um livro, um tema, uma busca ou um painel? O botão ← no topo (e o gesto de voltar do celular) desfaz o último passo e devolve você exatamente ao ponto da lista onde estava.',
+      'help.fav.image.t': 'Imagem e Exportar',
+      'help.fav.image.d': '"Imagem" salva aquele destaque como um cartão JPG; "Exportar" baixa só ele em Markdown, JSON, texto ou Anki. No celular, os quatro botões ficam numa barra larga, fácil de tocar com o polegar.',
+      'help.stats.drill.t': 'Toque num quadro',
+      'help.stats.drill.d': 'Cada quadro do topo (Destaques, Livros, Notas, Palavras) abre uma visão detalhada: meses e dias mais intensos, todos os livros com ordenação, suas notas mais recentes e o tamanho dos destaques. Toque num livro para abrir seus destaques.'
+    },
+    'en': {
+      'nav.back': 'Back to where I was',
+      'modal.close': 'Close',
+      'menu.view': 'Display',
+      'menu.data': 'Export & backup',
+      'theme.toDark': 'Dark mode',
+      'theme.toLight': 'Light mode',
+
+      'card.star': 'Star',
+      'card.starred': 'Starred',
+      'card.copyDone': 'Copied',
+      'card.image': 'Image',
+      'card.imageDone': 'Saved',
+
+      'st.open': 'Details',
+      'st.overview': 'Overview',
+      'st.last30': 'Last 30 days',
+      'st.thisYear': 'This year',
+      'st.perActiveDay': 'Per active day',
+      'st.byMonth': 'By month',
+      'st.byMonthHint': 'Months with highlights, newest first — up to {n}.',
+      'st.topDays': 'Busiest days',
+      'st.allBooks': 'All books',
+      'st.tapBook': 'Tap a book to open its highlights.',
+      'st.sortCount': 'Most highlights',
+      'st.sortTitle': 'A–Z',
+      'st.sortRecent': 'Recent',
+      'st.bookNotes': '{n} notes',
+      'st.bookLast': 'last on {d}',
+      'st.topBookCount': 'In your top book',
+      'st.withNotes': 'Books with notes',
+      'st.noteShare': 'Highlights with a note',
+      'st.notesPerBook': 'Notes per book',
+      'st.latestNotes': 'Latest notes',
+      'st.noNotes': 'No notes yet — notes you type on your Kindle show up here.',
+      'st.pages': 'Book pages (≈ 250 words each)',
+      'st.lengths': 'Highlight length',
+      'st.lengthsHint': 'How many highlights fall in each word range.',
+      'st.len.xs': 'Up to 10 words',
+      'st.len.s': '11 to 25',
+      'st.len.m': '26 to 50',
+      'st.len.l': '51 to 100',
+      'st.len.xl': 'Over 100',
+      'st.wordsPerBook': 'Words per book',
+      'st.longestN': 'Your longest highlights',
+
+      'help.search.back.t': '← Back',
+      'help.search.back.d': 'Opened a book, a topic, a search or a panel? The ← button at the top (and your phone’s back gesture) undoes the last step and puts you back at the exact spot in the list where you were.',
+      'help.fav.image.t': 'Image and Export',
+      'help.fav.image.d': '"Image" saves that highlight as a JPG card; "Export" downloads just that one as Markdown, JSON, text or Anki. On a phone the four buttons sit in a wide, thumb-friendly bar.',
+      'help.stats.drill.t': 'Tap a tile',
+      'help.stats.drill.d': 'Each tile at the top (Highlights, Books, Notes, Words) opens a detailed view: busiest months and days, every book with sorting, your latest notes and how long your highlights run. Tap a book to open its highlights.'
+    }
+  });
+})(window.KC = window.KC || {});

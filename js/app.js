@@ -1,7 +1,7 @@
 // ---
 // purpose: App entry — state, file loading, drag & drop, and every event wiring
 // exports: KC.state, KC.app.load(text)
-// depends: every other js/ module (incl. js/persist.js); loaded last by index.html
+// depends: every other js/ module (incl. js/persist.js, js/backnav.js, js/cardactions.js); loaded last by index.html
 // gotcha: highlight data never leaves the device unless the user opts into covers (js/covers.js) —
 //   even then, only title/author are sent, never highlight text
 // ---
@@ -10,6 +10,7 @@
 
   var DEBOUNCE = 120;
   var searchTimer = null;
+  var searchPushed = false;  // one history entry per search, not one per keystroke
   var byIdMap = {};
   var pendingBook = null;
 
@@ -74,6 +75,7 @@
       pendingBook = null;
       byId('restore-pending').hidden = true;
 
+      if (KC.backnav) KC.backnav.clear();  // saved spots belong to the previous file's books
       KC.store.books.set(snapshotOf(out.books));
       if (KC.state.coversOn) KC.covers.fetchAll(out.books, onCoverProgress);
 
@@ -134,6 +136,7 @@
 
     byId('q').value = '';
     byId('file').value = '';  // same file must fire `change` again
+    KC.backnav.clear();       // every saved spot pointed into the file that just went away
     byId('restore-pending').hidden = true;
     byId('dropzone').hidden = false;
 
@@ -142,8 +145,11 @@
   }
 
   function setQuery(value) {
+    // Starting a search from an empty box is a move you can go back from; refining it is not.
+    if (value && !KC.state.query && !searchPushed) { KC.backnav.push('nav'); searchPushed = true; }
     clearTimeout(searchTimer);
     searchTimer = setTimeout(function () {
+      searchPushed = false;
       KC.state.query = value;
       KC.state.rendered = 0;
       KC.ui.render();
@@ -155,12 +161,37 @@
     byId('export-btn').setAttribute('aria-expanded', 'false');
   }
 
+  function drawerIsOpen() { return byId('sidebar').className.indexOf('is-open') !== -1; }
+
   function toggleDrawer(open) {
     var side = byId('sidebar');
-    var on = open === undefined ? side.className.indexOf('is-open') === -1 : open;
+    var on = open === undefined ? !drawerIsOpen() : open;
     side.className = on ? 'sidebar is-open' : 'sidebar';
     byId('scrim').hidden = !on;
     byId('drawer-toggle').setAttribute('aria-expanded', on ? 'true' : 'false');
+  }
+
+  // A user-initiated open is a history step (the phone's back gesture closes it again); a
+  // user-initiated close walks that step back instead of leaving a stale entry behind.
+  function userDrawer(open) {
+    if (open && !drawerIsOpen()) { KC.backnav.push('drawer'); toggleDrawer(true); return; }
+    if (!open && drawerIsOpen()) KC.backnav.requestCloseDrawer();
+  }
+
+  // Any filter change is a step back-able to — unless it is made from inside the open drawer,
+  // whose own entry already holds the "before" state.
+  function pushNav() {
+    if (!KC.backnav.adoptDrawer()) KC.backnav.push('nav');
+  }
+
+  function paintFav(btn, on, animate) {
+    btn.className = btn.className.replace(/\s*(is-on|is-pop|is-unpop)/g, '') + (on ? ' is-on' : '');
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    var lbl = btn.querySelector('.act-lbl');
+    if (lbl) lbl.textContent = KC.i18n.t(on ? 'card.starred' : 'card.star');
+    if (!animate) return;
+    void btn.offsetWidth;  // restart the keyframes on a quick re-tap
+    btn.className += on ? ' is-pop' : ' is-unpop';
   }
 
   function wire() {
@@ -200,19 +231,25 @@
       var chip = e.target.closest ? e.target.closest('.chip') : null;
       if (chip) {
         var topic = chip.getAttribute('data-topic');
-        if (topic === 'all') { KC.state.activeTopic = null; }
-        else { KC.state.activeTopic = (KC.state.activeTopic === topic) ? null : topic; }
+        var nextTopic = topic === 'all' ? null : (KC.state.activeTopic === topic ? null : topic);
+        if (nextTopic === KC.state.activeTopic) return;
+        pushNav();
+        KC.state.activeTopic = nextTopic;
         KC.state.rendered = 0;
         KC.ui.render();
         return;
       }
       var btn = e.target.closest ? e.target.closest('.book-item') : null;
       if (!btn) return;
-      KC.state.activeBook = btn.getAttribute('data-book') || null;
-      KC.state.rendered = 0;
-      KC.ui.render();
-      toggleDrawer(false);
-      byId('main').scrollTop = 0;
+      var nextBook = btn.getAttribute('data-book') || null;
+      if (nextBook !== KC.state.activeBook) {
+        pushNav();
+        KC.state.activeBook = nextBook;
+        KC.state.rendered = 0;
+        KC.ui.render();
+        byId('main').scrollTop = 0;
+      }
+      toggleDrawer(false);  // direct: the step is already recorded (or there was nothing to record)
     });
 
     byId('sort-seg').addEventListener('click', function (e) {
@@ -251,6 +288,8 @@
       var next = current === 'dark' ? 'light' : 'dark';
       KC.ui.setTheme(next);
       KC.store.prefs.set({ theme: next });
+      var ico = byId('theme-ico');
+      if (ico) { ico.className = 'mp-ico is-spin'; setTimeout(function () { ico.className = 'mp-ico'; }, 450); }
     });
 
     byId('toggle-lang').addEventListener('click', function () {
@@ -274,23 +313,24 @@
       if (!byId('export-menu').contains(e.target)) closeExportMenu();
     });
 
+    // closest(), never e.target: the buttons hold an <svg> and a label, and a tap lands on those.
     byId('cards').addEventListener('click', function (e) {
-      var favId = e.target.getAttribute && e.target.getAttribute('data-fav');
-      if (favId) {
-        var favRec = byIdMap[favId];
-        var on = KC.favorites.toggle(favRec);
-        e.target.className = on ? 'fav is-on' : 'fav';
-        e.target.setAttribute('aria-pressed', on ? 'true' : 'false');
-        var card = e.target.closest ? e.target.closest('.entry') : null;
-        if (card) card.className = on ? card.className + ' is-fav' : card.className.replace(/\s*is-fav/g, '');
+      var favBtn = e.target.closest ? e.target.closest('[data-fav]') : null;
+      if (favBtn) {
+        var on = KC.favorites.toggle(byIdMap[favBtn.getAttribute('data-fav')]);
+        paintFav(favBtn, on, true);
+        var card = favBtn.closest('.entry');
+        if (card) card.className = card.className.replace(/\s*is-fav/g, '') + (on ? ' is-fav' : '');
         return;
       }
-      var id = e.target.getAttribute && e.target.getAttribute('data-copy');
-      if (!id) return;
-      var rec = byIdMap[id];
+      var copyBtn = e.target.closest ? e.target.closest('[data-copy]') : null;
+      if (!copyBtn) return;
+      var rec = byIdMap[copyBtn.getAttribute('data-copy')];
+      if (!rec) return;
       var text = rec.text + (rec.note && rec.note.text ? '\n\n' + rec.note.text : '') + '\n\n' + rec.tag;
       KC.clipboard.copyText(text).then(function (okCopy) {
         KC.ui.toast(KC.i18n.t(okCopy ? 'card.copied' : 'error.read'));
+        if (okCopy) KC.cardactions.flash(copyBtn, 'card.copyDone');
       });
     });
 
@@ -314,12 +354,20 @@
     byId('nav-stats').addEventListener('click', function () { KC.statsview.open(); });
     byId('nav-quotes').addEventListener('click', function () { KC.quoteview.open(); });
 
-    // A book name in the stats panel is a shortcut back into the reader, filtered to that book.
+    // Desktop topbar shortcuts forward to the real controls inside the ⋯ panel.
+    document.querySelector('.topnav').addEventListener('click', function (e) {
+      var px = e.target.closest ? e.target.closest('[data-proxy]') : null;
+      if (px) byId(px.getAttribute('data-proxy')).click();
+    });
+
+    // A book in the stats panel is a shortcut into the reader, filtered to that book; back returns
+    // to the very stats view it was tapped in (the entry is pushed while the panel is still open).
     byId('stats-body').addEventListener('click', function (e) {
-      var key = e.target.getAttribute && e.target.getAttribute('data-book');
-      if (!key) return;
+      var hit = e.target.closest ? e.target.closest('[data-book]') : null;
+      if (!hit) return;
+      KC.backnav.push('nav');
       KC.statsview.close();
-      KC.state.activeBook = key;
+      KC.state.activeBook = hit.getAttribute('data-book');
       KC.state.rendered = 0;
       KC.ui.render();
       byId('main').scrollTop = 0;
@@ -327,7 +375,10 @@
 
     var qcModal = byId('quotes-modal');
     qcModal.addEventListener('click', function (e) {
-      var el = e.target, get = function (a) { return el.getAttribute && el.getAttribute(a); };
+      // the gallery's buttons hold an <svg> now — resolve the tap to the button that owns it
+      var el = (e.target.closest && e.target.closest(
+        '[data-qc-src],[data-qc-theme],[data-qc-more],[data-qc-dlall],[data-qc-dl],[data-qc-fav]')) || e.target;
+      var get = function (a) { return el.getAttribute && el.getAttribute(a); };
       if (get('data-qc-src')) { KC.quoteview.set({ source: get('data-qc-src') }); return; }
       if (get('data-qc-theme')) { KC.quoteview.set({ theme: get('data-qc-theme') }); return; }
       if (get('data-qc-more')) { KC.quoteview.set({ shown: KC.quoteview.state.shown + 18 }); return; }
@@ -341,12 +392,12 @@
     byId('qc-q').addEventListener('input', function (e) { KC.quoteview.set({ query: e.target.value }); });
     byId('qc-size').addEventListener('change', function (e) { KC.quoteview.set({ sizeId: e.target.value }); });
 
-    byId('drawer-toggle').addEventListener('click', function () { toggleDrawer(); });
-    byId('scrim').addEventListener('click', function () { toggleDrawer(false); });
+    byId('drawer-toggle').addEventListener('click', function () { userDrawer(!drawerIsOpen()); });
+    byId('scrim').addEventListener('click', function () { userDrawer(false); });
 
     document.addEventListener('keydown', function (e) {
       if (e.key === '/' && e.target.tagName !== 'INPUT') { e.preventDefault(); byId('q').focus(); }
-      if (e.key === 'Escape') { closeExportMenu(); toggleDrawer(false); }
+      if (e.key === 'Escape') { closeExportMenu(); userDrawer(false); }
     });
 
     KC.i18n.onChange = function () {
@@ -393,6 +444,7 @@
 
     KC.clipboard.install();
     KC.modal.install();
+    KC.backnav.install();
     wire();
     fillSizes();
     KC.sidebar.installResizer();

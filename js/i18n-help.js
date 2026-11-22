@@ -47,7 +47,7 @@
       'help.dup.flagnear.d': 'Aparece numa nota quando o app não achou uma posição exata para ligá-la a um destaque, e usou a melhor aproximação disponível.',
 
       'help.fav.h': 'Favoritos e copiar',
-      'help.fav.star.t': 'A estrela ★',
+      'help.fav.star.t': 'A estrela (Favoritar)',
       'help.fav.star.d': 'Marca um destaque como favorito. Fica salva neste aparelho, e é o que abastece a galeria de citações em imagem (mais abaixo).',
       'help.fav.copy.t': 'Copiar',
       'help.fav.copy.d': 'O botão "Copiar" (ou selecionar o texto e usar Ctrl/Cmd+C) copia o destaque junto com uma hashtag invisível do livro — ela não aparece no texto colado, mas ajuda apps de notas que entendem hashtags a agrupar tudo do mesmo livro.',
@@ -138,7 +138,7 @@
       'help.dup.flagnear.d': "Shows up on a note when the app couldn't find an exact spot to attach it to a highlight, and used its best guess instead.",
 
       'help.fav.h': 'Favorites and copy',
-      'help.fav.star.t': 'The star ★',
+      'help.fav.star.t': 'The star (Star)',
       'help.fav.star.d': "Marks a highlight as a favorite. It's saved on this device, and it's what feeds the quote-card gallery (further down).",
       'help.fav.copy.t': 'Copy',
       'help.fav.copy.d': "The \"Copy\" button (or selecting the text yourself and pressing Ctrl/Cmd+C) copies the highlight along with an invisible book hashtag — it doesn't show up in the pasted text, but it helps note-taking apps that understand hashtags group everything from the same book.",

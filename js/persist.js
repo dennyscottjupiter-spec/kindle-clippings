@@ -19,9 +19,6 @@
   var PREFS_KEY = 'prefs';
   var OPEN_TIMEOUT = 3000;
 
-  // Per-person record keys when two-person mode is on (js/profile.js); bare keys otherwise.
-  function K(k) { return KC.profile ? KC.profile.key(k) : k; }
-
   var idb = null;
   try { idb = window.indexedDB || null; } catch (e) { idb = null; }
 
@@ -88,13 +85,13 @@
     save: function (text, name) {
       var rec = { text: String(text || ''), name: String(name || ''), ts: Date.now() };
       return withStore('readwrite', function (store) {
-        return store.put(rec, K(KEY));
+        return store.put(rec, KEY);
       }).then(function (r) { return r !== null; });
     },
 
     load: function () {
       return withStore('readonly', function (store) {
-        return store.get(K(KEY));
+        return store.get(KEY);
       }).then(function (r) {
         var rec = r && r.value;
         return (rec && rec.text) ? rec : null;
@@ -103,7 +100,7 @@
 
     clear: function () {
       return withStore('readwrite', function (store) {
-        return store['delete'](K(KEY));
+        return store['delete'](KEY);
       }).then(function () { /* always resolves */ });
     },
 
@@ -111,13 +108,13 @@
     // IndexedDB — this mirror is what actually carries the stars across sessions.
     saveFavorites: function (keys) {
       return withStore('readwrite', function (store) {
-        return store.put({ keys: keys.slice(), ts: Date.now() }, K(FAV_KEY));
+        return store.put({ keys: keys.slice(), ts: Date.now() }, FAV_KEY);
       }).then(function (r) { return r !== null; });
     },
 
     loadFavorites: function () {
       return withStore('readonly', function (store) {
-        return store.get(K(FAV_KEY));
+        return store.get(FAV_KEY);
       }).then(function (r) {
         var rec = r && r.value;
         return (rec && Object.prototype.toString.call(rec.keys) === '[object Array]') ? rec.keys : null;
@@ -130,13 +127,13 @@
       var copy = {}, k;
       for (k in prefs) if (Object.prototype.hasOwnProperty.call(prefs, k)) copy[k] = prefs[k];
       return withStore('readwrite', function (store) {
-        return store.put({ prefs: copy, ts: Date.now() }, K(PREFS_KEY));
+        return store.put({ prefs: copy, ts: Date.now() }, PREFS_KEY);
       }).then(function (r) { return r !== null; });
     },
 
     loadPrefs: function () {
       return withStore('readonly', function (store) {
-        return store.get(K(PREFS_KEY));
+        return store.get(PREFS_KEY);
       }).then(function (r) {
         var rec = r && r.value;
         return (rec && rec.prefs && typeof rec.prefs === 'object') ? rec.prefs : null;

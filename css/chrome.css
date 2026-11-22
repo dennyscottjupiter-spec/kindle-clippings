@@ -1,8 +1,11 @@
 /* ---
-   purpose: Top bar, brand home pill, buttons, switches, flag, dropdown + ⋯ overflow menu, toast, tooltip, seg control
-   depends: css/tokens.css
-   gotcha: .tip uses visibility (not display) so aria-describedby stays reachable and pointer-events:none;
-     .more-panel is display:contents on desktop (beats [hidden]) and a real dropdown below 860px
+   purpose: Top bar, brand home pill, line icons, buttons, back button, desktop shortcuts, switches, flag,
+     dropdown + the ⋯ panel (tiles, grouped rows, help/about footer), toast, tooltip, seg control
+   depends: css/tokens.css; js/icons.js draws every .ico this sheet sizes
+   gotcha: .tip uses visibility (not display) so aria-describedby stays reachable and pointer-events:none
+   gotcha: .more-panel is a dropdown at EVERY width and is shown only by .more-panel:not([hidden]);
+     .topnav (desktop shortcuts) and .mp-tiles (the same three destinations, phone) are mutually exclusive
+   gotcha: .back-btn is toggled with [hidden] by js/backnav.js — its show rule is :not([hidden])
    --- */
 
 .skip {
@@ -17,6 +20,15 @@
   transition: top .15s ease;
 }
 .skip:focus { top: 8px; }
+
+/* line icons (js/icons.js) — stroke-drawn, coloured by currentColor, sized by their container */
+.ico {
+  width: 1.15em; height: 1.15em; flex-shrink: 0;
+  fill: none; stroke: currentColor; stroke-width: 2;
+  stroke-linecap: round; stroke-linejoin: round;
+  display: block;
+}
+[data-icon] { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
 /* topbar */
 .topbar {
@@ -81,13 +93,18 @@
 
 .actions { display: flex; align-items: center; gap: .4rem; margin-left: auto; position: relative; }
 
-/* overflow menu — a pass-through wrapper on desktop (toolbar unchanged), a dropdown below 860px.
-   The display:contents rule is scoped to the desktop query on purpose: unscoped it would outrank the
-   [hidden] attribute at every width and desync the panel from js/nav.js. */
-@media (min-width: 861px) {
-  .more, .more-panel { display: contents; }
-  #more-btn { display: none; }
+/* back — only exists while there is somewhere to go back to (js/backnav.js) */
+.btn.back-btn[hidden] { display: none; }   /* outranks .btn.icon (display:inline-flex), which comes later */
+.back-btn:not([hidden]) {
+  color: var(--accent);
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  animation: kc-pop-in .22s cubic-bezier(.2,.8,.3,1.2);
 }
+.back-btn .ico { width: 20px; height: 20px; stroke-width: 2.3; }
+
+/* desktop shortcuts — the same three destinations as the panel's tiles */
+.topnav { display: flex; align-items: center; gap: .15rem; }
 
 /* buttons — three ranks, all pills */
 .btn {
@@ -102,12 +119,22 @@
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  gap: .45em;
   cursor: pointer;
   font-family: var(--font-sans);
   box-shadow: var(--sh-1);
-  transition: box-shadow .15s ease, border-color .15s ease, background .15s ease;
+  transition: box-shadow .15s ease, border-color .15s ease, background .15s ease, transform .12s ease;
 }
-.btn:hover { border-color: var(--brand-1); box-shadow: var(--sh-2); }
+.btn:active { transform: scale(.96); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { border-color: var(--brand-1); box-shadow: var(--sh-2); }
+}
+/* quiet rank — no chrome until hovered; used by the desktop shortcuts */
+.btn.ghost { background: transparent; border-color: transparent; box-shadow: none; color: var(--mid); }
+.btn.ghost .ico { color: var(--accent); }
+@media (hover: hover) and (pointer: fine) {
+  .btn.ghost:hover { background: var(--sunk); color: var(--ink); box-shadow: none; border-color: transparent; }
+}
 .btn.primary {
   background: var(--grad-primary);
   color: #fff;
@@ -115,6 +142,7 @@
 }
 .btn.primary:hover { box-shadow: var(--sh-2); }
 .btn.icon { width: 2.4em; height: 2.4em; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.btn.icon .ico { width: 1.25em; height: 1.25em; }
 .btn[aria-pressed="true"] { background: var(--brand-3); color: #04241F; border-color: transparent; }
 
 /* switches — the two persistent settings read as settings, not as buttons */
@@ -131,7 +159,7 @@
   color: var(--mid);
   transition: color .15s ease, background .15s ease;
 }
-.switch:hover { background: var(--sunk); color: var(--ink); }
+@media (hover: hover) and (pointer: fine) { .switch:hover { background: var(--sunk); color: var(--ink); } }
 .switch[aria-checked="true"] { color: var(--ink); }
 
 .sw-track {
@@ -157,22 +185,7 @@
 /* green = the one control that talks to the network; violet = a purely local view setting */
 #toggle-covers[aria-checked="true"] .sw-track { background: var(--brand-green); }
 #toggle-hidden[aria-checked="true"] .sw-track { background: var(--brand-1); }
-#toggle-profile[aria-checked="true"] .sw-track { background: var(--brand-1); }
 @media (prefers-reduced-motion: reduce) { .sw-thumb, .sw-track { transition: none; } }
-
-/* two-person mode: one tappable monogram, hidden unless the setting is on (js/profile.js) */
-.profile-pill:not([hidden]) {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 2.4em; height: 2.4em; flex-shrink: 0;
-  border: 0; border-radius: 50%; cursor: pointer;
-  font: 700 1rem/1 var(--font-display, var(--font-sans));
-  color: #fff; background: var(--brand-1); box-shadow: var(--sh-1);
-  transition: transform .15s ease, box-shadow .15s ease;
-}
-.profile-pill[data-profile="B"] { background: var(--brand-green); }
-.profile-pill:hover { box-shadow: var(--sh-2); transform: scale(1.06); }
-.profile-pill:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .profile-pill { transition: none; } }
 
 /* language flag — the button is sized by the flag, not by the icon-button square */
 .flag-btn { padding: .35em .5em; }
@@ -226,6 +239,174 @@
   cursor: pointer;
 }
 .menu-list button:hover { background: var(--sunk); }
+
+/* ---- ⋯ panel — a dropdown at every width ------------------------------------------------------ */
+.more { position: relative; }
+#more-btn { touch-action: manipulation; }
+#more-btn[aria-expanded="true"] { background: var(--accent-soft); border-color: var(--accent-line); color: var(--accent); }
+.more-panel[hidden] { display: none; }
+.more-panel:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  width: 20rem;
+  max-width: calc(100vw - 1.6rem);
+  max-height: calc(100svh - 6rem);   /* svh, not dvh — dvh re-resolves as the iOS URL bar animates */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: .5rem;
+  background: var(--panel);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-lift);
+  transform-origin: top right;
+  animation: kc-drop .18s cubic-bezier(.2,.8,.3,1);
+}
+
+/* three destinations as tiles — phone only; the desktop has .topnav for them */
+.mp-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: .4rem; margin-bottom: .2rem; }
+.mp-tile {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem;
+  min-height: 5.2rem; padding: .7rem .3rem .6rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--rule);
+  border-radius: var(--r-md);
+  color: var(--ink);
+  font: 600 .76rem/1.15 var(--font-sans);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--sh-1);
+  transition: transform .12s ease, box-shadow .15s ease, border-color .15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.mp-tile-ico {
+  width: 2.5rem; height: 2.5rem; border-radius: 12px;
+  background: var(--grad-primary); color: #fff;
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.mp-tile-ico .ico { width: 1.3rem; height: 1.3rem; }
+.mp-tile:nth-child(2) .mp-tile-ico { background: linear-gradient(135deg, var(--brand-4), #7A4A05); }
+.mp-tile:nth-child(3) .mp-tile-ico { background: linear-gradient(135deg, var(--brand-green), #3E5520); }
+.mp-tile:active { transform: scale(.95); }
+@media (min-width: 861px) { .mp-tiles { display: none; } .mp-tiles + .mp-label { margin-top: .3rem; } }
+@media (hover: hover) and (pointer: fine) {
+  .mp-tile:hover { border-color: var(--accent-line); box-shadow: var(--sh-2); transform: translateY(-1px); }
+}
+
+.mp-label {
+  margin: .8rem .6rem .3rem;
+  font: 700 .62rem/1 var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: .16em;
+  color: var(--mid);
+}
+.mp-group { display: flex; flex-direction: column; gap: 1px; }
+.mp-group > .tip-host, .mp-group > .menu { display: flex; flex-direction: column; width: 100%; }
+
+/* one row = icon badge + label (+ switch track or chevron at the end) */
+.mp-item, .more-panel .switch {
+  display: flex; align-items: center; gap: .7rem;
+  width: 100%; min-height: 44px;
+  padding: .4rem .55rem;
+  background: transparent;
+  border: 0;
+  border-radius: var(--r-md);
+  color: var(--ink);
+  font: 600 .86rem/1.2 var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.more-panel .switch .sw-text { flex: 1 1 auto; }
+.mp-item .lbl { flex: 1 1 auto; }
+.mp-item:active, .more-panel .switch:active { background: var(--sunk); }
+@media (hover: hover) and (pointer: fine) {
+  .mp-item:hover, .more-panel .switch:hover { background: var(--sunk); }
+}
+.mp-ico {
+  width: 2rem; height: 2rem; border-radius: 9px;
+  background: var(--accent-soft); color: var(--accent);
+  transition: transform .3s ease;
+}
+.mp-ico .ico { width: 1.1rem; height: 1.1rem; }
+.mp-ico.is-spin { transform: rotate(180deg) scale(.9); }
+.mp-item.is-quiet { color: var(--mid); }
+.mp-item.is-quiet .mp-ico { background: var(--sunk); color: var(--mid); }
+
+/* theme + language side by side */
+.mp-pair { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; margin-top: .3rem; }
+.mp-pair .mp-item { justify-content: flex-start; background: var(--sunk); padding: .4rem .5rem; gap: .5rem; font-size: .8rem; }
+.mp-pair .mp-item .mp-ico { background: var(--panel); width: 1.8rem; height: 1.8rem; }
+.mp-pair .flag-btn { padding: .4rem .6rem; }
+.mp-pair .flag { flex-shrink: 0; }
+
+/* export: an inline disclosure inside the panel, never a dropdown inside a dropdown */
+.mp-chev { color: var(--mid); transition: transform .18s ease; }
+.mp-chev .ico { width: 1rem; height: 1rem; }
+.mp-disclose[aria-expanded="true"] .mp-chev { transform: rotate(90deg); }
+.more-panel .menu-list {
+  position: static; min-width: 0;
+  margin: .15rem 0 .35rem 3.2rem;
+  border-radius: var(--r-md);
+  box-shadow: none;
+  background: var(--sunk);
+  border-color: transparent;
+}
+.more-panel .menu-list li + li { border-top-color: var(--rule); }
+.more-panel .menu-list button { min-height: 40px; font-size: .84rem; }
+
+/* help + about — the last thing in the panel, side by side */
+.mp-foot {
+  display: grid; grid-template-columns: 1fr 1fr; gap: .4rem;
+  margin-top: .6rem; padding: .6rem 0 .5rem;
+  border-top: 1px solid var(--rule);
+  /* pinned to the panel's bottom edge even while the list above scrolls on a short phone */
+  position: sticky; bottom: -.5rem; z-index: 1;
+  background: var(--panel);
+}
+.mp-foot > .tip-host { display: flex; }
+.mp-foot-btn {
+  flex: 1 1 auto;
+  display: inline-flex; align-items: center; justify-content: center; gap: .5rem;
+  min-height: 44px; padding: .45rem .7rem;
+  background: var(--sunk);
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  color: var(--ink);
+  font: 600 .84rem/1 var(--font-sans);
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, transform .12s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.mp-foot-btn .mp-ico { width: 1.7rem; height: 1.7rem; border-radius: 50%; background: var(--grad-primary); color: #fff; }
+#nav-about .mp-ico { background: linear-gradient(135deg, var(--brand-4), #7A4A05); }
+.mp-foot-btn:active { transform: scale(.96); }
+@media (hover: hover) and (pointer: fine) { .mp-foot-btn:hover { border-color: var(--accent-line); background: var(--accent-soft); } }
+
+/* tips inside the panel: beside it on a tall desktop, never on touch (they would cover the list) */
+.more-panel .tip { display: none; }
+@media (hover: hover) and (pointer: fine) and (min-width: 861px) and (min-height: 760px) {
+  .more-panel:not([hidden]) { overflow: visible; max-height: none; }
+  .more-panel .tip { display: block; top: 50%; right: calc(100% + 18px); transform: translate(4px, -50%); }
+  .more-panel .tip::before { top: calc(50% - 5px); right: -5px; }
+  .more-panel .tip-host:hover .tip, .more-panel .tip-host:focus-within .tip { transform: translate(0, -50%); }
+}
+
+@keyframes kc-drop { from { opacity: 0; transform: translateY(-6px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes kc-pop-in { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .more-panel:not([hidden]), .back-btn:not([hidden]) { animation: none; }
+  .mp-ico, .mp-chev, .mp-tile, .mp-foot-btn, .btn { transition: none; }
+}
 
 /* covers progress ring — the "hourglass": a ring around the button that fills as the fetch queue drains */
 .covers-host { position: relative; }
@@ -295,36 +476,7 @@
   .btn { padding: .4em .7em; font-size: .85rem; }
   .tip { max-width: min(15rem, calc(100vw - 2rem)); }
 
-  /* every secondary control collapses behind ⋯ so the topbar stays one row + the search row */
-  .more { display: block; position: relative; }
-  #more-btn {
-    display: inline-flex; justify-content: center;
-    font-size: 1.05rem; line-height: 1;
-    touch-action: manipulation;
-  }
-  .more-panel { display: none; }
-  .more-panel:not([hidden]) {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: .25rem;
-    position: absolute;
-    top: calc(100% + 8px);
-    right: 0;
-    z-index: 30;
-    min-width: 13.5rem;
-    max-width: calc(100vw - 1.6rem);
-    max-height: calc(100svh - 7rem);   /* svh, not dvh — dvh re-resolves as the iOS URL bar animates */
-    overflow-y: auto;
-    padding: .4rem;
-    background: var(--panel);
-    border: 1px solid var(--rule);
-    border-radius: var(--r-md);
-    box-shadow: var(--sh-2);
-  }
-  .more-panel > .tip-host, .more-panel .menu { display: flex; flex-direction: column; width: 100%; }
-  .more-panel .btn, .more-panel .switch { width: 100%; justify-content: flex-start; }
-  .more-panel .btn.icon { width: 100%; height: auto; padding: .5em 1em; }
-  /* inline, not absolute — a dropdown inside a dropdown would run off the screen */
-  .more-panel .menu-list { position: static; min-width: 0; margin-top: .25rem; }
+  /* the three destinations move from the topbar into the ⋯ panel as tiles */
+  .topnav { display: none; }
+  #more-btn { font-size: 1.05rem; line-height: 1; }
 }

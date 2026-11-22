@@ -1,7 +1,7 @@
 // ---
 // purpose: Standalone shelf page — cover-card grid, topic chips, auto + manual missing-cover fetch
 // exports: nothing (wires itself on DOMContentLoaded)
-// depends: js/i18n.js, js/store.js, js/topics.js, js/covers.js, js/topicfilter.js
+// depends: js/i18n.js, js/icons.js, js/store.js, js/topics.js, js/covers.js, js/topicfilter.js
 // gotcha: this page has no js/app.js, so it seeds KC.state and a minimal KC.ui.toast itself —
 //   js/covers.js reads both. It never touches highlight text; none is cached here.
 // ---
@@ -151,6 +151,7 @@
     KC.state.coversOn = !!prefs.coversOn;
 
     applyStrings();
+    KC.icons.paintTheme();
     render();
     KC.covers.paintSwitch();
     if (KC.state.coversOn) KC.covers.fetchAll(KC.state.books, onProgress);
@@ -189,6 +190,7 @@
       var next = current === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
       KC.store.prefs.set({ theme: next });
+      KC.icons.paintTheme();
     });
   });
 })(window.KC = window.KC || {});

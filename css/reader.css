@@ -3,11 +3,12 @@
    depends: css/tokens.css
    gotcha: .statline:not([hidden]) — a bare display: rule outranks [hidden] at equal specificity
    gotcha: --pane-pad on .pane-inner is the pane gutter; .book-banner bleeds edge-to-edge off it
-   gotcha: .ca-menu > .menu-list re-anchors chrome.css's dropdown to left: 0 — right: 0 would open it
-     off the left edge of the screen, since the trigger sits at the start of a card's meta row
-   gotcha: the .meta separator-dot selector's :not() list also excludes .ca-img/.ca-menu (per-card
-     actions, js/cardactions.js) alongside .copy — any future meta action button needs the same
-     exclusion or it grows a stray "·" before it, same as .fav's own comment below explains
+   gotcha: a card's footer is .meta > .meta-info (book/page/location/date chips) + .meta-actions (the
+     tray: star, copy from js/cards.js; image, export from js/cardactions.js). Any new tray button is
+     built with KC.cards.actBtn so it gets the same .act shape on desktop and phone
+   gotcha: .ca-menu > .menu-list anchors right: 0 (the export trigger is the LAST tray button, at the
+     card's right edge) and opens UPWARD on phones so it is never cut off by the next card
+   gotcha: star colour lives only on .act.fav.is-on — never on :hover, which sticks after a tap on touch
    --- */
 
 .pane { overflow-y: auto; height: 100%; min-width: 0; }
@@ -155,96 +156,155 @@
 }
 
 .entry .note-attached {
-  margin-top: .8em;
-  padding-left: .8em;
-  border-left: 2px solid var(--marker-note);
+  margin-top: .85em;
+  padding: .6em .8em .65em;
+  border-left: 3px solid var(--marker-note);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  background: var(--marker-note-tint);
 }
+.note-label {
+  display: inline-flex; align-items: center; gap: .35em;
+  margin-bottom: .25em;
+  font: 700 .62rem/1 var(--font-mono);
+  text-transform: uppercase; letter-spacing: .14em;
+  color: var(--marker-note);
+}
+.note-label .ico { width: .95rem; height: .95rem; }
 .entry .note-text {
   font-family: var(--font-sans);
   font-size: .9rem;
-  color: var(--mid);
+  color: var(--ink);
 }
 
-.entry .meta > *:not(:first-child):not(.copy):not(.ca-img):not(.ca-menu)::before {
-  content: "·";
-  margin-right: .55em;
-  color: var(--rule);
-}
+/* ---- card footer: an info row (where + when) and an action tray ---- */
 .entry .meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: .6em;
-  margin-top: .8em;
-  font-family: var(--font-mono);
-  font-size: .76rem;
-  letter-spacing: .02em;
+  justify-content: space-between;
+  gap: .6rem 1rem;
+  margin-top: .95em;
+  padding-top: .8em;
+  border-top: 1px dashed var(--rule);
   color: var(--mid);
 }
-.meta .book { font-family: var(--font-sans); font-style: italic; }
-.meta .loc, .meta time { font-family: var(--font-mono); }
-.meta .copy {
-  margin-left: auto;
-  background: transparent;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-pill);
-  padding: .2em .7em;
-  cursor: pointer;
+.meta-info {
+  display: flex; flex-wrap: wrap; align-items: center;
+  gap: .35rem .4rem;
+  min-width: 0;
 }
-.meta .copy:hover { border-color: var(--brand-1); }
+.meta-info .book {
+  flex: 0 1 auto; min-width: 0;
+  margin-right: .2rem;
+  font: italic 500 .8rem/1.3 var(--font-sans);
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.meta-info .loc, .meta-info .when {
+  display: inline-flex; align-items: center; gap: .32em;
+  padding: .28em .6em;
+  border-radius: var(--r-pill);
+  background: var(--sunk);
+  font: 500 .7rem/1 var(--font-mono);
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+.meta-info .ico { width: .85rem; height: .85rem; color: var(--accent); opacity: .85; }
+.meta-info .when { cursor: help; }
 
-/* favourite star — bare glyph button in the meta row, no chrome of its own */
-.meta .fav {
+.meta-actions { display: flex; align-items: center; gap: .2rem; margin-left: auto; }
+.act {
+  position: relative;
+  display: inline-flex; align-items: center; justify-content: center; gap: .38em;
+  padding: .42em .75em;
   background: transparent;
-  border: 0;
-  padding: 0 .25em;
-  line-height: 1;
-  font-size: .95rem;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
   color: var(--mid);
+  font: 600 .74rem/1 var(--font-sans);
   cursor: pointer;
-  transition: color .15s ease, transform .15s ease;
+  transition: background .15s ease, color .15s ease, transform .12s ease, border-color .15s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
-/* the meta separator rule dots every child but .copy — the star is an icon, not a field */
-.entry .meta > .fav::before { content: none; margin-right: 0; }
-.meta .fav:hover { color: var(--brand-4); transform: scale(1.15); }
-.meta .fav.is-on, .meta .fav[aria-pressed="true"] { color: var(--brand-4); }
+.act .ico { width: 1.05rem; height: 1.05rem; }
+.act:active { transform: scale(.92); }
+.act:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* hover is a background wash only — never the star's own colour, which :hover would keep "on"
+   after a tap on touch screens (the v2.2 "un-starred but still gold" bug) */
+@media (hover: hover) and (pointer: fine) {
+  .act:hover { background: var(--sunk); color: var(--ink); }
+  .entry .meta-actions { opacity: .62; transition: opacity .18s ease; }
+  .entry:hover .meta-actions, .entry:focus-within .meta-actions { opacity: 1; }
+}
 
-/* per-card actions (js/cardactions.js) — save as JPEG + export this one highlight, same quiet pill
-   as .copy; the export trigger reuses css/chrome.css's .menu/.menu-list dropdown verbatim */
-.meta .ca-btn {
-  background: transparent;
-  border: 1px solid var(--rule);
-  border-radius: var(--r-pill);
-  padding: .2em .7em;
-  cursor: pointer;
+/* the star: outline when off, filled gold when on, a small burst when it turns on */
+.act.fav.is-on { color: var(--brand-4); }
+.act.fav.is-on .ico { fill: currentColor; }
+.act.fav.is-pop .ico { animation: kc-star-pop .45s cubic-bezier(.2,.8,.3,1.4); }
+.act.fav.is-pop::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 2.2rem; height: 2.2rem; margin: -1.1rem 0 0 -1.1rem;
+  border-radius: 50%;
+  border: 2px solid var(--brand-4);
+  opacity: 0; pointer-events: none;
+  animation: kc-ring .5s ease-out;
 }
-.meta .ca-btn:hover { border-color: var(--brand-1); }
-/* chrome.css anchors .menu-list with right: 0 — right for the topbar, wrong here: this trigger sits
-   near the LEFT edge of a card, so a right-anchored 12rem list opens off the left of the screen. */
+.act.fav.is-unpop .ico { animation: kc-star-out .25s ease; }
+
+/* success morph (copy, image) and the image button's busy spinner */
+.act.is-done { color: var(--brand-green); }
+.act.is-done .ico { animation: kc-star-pop .35s ease; }
+.act.is-busy { pointer-events: none; opacity: .7; }
+.act.is-busy .ico { animation: kc-spin .8s linear infinite; }
+
+@keyframes kc-star-pop { 0% { transform: scale(.6); } 55% { transform: scale(1.35) rotate(-8deg); } 100% { transform: none; } }
+@keyframes kc-star-out { 0% { transform: scale(1); } 50% { transform: scale(.75); } 100% { transform: none; } }
+@keyframes kc-ring { 0% { opacity: .8; transform: scale(.5); } 100% { opacity: 0; transform: scale(1.5); } }
+@keyframes kc-spin { to { transform: rotate(360deg); } }
+
+/* per-card export (js/cardactions.js) reuses css/chrome.css's .menu/.menu-list dropdown. The trigger
+   is the LAST button of the tray, at the card's right edge, so the list anchors right: 0 (chrome.css's
+   own default) and must never be re-anchored left — that would run it off the right of a phone. */
+.ca-menu { position: relative; display: inline-flex; }
 .ca-menu > .menu-list {
-  left: 0;
-  right: auto;
-  min-width: 10rem;
+  right: 0;
+  left: auto;
+  min-width: 11rem;
   max-width: calc(100vw - 2rem);
-}
-@media (max-width: 720px) {
-  /* mirrors css/mobile.css's .meta .copy/.fav 44px hit-area trick for these two — that file is
-     never edited, so the same invisible-::after expansion is reproduced here instead */
-  .meta .ca-btn { position: relative; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-  .meta .ca-btn::after {
-    content: "";
-    position: absolute;
-    left: -6px; right: -6px; top: 50%;
-    height: 44px; min-width: 44px;
-    transform: translateY(-50%);
-  }
+  animation: kc-drop .16s ease;
 }
 
 /* starred cards keep the topic edge and gain an inset amber rail beside it */
 .entry.is-fav { box-shadow: var(--sh-1), inset 2px 0 0 var(--brand-4); }
 
+@media (max-width: 720px) {
+  /* phone: the tray becomes a full-width, thumb-sized bar of equal cells — icon over label */
+  .entry .meta { flex-direction: column; align-items: stretch; gap: .65rem; }
+  .meta-actions {
+    margin-left: 0;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .25rem;
+    padding: .25rem;
+    background: var(--sunk);
+    border-radius: var(--r-md);
+  }
+  .act, .ca-menu > .act {
+    flex-direction: column; gap: .28rem;
+    width: 100%; min-height: 50px;
+    padding: .45rem .15rem;
+    border-radius: var(--r-sm);
+    font-size: .66rem;
+  }
+  .act .ico { width: 1.2rem; height: 1.2rem; }
+  .act:active { background: var(--panel); }
+  .ca-menu { display: flex; }
+  .ca-menu > .menu-list { top: auto; bottom: calc(100% + 8px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .fav { transition: none; }
+  .act, .act .ico, .act::after, .ca-menu > .menu-list { transition: none; animation: none !important; }
 }
 
 /* card flags — NOT .flag: chrome.css already owns .flag for the language button's <img>, and this
