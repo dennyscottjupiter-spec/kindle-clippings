@@ -62,13 +62,18 @@
   cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
 }
-.chip:hover { border-color: var(--topic-edge); }
+/* :hover sticks after a tap on touch — real pointers only */
+@media (hover: hover) and (pointer: fine) {
+  .chip:hover { border-color: var(--topic-edge); }
+}
 /* pressed = filled with the topic's own edge tone, never just a ring — has to read at a glance */
 .chip[aria-pressed="true"] { background: var(--topic-edge); color: var(--accent-ink); border-color: var(--topic-edge); }
 
 /* "All topics" carries no hue, so it gets its own resting/pressed pair instead of the --h mechanism */
 .chip[data-topic="all"] { background: var(--sunk); color: var(--mid); }
-.chip[data-topic="all"]:hover { border-color: var(--rule); }
+@media (hover: hover) and (pointer: fine) {
+  .chip[data-topic="all"]:hover { border-color: var(--rule); }
+}
 .chip[data-topic="all"][aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
 .topic-discover {
@@ -95,7 +100,9 @@
   text-align: left;
   position: relative;
 }
-.book-item:hover { background: var(--sunk); }
+@media (hover: hover) and (pointer: fine) {
+  .book-item:hover { background: var(--sunk); }
+}
 .book-item.is-active { background: var(--sunk); }
 .book-item.is-off-topic { opacity: .45; }
 .book-item .spine {

@@ -64,6 +64,13 @@
     } catch (e) { return ''; }
   }
 
+  function noteLabel(cls) {
+    var nl = el('span', cls);
+    nl.appendChild(KC.icons.svg('note'));
+    nl.appendChild(el('span', null, KC.i18n.t('card.noteLabel').replace(/:$/, '')));
+    return nl;
+  }
+
   function flag(cls, text) {
     return el('span', 'card-flag ' + cls, text);
   }
@@ -90,6 +97,9 @@
       var hue = KC.topics.hueOf(topicId);
       if (hue !== null && hue !== undefined) art.style.setProperty('--h', String(hue));
 
+      // A standalone note is the reader's own words, not the author's — say so before the text.
+      if (rec.type === 'note') art.appendChild(noteLabel('note-label note-solo'));
+
       var q = el('p', 'q');
       q.appendChild(el('span', 'q-text', rec.text || KC.i18n.t('type.' + rec.type)));
       // In the DOM, invisible, no layout — but it rides along with a selection copy.
@@ -98,10 +108,7 @@
 
       if (rec.note && rec.note.text) {
         var wrap = el('div', 'note-attached');
-        var nl = el('span', 'note-label');
-        nl.appendChild(KC.icons.svg('note'));
-        nl.appendChild(el('span', null, KC.i18n.t('card.noteLabel').replace(/:$/, '')));
-        wrap.appendChild(nl);
+        wrap.appendChild(noteLabel('note-label'));
         wrap.appendChild(el('p', 'note-text', rec.note.text));
         art.appendChild(wrap);
       }

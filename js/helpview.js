@@ -13,6 +13,13 @@
       ['help.load.open.t', 'help.load.open.d'],
       ['help.load.remember.t', 'help.load.remember.d']
     ] },
+    { code: 'kinds', h: 'help.kinds.h', lead: 'help.kinds.lead', note: 'help.kinds.note', items: [
+      ['help.kinds.hl.t', 'help.kinds.hl.d'],
+      ['help.kinds.note.t', 'help.kinds.note.d'],
+      ['help.kinds.attached.t', 'help.kinds.attached.d'],
+      ['help.kinds.solo.t', 'help.kinds.solo.d'],
+      ['help.kinds.near.t', 'help.kinds.near.d']
+    ] },
     { code: 'books', h: 'help.books.h', note: 'help.books.note', items: [
       ['help.books.list.t', 'help.books.list.d'],
       ['help.books.chips.t', 'help.books.chips.d']

@@ -202,7 +202,9 @@
   border-color: var(--rule);
   font-variant-numeric: tabular-nums;
 }
-.yr-chip:hover { color: var(--ink); border-color: var(--brand-1); }
+@media (hover: hover) and (pointer: fine) {
+  .yr-chip:hover { color: var(--ink); border-color: var(--brand-1); }
+}
 .yr-chip[aria-pressed="true"] {
   background: var(--grad-primary);
   color: #fff;
@@ -284,7 +286,9 @@
   padding: .45em .9em; color: var(--ink); font-size: .84rem;
   max-width: 100%; min-width: 0;
 }
-.qc-tools select:hover, .qc-tools input[type="search"]:hover { border-color: var(--brand-1); }
+@media (hover: hover) and (pointer: fine) {
+  .qc-tools select:hover, .qc-tools input[type="search"]:hover { border-color: var(--brand-1); }
+}
 /* the live tally is the one place the bar raises its voice — accented while a filter is narrowing */
 .qc-count {
   margin-left: auto;
@@ -317,7 +321,10 @@
   box-shadow: var(--sh-1);
   transition: box-shadow .15s ease, transform .15s ease;
 }
-.qc:hover { box-shadow: var(--sh-2); transform: translateY(-2px); }
+/* a lifted card would stay lifted after a tap on touch — real pointers only */
+@media (hover: hover) and (pointer: fine) {
+  .qc:hover { box-shadow: var(--sh-2); transform: translateY(-2px); }
+}
 .qc-canvas { width: 100%; height: auto; display: block; background: var(--sunk); }
 .qc-bar { display: flex; align-items: center; gap: .4rem; padding: .45rem .6rem; }
 .qc-title {
@@ -330,7 +337,9 @@
   background: transparent; border: 1px solid var(--rule); border-radius: var(--r-pill);
   padding: .2em .6em; font-size: .74rem; font-weight: 600; color: var(--mid); cursor: pointer;
 }
-.qc-btn:hover { border-color: var(--brand-1); color: var(--ink); }
+@media (hover: hover) and (pointer: fine) {
+  .qc-btn:hover { border-color: var(--brand-1); color: var(--ink); }
+}
 .qc-btn { display: inline-flex; align-items: center; gap: .3em; }
 .qc-btn .ico { width: .95rem; height: .95rem; }
 .qc-btn.is-on, .qc-btn[aria-pressed="true"] { color: var(--brand-4); border-color: var(--brand-4); }
@@ -349,7 +358,8 @@
   /* fields pair up two per row; book and search take a row each — their values are long */
   .qc-field { flex: 1 1 8.5rem; }
   .qc-field-wide { flex: 1 1 100%; }
-  .qc-tools { gap: .45rem .6rem; padding-top: .6rem; }
+  .qc-tools { gap: .45rem .6rem; padding-top: .6rem; align-items: flex-start; }
+  .qc-tools .seg { min-height: 44px; }
   /* 16px minimum or Safari zooms the whole page when a field takes focus */
   .qc-tools select, .qc-tools input[type="search"] { font-size: 16px; min-height: 44px; width: 100%; }
   /* the tally rides the title row instead of eating a whole row of a 390px screen */

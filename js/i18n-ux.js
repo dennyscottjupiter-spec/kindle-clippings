@@ -13,6 +13,7 @@
       'modal.close': 'Fechar',
       'menu.view': 'Exibição',
       'menu.data': 'Exportar e backup',
+      'stats.lineFound': '{n} de {records} destaques · {books} livros',
       'theme.toDark': 'Modo escuro',
       'theme.toLight': 'Modo claro',
 
@@ -66,6 +67,7 @@
       'modal.close': 'Close',
       'menu.view': 'Display',
       'menu.data': 'Export & backup',
+      'stats.lineFound': '{n} of {records} highlights · {books} books',
       'theme.toDark': 'Dark mode',
       'theme.toLight': 'Light mode',
 

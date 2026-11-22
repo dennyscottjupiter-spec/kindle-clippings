@@ -2,7 +2,7 @@
 // purpose: Render the chrome — strings, sidebar delegate, book banner, sort bar, stat line, toast
 // exports: KC.ui.applyStrings(), renderSidebar(), renderBookBanner(), render(), toast(), setTheme(),
 //   fillPane(), updateCoversButton()
-// depends: js/i18n.js, js/icons.js, js/search.js, js/sort.js, js/cards.js, js/sidebar.js, js/covers.js, js/topics.js
+// depends: js/i18n.js + js/i18n-ux.js (stats.lineFound), js/icons.js, js/search.js, js/sort.js, js/cards.js, js/sidebar.js, js/covers.js, js/topics.js
 // gotcha: the pagination reset key is activeBook | activeTopic | query | showHidden | sortMode — all five
 // ---
 (function (KC) {
@@ -62,7 +62,11 @@
       while (line.firstChild) line.removeChild(line.firstChild);
       line.hidden = false;
 
-      var main = document.createTextNode(KC.i18n.t('stats.line', { records: s.visible.length, books: st.books }));
+      // While a search narrows the list, say how many match — "244 highlights" over an empty pane misleads.
+      var line1 = s.query
+        ? KC.i18n.t('stats.lineFound', { n: s.filtered.length, records: s.visible.length, books: st.books })
+        : KC.i18n.t('stats.line', { records: s.visible.length, books: st.books });
+      var main = document.createTextNode(line1);
       line.appendChild(main);
 
       var extras = [];

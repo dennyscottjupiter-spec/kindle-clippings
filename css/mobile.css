@@ -74,7 +74,10 @@ html { -webkit-text-size-adjust: 100%; }
   }
 
   /* --- sidebar drawer -------------------------------------------------- */
-  .resizer { display: none; }                /* col-resize is meaningless on touch */
+  .resizer { display: none; }
+  /* thumb-sized: Help's jump links and the gallery's star / JPG buttons were 22–27px tall */
+  .doc-toc-link { min-height: 38px; }
+  .qc-btn { min-height: 40px; padding: .3em .85em; }                /* col-resize is meaningless on touch */
   .sidebar {
     width: min(86vw, 300px);
     height: 100%;
@@ -111,6 +114,9 @@ html { -webkit-text-size-adjust: 100%; }
     padding-bottom: .2rem;
   }
   .sortbar::-webkit-scrollbar { display: none; }
+  /* the bar scrolls sideways — keep every option on one line instead of "Mais / recentes" stacks */
+  .sortbar .seg { flex-shrink: 0; }
+  .sortbar .seg button { white-space: nowrap; }
   .dropzone { padding: 2rem 1rem; }
 
   /* --- toast ----------------------------------------------------------- */

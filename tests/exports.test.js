@@ -74,7 +74,9 @@ function run() {
   ok(txt.text.indexOf('#HabitosAtomicos') !== -1, 'TXT carries the tag inline');
   const anki = KC.exports.build('anki', recs, {});
   eq(anki.name, 'kindle-anki.tsv', 'anki filename');
-  const all = anki.text.trim().split('\n');
+  // Every field is quoted, so a row always starts with '"' — a newline inside a field (an attached
+  // note on the back) is not followed by one. Split on row starts, not on every newline.
+  const all = anki.text.trim().split(/\n(?=["#])/);
   const head = all.slice(0, 5), rows = all.slice(5);
   eq(head.join('|'), '#separator:tab|#html:false|#notetype:Basic|#deck:Kindle|#tags column:3',
     'the five Anki headers open the file, in order');
@@ -89,6 +91,15 @@ function run() {
   }], {}).text.trim().split('\n').slice(5).join('\n');
   eq(evil, '"#hash\tafter tab ""quoted""\nsecond line"\t"T"\t"#T"',
     'a tab, a newline, a leading # and inner quotes all stay inside one quoted field');
+
+  const noted = recs.filter(function (r) { return r.note && r.note.text; });
+  ok(noted.length > 0, 'the fixture has at least one highlight with an attached note');
+  ok(noted.every(function (r) { return txt.text.indexOf(r.note.text) !== -1; }), 'TXT keeps every attached note');
+  ok(noted.every(function (r) { return anki.text.indexOf(r.note.text.replace(/"/g, '""')) !== -1; }),
+    'Anki keeps every attached note (on the back of the card)');
+  ok(rows.filter(function (r) { return r.indexOf('Nota: ') !== -1; }).every(function (r) {
+    return r.split('\t')[1].indexOf('"Nota: ') === 0;
+  }), 'the note opens the back field, above the source line');
 
   section('exports — guards');
   ok(['md', 'json', 'csv', 'txt', 'anki'].every(function (k) {

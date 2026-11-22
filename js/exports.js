@@ -125,7 +125,8 @@
     for (var i = 0; i < records.length; i++) {
       var r = records[i], titleLine = r.title + (r.author ? ' — ' + r.author : ''), parts = attrParts(r);
       var full = '  ' + titleLine + (parts.length ? ' · ' + parts.join(' · ') : '');
-      blocks.push(r.text + '\n\n' + full + '\n\n' + dash);
+      var note = r.note && r.note.text ? '\n\n' + L('card.noteLabel', 'Note:') + ' ' + r.note.text : '';
+      blocks.push(r.text + note + '\n\n' + full + '\n\n' + dash);
     }
     return blocks.join('\n\n') + '\n';
   }
@@ -152,6 +153,8 @@
       var titleLine = r.title + (r.author ? ' — ' + r.author : ''), parts = pageLocParts(r);
       if (r.dateRaw) { parts.push(r.dateRaw); }
       var back = titleLine + (parts.length ? ' · ' + parts.join(' · ') : '');
+      // The reader's own note belongs on the back, above the source — it is the point of the card.
+      if (r.note && r.note.text) { back = L('card.noteLabel', 'Note:') + ' ' + r.note.text + '\n\n' + back; }
       lines.push(ankiField(r.text) + '\t' + ankiField(back) + '\t' + ankiField(r.tag));
     }
     return lines.join('\n') + '\n';

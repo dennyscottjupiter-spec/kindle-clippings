@@ -25,13 +25,13 @@ non-zero if any assertion failed:
 |---|---|
 | `syntax.test.js` | `node --check` on every file in `js/` — including the DOM modules the vm harness cannot load |
 | `fixture.test.js` | parser / clean / dedupe / tags against `tests/fixture-clippings.txt` (synthetic edge cases) |
-| `exports.test.js` | every export format builds and always carries the hashtag (same fixture) |
+| `exports.test.js` | every export format builds, always carries the hashtag, and TXT + Anki keep attached notes (same fixture) |
 | `topics.test.js` | the 15-topic taxonomy + Open Library subject classifier |
 | `sort.test.js` | right-pane sort ordering and group-key assignment |
 | `stats.test.js` | stats totals, per-book/topic aggregates, time histograms, streaks, the `details()` drill-down data, local-midnight day keys |
 | `real.test.js` | regression against the user's real `My Clippings.txt` at repo root — gitignored, personal; self-skips when the file is absent |
 
-Baseline as of this writing: **232 passed, 0 failed** without the real file (`real.test.js` self-skips);
+Baseline as of this writing: **236 passed, 0 failed** without the real file (`real.test.js` self-skips);
 the real file adds ~33 more when present.
 
 To view the app itself: open `index.html` directly (double-click / `file://`), or serve it — there
@@ -73,7 +73,7 @@ a module can only use what a script tag above it already defined:
 | `js/statsview.js` | statistics panel render — tappable KPI tiles, month timeline, per-year bars, top books, topics, weekday/hour rhythm, extremes (CSS bars/columns, no chart library); each tile opens a drill-down view (`highlights` / `books` / `notes` / `words`, memory-only `mode()`), wired by its own `install()` |
 | `js/quotesort.js` | quote-gallery ordering — newest / oldest / book A-Z / quote A-Z / longest |
 | `js/quoteview.js` | quote-card gallery — source toggle, book filter, search, sort, preview, download JPEGs |
-| `js/helpview.js` | help panel render (`#help-body`) — ten `.doc-section`s built from `i18n-help` keys |
+| `js/helpview.js` | help panel render (`#help-body`) — eleven `.doc-section`s (the second, `kinds`, explains highlight vs note) built from `i18n-help` keys |
 | `js/aboutview.js` | about panel render (`#about-body`) — what the app is, privacy note, `KC.version.RELEASES` changelog |
 | `js/cards.js` | single card render (footer = `.meta-info` chips + `.meta-actions` tray; `actBtn()` builds every tray button), group headers, `IntersectionObserver` pagination |
 | `js/cardactions.js` | per-card Image + Export tray buttons, and `flash()` (the ✓ "done" morph the copy button reuses). **Wraps `KC.cards.appendPage`** instead of editing `cards.js`, so every 200-card batch gets augmented; each processed `.entry` is marked `[data-ca-done]` |
@@ -170,6 +170,13 @@ page and each page's order is the cascade:
   `KC.modal.requestClose` / `KC.backnav.requestCloseDrawer` so the browser history steps back too;
   programmatic closes (`KC.modal.close`) deliberately do not. `restore()` sets `restoring()` so a
   re-open never pushes again, and `statsview.open()` keeps the restored drill-down mode only then.
+- A `[data-topic]` hue rule is `hsl(var(--h) …)`, and `"uncategorized"` has no `--h`. Every theme
+  layer that redefines `[data-topic]` (light base, system-dark, `[data-theme="dark"]`) needs its own
+  `[data-topic="uncategorized"]` fallback at equal-or-higher specificity right after it — otherwise
+  `--topic-edge` is invalid, the browser drops the whole `border-left` shorthand, and every card
+  loses its rail (notes their gold one). This was broken in dark mode until 2.3.1.
+- Every export that writes a record's text must also write its attached `rec.note` (md, json, csv,
+  txt, anki, obsidian all do; `exports.test.js` asserts txt + anki) — a dropped note is lost user data.
 - `KC.stats` day keys are UTC-based integers; turn one back into a timestamp with `dayStartMs()`
   (local midnight), never `day * DAY` — that is UTC midnight and shows as the previous day in UTC−3.
 - The pagination reset key is `activeBook | activeTopic | query | showHidden | sortMode` — all five,

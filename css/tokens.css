@@ -94,6 +94,11 @@ ul { list-style: none; padding: 0; }
     --topic-bg:   color-mix(in srgb, hsl(var(--h) 34% 22%) 74%, var(--paper));
     --topic-edge: color-mix(in srgb, hsl(var(--h) 46% 58%) 86%, var(--accent));
   }
+  /* must out-rank the rule above: "uncategorized" has no --h, and an invalid --topic-edge voids the
+     whole `border-left` shorthand — every card lost its rail (and notes their gold one) in dark mode */
+  :root:not([data-theme="light"]) [data-topic="uncategorized"] {
+    --topic-fg: var(--mid); --topic-bg: var(--sunk); --topic-edge: var(--rule);
+  }
 }
 
 :root[data-theme="dark"] {
@@ -123,6 +128,9 @@ ul { list-style: none; padding: 0; }
   --topic-fg:   color-mix(in srgb, hsl(var(--h) 48% 74%) 88%, var(--accent));
   --topic-bg:   color-mix(in srgb, hsl(var(--h) 34% 22%) 74%, var(--paper));
   --topic-edge: color-mix(in srgb, hsl(var(--h) 46% 58%) 86%, var(--accent));
+}
+:root[data-theme="dark"] [data-topic="uncategorized"] {
+  --topic-fg: var(--mid); --topic-bg: var(--sunk); --topic-edge: var(--rule);
 }
 :root[data-theme="light"] {
   color-scheme: light;

@@ -170,6 +170,9 @@
   color: var(--marker-note);
 }
 .note-label .ico { width: .95rem; height: .95rem; }
+/* a standalone note card: the label sits on top, and the text is the reader's own — UI type, not book type */
+.note-solo { display: flex; width: max-content; margin-bottom: .45em; }
+.entry[data-type="note"] .q { font-family: var(--font-sans); font-size: .98rem; }
 .entry .note-text {
   font-family: var(--font-sans);
   font-size: .9rem;

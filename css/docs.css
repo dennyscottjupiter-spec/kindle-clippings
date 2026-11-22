@@ -33,7 +33,11 @@
   border-radius: var(--r-pill);
   white-space: nowrap;
 }
-.doc-toc-link:hover, .doc-toc-link:focus-visible { color: var(--ink); border-color: var(--brand-1); }
+.doc-toc-link:focus-visible { color: var(--ink); border-color: var(--brand-1); }
+/* :hover sticks after a tap on touch — real pointers only */
+@media (hover: hover) and (pointer: fine) {
+  .doc-toc-link:hover { color: var(--ink); border-color: var(--brand-1); }
+}
 
 .doc-section { margin-bottom: 1.8rem; }
 .doc-section:last-child { margin-bottom: 0; }

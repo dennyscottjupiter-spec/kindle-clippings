@@ -23,6 +23,10 @@
       'about.credit.h': 'Créditos',
       'about.credit.body': 'Este app foi construído com a ajuda do Claude Code, da Anthropic.',
 
+      'about.rel.2_3_1.1': 'Nova seção na Ajuda: "Destaques × notas" — o que é cada um e como o app mostra.',
+      'about.rel.2_3_1.2': 'Notas soltas agora têm o selo "NOTA" no topo do cartão; as exportações TXT e Anki passaram a incluir as notas.',
+      'about.rel.2_3_1.3': 'Modo escuro: a faixa colorida à esquerda dos cartões (e a dourada das notas) voltou a aparecer.',
+      'about.rel.2_3_1.4': 'Celular: botões maiores na Ajuda e na galeria, ordenação numa linha só, e a busca mostra "N de 244".',
       'about.rel.2_3_0.1': 'Botões e menus redesenhados com ícones próprios; Ajuda e Sobre agora ficam no fim do menu ⋯.',
       'about.rel.2_3_0.2': 'Novo botão ← Voltar (e o gesto de voltar do celular) leva você de volta para onde estava: livro, tema, busca ou painel.',
       'about.rel.2_3_0.3': 'Rodapé de cada destaque refeito: página, posição e data em etiquetas, e uma barra de ações para o polegar.',
@@ -84,6 +88,10 @@
       'about.credit.h': 'Credits',
       'about.credit.body': 'This app was built with the help of Claude Code, by Anthropic.',
 
+      'about.rel.2_3_1.1': 'New Help section: "Highlights vs notes" — what each one is and how the app shows it.',
+      'about.rel.2_3_1.2': 'Standalone notes now carry a "NOTE" label at the top of the card; TXT and Anki exports now include your notes.',
+      'about.rel.2_3_1.3': 'Dark mode: the colour stripe on the left of each card (and the gold one on notes) is back.',
+      'about.rel.2_3_1.4': 'Phone: bigger buttons in Help and the gallery, sort options on one line, and search shows "N of 244".',
       'about.rel.2_3_0.1': 'Buttons and menus redesigned with their own icons; Help and About now sit at the bottom of the ⋯ menu.',
       'about.rel.2_3_0.2': 'A new ← Back button (and your phone’s back gesture) takes you back to where you were: book, topic, search or panel.',
       'about.rel.2_3_0.3': 'Each highlight’s footer is redone: page, location and date as tags, plus a thumb-friendly action bar.',
